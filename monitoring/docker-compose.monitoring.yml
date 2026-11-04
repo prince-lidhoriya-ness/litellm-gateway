@@ -1,0 +1,166 @@
+# Observability stack for the LiteLLM gateway (see docs/monitoring-plan.md).
+# Target runtime: Docker on Windows (tested on Rancher Desktop dockerd; Docker Desktop is the same API).
+#
+#   # from the gateway folder, after the quickstart stack is up (it owns the litellm-gateway_default network):
+#   docker compose -p litellm-monitoring --env-file .env -f monitoring/docker-compose.monitoring.yml up -d
+#
+# -p is required: .env sets COMPOSE_PROJECT_NAME=litellm-gateway, which would otherwise override `name:`
+# below and merge these services into the gateway's compose project. --env-file .env supplies POSTGRES_PASSWORD / REDIS_PASSWORD / GRAFANA_ADMIN_PASSWORD; nothing secret is
+# written here. Every image is pinned. Ports bind to 127.0.0.1 only.
+#
+#   Grafana        http://localhost:3000   Prometheus  http://localhost:9090
+#   Jaeger UI      http://localhost:16686  Alertmanager http://localhost:9093   Loki http://localhost:3100
+name: litellm-monitoring
+
+networks:
+  # The quickstart stack's network: Prometheus reaches litellm/db/redis, the proxy reaches otel-collector.
+  gateway:
+    name: litellm-gateway_default
+    external: true
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  loki_data:
+  alertmanager_data:
+
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.164.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "127.0.0.1:4317:4317"
+      - "127.0.0.1:4318:4318"
+    networks: [gateway]
+    depends_on: [jaeger, loki]
+    restart: unless-stopped
+
+  jaeger:
+    # 2.20.0 is the newest release that still serves the legacy /api/services query API, which
+    # Grafana 13.2.5's Jaeger datasource calls (2.21.0 and 2.22.0 answer 404 there; checked).
+    image: jaegertracing/jaeger:2.20.0
+    # In-memory store (dev): last 50k traces, gone on restart. Use Badger/Tempo for real retention.
+    command: ["--set=extensions.jaeger_storage.backends.some_storage.memory.max_traces=50000"]
+    ports:
+      - "127.0.0.1:16686:16686"
+    networks: [gateway]
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.7.9
+    command: ["-config.file=/etc/loki/config.yaml"]
+    volumes:
+      - ./loki/config.yaml:/etc/loki/config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "127.0.0.1:3100:3100"
+    networks: [gateway]
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.15.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      # Allows POST /-/reload after editing rules (used for the deliberate alert test).
+      - --web.enable-lifecycle
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks: [gateway]
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.34.1
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --data.retention=120h
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    ports:
+      - "127.0.0.1:9093:9093"
+    networks: [gateway]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:13.2.5
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in .env and pass --env-file .env}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_FEATURE_TOGGLES_ENABLE: traceqlEditor
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks: [gateway]
+    depends_on: [prometheus, loki, jaeger]
+    restart: unless-stopped
+
+  # ----- infrastructure exporters -----------------------------------------------------
+  # On Windows these see the Linux VM that runs the containers (Rancher Desktop / Docker Desktop
+  # WSL distro), which is where the gateway's CPU, RAM, disk and network are actually spent.
+  node-exporter:
+    image: prom/node-exporter:v1.12.1
+    command: ["--path.rootfs=/host"]
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    networks: [gateway]
+    restart: unless-stopped
+
+  cadvisor:
+    image: ghcr.io/google/cadvisor:v0.60.5
+    privileged: true
+    devices:
+      - /dev/kmsg
+    # Raw cgroup mode: on Rancher Desktop cAdvisor's docker factory cannot reach containerd
+    # ("unable to create containerd client"), so containers are read from /docker/<id> cgroups and
+    # identified by id (prometheus.yml adds a 12-char container_id label; map with `docker ps`).
+    command: ["--docker_only=false", "--raw_cgroup_prefix_whitelist=/docker/", "--housekeeping_interval=15s",
+              "--store_container_labels=false"]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks: [gateway]
+    restart: unless-stopped
+
+  postgres-exporter:
+    image: quay.io/prometheuscommunity/postgres-exporter:v0.20.1
+    environment:
+      DATA_SOURCE_URI: db:5432/litellm?sslmode=disable
+      DATA_SOURCE_USER: litellm
+      DATA_SOURCE_PASS: ${POSTGRES_PASSWORD:-litellm}
+    networks: [gateway]
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.94.0
+    environment:
+      REDIS_ADDR: redis://redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    networks: [gateway]
+    restart: unless-stopped
+
+  # GPU hosts only: docker compose --profile gpu ... (needs the NVIDIA container toolkit; not usable here).
+  dcgm-exporter:
+    image: nvcr.io/nvidia/k8s/dcgm-exporter:4.2.3-4.1.3-ubuntu22.04
+    profiles: [gpu]
+    gpus: all
+    cap_add: [SYS_ADMIN]
+    networks: [gateway]
+    restart: unless-stopped

@@ -1,0 +1,20 @@
+# Alertmanager 0.34: routes every alert to a webhook placeholder.
+# Replace the receiver with Slack/email/PagerDuty; keep credentials in env, not in this file.
+route:
+  receiver: default
+  group_by: [alertname, severity]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 4h
+
+receivers:
+  - name: default
+    webhook_configs:
+      # Nothing listens here by default; firing alerts stay visible in the Alertmanager UI/API.
+      - url: http://alert-sink.invalid:9999/alerts
+        send_resolved: true
+
+inhibit_rules:
+  - source_matchers: [severity="critical"]
+    target_matchers: [severity="warning"]
+    equal: [alertname]

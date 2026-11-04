@@ -1,0 +1,26 @@
+# Sample LiteLLM proxy config with the prompt-compression pipeline
+# (prompt_compression/, see prompt_compression/README.md).
+#
+#   litellm --config config.yaml --port 4000
+#
+# One model entry. By default it points at the local mock provider used for
+# verification (prompt_compression/dev/mock_openai_server.py). For a real
+# provider, swap it for the commented entry and set OPENAI_API_KEY.
+model_list:
+  - model_name: mock-echo
+    litellm_params:
+      model: openai/mock-echo
+      api_base: os.environ/MOCK_LLM_API_BASE
+      api_key: os.environ/MOCK_LLM_API_KEY
+  # - model_name: gpt-4o-mini
+  #   litellm_params:
+  #     model: openai/gpt-4o-mini
+  #     api_key: os.environ/OPENAI_API_KEY
+
+litellm_settings:
+  # Resolved relative to this file: loads prompt_compression/prompt_compression_callback.py
+  # and runs its async_pre_call_hook before every chat/completions provider call.
+  callbacks: ["prompt_compression.prompt_compression_callback.prompt_compression_instance"]
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

@@ -1,0 +1,976 @@
+{
+  "per_class": {
+    "sensitive": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "support": 37
+    },
+    "critical": {
+      "precision": 0.5,
+      "recall": 0.1351,
+      "f1": 0.2128,
+      "support": 37
+    },
+    "non_sensitive": {
+      "precision": 0.2764,
+      "recall": 0.9189,
+      "f1": 0.425,
+      "support": 37
+    },
+    "less_important": {
+      "precision": 0.8667,
+      "recall": 0.3514,
+      "f1": 0.5,
+      "support": 37
+    }
+  },
+  "macro_f1": 0.2844,
+  "accuracy": 0.3514,
+  "hard_negative_accuracy": 0.3889,
+  "confusion_matrix": {
+    "labels": [
+      "sensitive",
+      "critical",
+      "non_sensitive",
+      "less_important"
+    ],
+    "rows_gold_cols_pred": [
+      [
+        0,
+        2,
+        34,
+        1
+      ],
+      [
+        0,
+        5,
+        31,
+        1
+      ],
+      [
+        0,
+        3,
+        34,
+        0
+      ],
+      [
+        0,
+        0,
+        24,
+        13
+      ]
+    ]
+  },
+  "latency_ms": {
+    "p50": 139.8,
+    "p95": 213.6,
+    "mean": 145.3
+  },
+  "params": 70830722,
+  "max_length": 512,
+  "load_seconds": 2.8,
+  "predictions": [
+    {
+      "id": "sensitive-016",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6327
+    },
+    {
+      "id": "sensitive-008",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5181
+    },
+    {
+      "id": "sensitive-052",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6792
+    },
+    {
+      "id": "sensitive-027",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6366
+    },
+    {
+      "id": "sensitive-045",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.351
+    },
+    {
+      "id": "sensitive-040",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.4584
+    },
+    {
+      "id": "sensitive-024",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6105
+    },
+    {
+      "id": "sensitive-046",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6842
+    },
+    {
+      "id": "sensitive-036",
+      "gold": "sensitive",
+      "pred": "critical",
+      "score": 0.425
+    },
+    {
+      "id": "sensitive-029",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7445
+    },
+    {
+      "id": "sensitive-030",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6143
+    },
+    {
+      "id": "sensitive-026",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8051
+    },
+    {
+      "id": "sensitive-037",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5161
+    },
+    {
+      "id": "sensitive-006",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5481
+    },
+    {
+      "id": "sensitive-047",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5622
+    },
+    {
+      "id": "sensitive-018",
+      "gold": "sensitive",
+      "pred": "less_important",
+      "score": 0.6577
+    },
+    {
+      "id": "sensitive-001",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7153
+    },
+    {
+      "id": "sensitive-048",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8026
+    },
+    {
+      "id": "sensitive-028",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6622
+    },
+    {
+      "id": "sensitive-002",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5985
+    },
+    {
+      "id": "sensitive-054",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5011
+    },
+    {
+      "id": "sensitive-014",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8104
+    },
+    {
+      "id": "sensitive-035",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7793
+    },
+    {
+      "id": "sensitive-005",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.532
+    },
+    {
+      "id": "sensitive-009",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6218
+    },
+    {
+      "id": "sensitive-051",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7306
+    },
+    {
+      "id": "sensitive-050",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7197
+    },
+    {
+      "id": "sensitive-049",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.4235
+    },
+    {
+      "id": "sensitive-010",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.849
+    },
+    {
+      "id": "sensitive-043",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7848
+    },
+    {
+      "id": "sensitive-015",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8428
+    },
+    {
+      "id": "sensitive-042",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6502
+    },
+    {
+      "id": "sensitive-012",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6291
+    },
+    {
+      "id": "sensitive-053",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6633
+    },
+    {
+      "id": "sensitive-044",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8493
+    },
+    {
+      "id": "sensitive-019",
+      "gold": "sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6237
+    },
+    {
+      "id": "sensitive-017",
+      "gold": "sensitive",
+      "pred": "critical",
+      "score": 0.3188
+    },
+    {
+      "id": "critical-028",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.7135
+    },
+    {
+      "id": "critical-038",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.7516
+    },
+    {
+      "id": "critical-044",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.6826
+    },
+    {
+      "id": "critical-008",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.5273
+    },
+    {
+      "id": "critical-002",
+      "gold": "critical",
+      "pred": "critical",
+      "score": 0.6843
+    },
+    {
+      "id": "critical-031",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.4675
+    },
+    {
+      "id": "critical-050",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.8713
+    },
+    {
+      "id": "critical-001",
+      "gold": "critical",
+      "pred": "critical",
+      "score": 0.7054
+    },
+    {
+      "id": "critical-055",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.5678
+    },
+    {
+      "id": "critical-015",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.6688
+    },
+    {
+      "id": "critical-046",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.4317
+    },
+    {
+      "id": "critical-021",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.426
+    },
+    {
+      "id": "critical-014",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.6217
+    },
+    {
+      "id": "critical-005",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.4977
+    },
+    {
+      "id": "critical-041",
+      "gold": "critical",
+      "pred": "critical",
+      "score": 0.479
+    },
+    {
+      "id": "critical-047",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.6376
+    },
+    {
+      "id": "critical-052",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.7781
+    },
+    {
+      "id": "critical-040",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.562
+    },
+    {
+      "id": "critical-016",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.7577
+    },
+    {
+      "id": "critical-036",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.8114
+    },
+    {
+      "id": "critical-032",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.4594
+    },
+    {
+      "id": "critical-037",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.7685
+    },
+    {
+      "id": "critical-009",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.8501
+    },
+    {
+      "id": "critical-026",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.7792
+    },
+    {
+      "id": "critical-018",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.6181
+    },
+    {
+      "id": "critical-039",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.671
+    },
+    {
+      "id": "critical-048",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.7306
+    },
+    {
+      "id": "critical-030",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.6181
+    },
+    {
+      "id": "critical-024",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.5546
+    },
+    {
+      "id": "critical-017",
+      "gold": "critical",
+      "pred": "critical",
+      "score": 0.5996
+    },
+    {
+      "id": "critical-023",
+      "gold": "critical",
+      "pred": "less_important",
+      "score": 0.7025
+    },
+    {
+      "id": "critical-034",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.6903
+    },
+    {
+      "id": "critical-054",
+      "gold": "critical",
+      "pred": "critical",
+      "score": 0.7162
+    },
+    {
+      "id": "critical-013",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.7229
+    },
+    {
+      "id": "critical-019",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.6131
+    },
+    {
+      "id": "critical-012",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.6566
+    },
+    {
+      "id": "critical-035",
+      "gold": "critical",
+      "pred": "non_sensitive",
+      "score": 0.6711
+    },
+    {
+      "id": "non_sensitive-030",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7661
+    },
+    {
+      "id": "non_sensitive-020",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.3317
+    },
+    {
+      "id": "non_sensitive-054",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8334
+    },
+    {
+      "id": "non_sensitive-009",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5676
+    },
+    {
+      "id": "non_sensitive-026",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6773
+    },
+    {
+      "id": "non_sensitive-014",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5146
+    },
+    {
+      "id": "non_sensitive-004",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.3275
+    },
+    {
+      "id": "non_sensitive-010",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5375
+    },
+    {
+      "id": "non_sensitive-050",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6129
+    },
+    {
+      "id": "non_sensitive-001",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7136
+    },
+    {
+      "id": "non_sensitive-017",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5002
+    },
+    {
+      "id": "non_sensitive-034",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6351
+    },
+    {
+      "id": "non_sensitive-021",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7168
+    },
+    {
+      "id": "non_sensitive-049",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6752
+    },
+    {
+      "id": "non_sensitive-029",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5692
+    },
+    {
+      "id": "non_sensitive-052",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8274
+    },
+    {
+      "id": "non_sensitive-035",
+      "gold": "non_sensitive",
+      "pred": "critical",
+      "score": 0.4681
+    },
+    {
+      "id": "non_sensitive-042",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8212
+    },
+    {
+      "id": "non_sensitive-028",
+      "gold": "non_sensitive",
+      "pred": "critical",
+      "score": 0.5861
+    },
+    {
+      "id": "non_sensitive-005",
+      "gold": "non_sensitive",
+      "pred": "critical",
+      "score": 0.3678
+    },
+    {
+      "id": "non_sensitive-043",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7566
+    },
+    {
+      "id": "non_sensitive-015",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7094
+    },
+    {
+      "id": "non_sensitive-008",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.5968
+    },
+    {
+      "id": "non_sensitive-036",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8269
+    },
+    {
+      "id": "non_sensitive-011",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6935
+    },
+    {
+      "id": "non_sensitive-013",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.3429
+    },
+    {
+      "id": "non_sensitive-019",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8472
+    },
+    {
+      "id": "non_sensitive-012",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7315
+    },
+    {
+      "id": "non_sensitive-022",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.9709
+    },
+    {
+      "id": "non_sensitive-037",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7821
+    },
+    {
+      "id": "non_sensitive-047",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6697
+    },
+    {
+      "id": "non_sensitive-053",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.8911
+    },
+    {
+      "id": "non_sensitive-023",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6203
+    },
+    {
+      "id": "non_sensitive-003",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.695
+    },
+    {
+      "id": "non_sensitive-055",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.6354
+    },
+    {
+      "id": "non_sensitive-045",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7361
+    },
+    {
+      "id": "non_sensitive-038",
+      "gold": "non_sensitive",
+      "pred": "non_sensitive",
+      "score": 0.7664
+    },
+    {
+      "id": "less_important-007",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.6568
+    },
+    {
+      "id": "less_important-047",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.6359
+    },
+    {
+      "id": "less_important-021",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.7322
+    },
+    {
+      "id": "less_important-001",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.4812
+    },
+    {
+      "id": "less_important-020",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.6769
+    },
+    {
+      "id": "less_important-031",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.4765
+    },
+    {
+      "id": "less_important-054",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.4902
+    },
+    {
+      "id": "less_important-027",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.49
+    },
+    {
+      "id": "less_important-053",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.6467
+    },
+    {
+      "id": "less_important-015",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.3949
+    },
+    {
+      "id": "less_important-013",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.4505
+    },
+    {
+      "id": "less_important-049",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.7573
+    },
+    {
+      "id": "less_important-002",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.6526
+    },
+    {
+      "id": "less_important-035",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.5995
+    },
+    {
+      "id": "less_important-040",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.6473
+    },
+    {
+      "id": "less_important-043",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.4955
+    },
+    {
+      "id": "less_important-041",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.6039
+    },
+    {
+      "id": "less_important-055",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.4641
+    },
+    {
+      "id": "less_important-039",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.4974
+    },
+    {
+      "id": "less_important-023",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.6555
+    },
+    {
+      "id": "less_important-016",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.7382
+    },
+    {
+      "id": "less_important-038",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.4917
+    },
+    {
+      "id": "less_important-045",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.5345
+    },
+    {
+      "id": "less_important-050",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.6971
+    },
+    {
+      "id": "less_important-014",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.7298
+    },
+    {
+      "id": "less_important-044",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.595
+    },
+    {
+      "id": "less_important-028",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.5025
+    },
+    {
+      "id": "less_important-017",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.4712
+    },
+    {
+      "id": "less_important-010",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.8449
+    },
+    {
+      "id": "less_important-048",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.6217
+    },
+    {
+      "id": "less_important-011",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.6593
+    },
+    {
+      "id": "less_important-046",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.6671
+    },
+    {
+      "id": "less_important-033",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.4827
+    },
+    {
+      "id": "less_important-025",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.8524
+    },
+    {
+      "id": "less_important-003",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.4618
+    },
+    {
+      "id": "less_important-052",
+      "gold": "less_important",
+      "pred": "non_sensitive",
+      "score": 0.4908
+    },
+    {
+      "id": "less_important-019",
+      "gold": "less_important",
+      "pred": "less_important",
+      "score": 0.6913
+    }
+  ],
+  "environment": {
+    "timestamp": "2026-11-03T16:59:06+00:00",
+    "split": "test",
+    "n_examples": 148,
+    "python": "3.12.10",
+    "torch": "2.15.0+cpu",
+    "transformers": "5.20.1",
+    "cpu": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+    "torch_threads": 4,
+    "device": "cpu"
+  },
+  "model": "MoritzLaurer/deberta-v3-xsmall-zeroshot-v1.1-all-33",
+  "label_format": "descriptive"
+}
