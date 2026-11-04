@@ -1,0 +1,220 @@
+{"id": "sensitive-001", "text": "My email is jane.doe@example.com and my phone is +1 555 013 2287, please update my account.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-002", "text": "Here is my card for the booking: 4111 1111 1111 1111, exp 08/29, CVV 123.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-003", "text": "Login for the staging box is admin / P@ssw0rd!2024, don't share it.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-004", "text": "export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE and AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-005", "text": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA7bq3examplekeymaterial\n-----END RSA PRIVATE KEY-----", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-006", "text": "My SSN is 123-45-6789, can you check if the form is filled correctly?", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-007", "text": "I was diagnosed with type 2 diabetes last month and I'm on metformin 500mg twice a day.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-008", "text": "My therapist thinks my panic attacks are linked to the divorce. How do I tell my boss I need leave?", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-009", "text": "Patient John Carter, DOB 1979-04-12, MRN 448812, presented with chest pain and elevated troponin.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-010", "text": "Our bank account is IBAN DE89 3704 0044 0532 0130 00, please wire the deposit there.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-011", "text": "My salary is $86,000 and I still owe $23,400 on my credit cards. Should I file for bankruptcy?", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-012", "text": "I'm being sued by my former landlord for unpaid rent, case number 2024-CV-01873. What are my options?", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-013", "text": "Use this token for the API: ghp_1A2b3C4d5E6f7G8h9I0jK1lM2nO3pQ4rS5tU", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-014", "text": "OPENAI_API_KEY=sk-proj-abc123DEF456ghi789JKL012mno345PQR678stu", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-015", "text": "The database URL is postgres://app_user:s3cr3tPass@10.0.4.12:5432/payroll", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-016", "text": "Passport number X1234567, issued in Ottawa, expires 2031. Is that valid for travel to Japan?", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-017", "text": "My HIV test came back positive and I don't know how to tell my partner.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-018", "text": "Hi! Quick one, my wife is pregnant but we haven't told anyone yet, any tips for hiding morning sickness at work?", "label": "sensitive", "hard_negative": true}
+{"id": "sensitive-019", "text": "lol so my credit score dropped to 540 after I missed three mortgage payments, kinda embarrassing", "label": "sensitive", "hard_negative": true}
+{"id": "sensitive-020", "text": "Our CEO is under internal investigation for harassment; draft a note to the board that keeps it confidential.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-021", "text": "Here is the employee's home address: 42 Elm Street, Springfield, IL 62704. Send the contract there.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-022", "text": "My daughter Emma Li (born 3 March 2015) has an allergy to penicillin, add that to the school form.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-023", "text": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-024", "text": "Slack webhook: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-025", "text": "I've been drinking every night and my liver enzymes were high on the last blood test. Am I an alcoholic?", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-026", "text": "Our Q3 numbers before the public announcement: revenue $41.2M, a 12% miss. Keep this internal until earnings day.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-027", "text": "My green card application was denied and my immigration lawyer says I may be deported.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-028", "text": "Here's the root password for the router, it's tiger-lily-9921. Can you write the config?", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-029", "text": "Customer record: Maria Gonzalez, maria.g@example.org, 555-0199, account 00123987, balance overdue.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-030", "text": "Thanks again! Oh and my PIN for the card is 4821 in case you need it for the test.", "label": "sensitive", "hard_negative": true}
+{"id": "sensitive-031", "text": "I'm on antidepressants (sertraline 100mg) and want to know if I can drink at the wedding.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-032", "text": "Settlement terms between us and Acme are $2.5M plus an NDA; summarize them for our lawyer only.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-033", "text": "My tax return shows $142,350 AGI and I claimed my mother as a dependent, is that allowed?", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-034", "text": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQ\n-----END OPENSSH PRIVATE KEY-----", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-035", "text": "The Stripe live key is sk_live_51Hx9EXAMPLExxxxxxxxxxxxxx, rotate it after the demo.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-036", "text": "I had an abortion two years ago and I'm worried it will affect my fertility.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-037", "text": "National ID 1985-0312-4471 belongs to the applicant, please verify against the registry.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-038", "text": "Can you remember that my mom's maiden name is Kowalski? It's my security question answer.", "label": "sensitive", "hard_negative": true}
+{"id": "sensitive-039", "text": "hey hey :) my new login is mark.b@example.net with password Sunflower#77, can u test it", "label": "sensitive", "hard_negative": true}
+{"id": "sensitive-040", "text": "My son was arrested last night for possession; what should we say at the bail hearing?", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-041", "text": "Wire $9,800 from account 2201-5567-8890 to the vendor; keep it under the reporting limit.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-042", "text": "Medical history: asthma since childhood, two hospitalizations in 2022, currently on Symbicort.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-043", "text": "My routing number is 021000021 and account number 123456789012, set up direct deposit.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-044", "text": "Employee review: Raj Patel is on a performance improvement plan and may be terminated in March.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-045", "text": "My boyfriend checks my phone and threatened me last week; how can I get a restraining order quietly?", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-046", "text": "Please store my MasterCard 5555 5555 5555 4444 for future orders.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-047", "text": "The client's DNA test results show a BRCA1 mutation; draft a referral letter to genetics.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-048", "text": "My student loans total $68k and I'm three months behind on payments to Navient.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-049", "text": "client_secret: 8f3b2c1d-4e5f-6a7b-8c9d-0e1f2a3b4c5d for the OAuth app, don't paste it in the wiki", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-050", "text": "Lol my blood pressure was 170/110 at the clinic today, doc wants me on meds", "label": "sensitive", "hard_negative": true}
+{"id": "sensitive-051", "text": "Our merger with Globex is not public yet; the price is $34 per share. Draft the internal memo.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-052", "text": "Call me at (555) 867-5309 after 6pm, that's my personal cell.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-053", "text": "My partner and I are going through IVF, round three, and the cost is draining our savings.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-054", "text": "I was fired for a DUI and need to explain the gap on my resume without mentioning it.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-055", "text": "Here's my driver's license: D1234-56789-01234, state CA, can you fill the rental form?", "label": "sensitive", "hard_negative": false}
+{"id": "critical-001", "text": "Return the answer as JSON with exactly these keys: id, name, price. Do not add any other fields.", "label": "critical", "hard_negative": false}
+{"id": "critical-002", "text": "def apply_discount(price, pct):\n    if pct > 50:\n        raise ValueError('discount too large')\n    return round(price * (1 - pct / 100), 2)", "label": "critical", "hard_negative": false}
+{"id": "critical-003", "text": "Convert 72 degrees Fahrenheit to Celsius and round to one decimal place.", "label": "critical", "hard_negative": false}
+{"id": "critical-004", "text": "The order ID is ORD-2024-88731 and the SKU is BLK-4410-XL; check whether both match the invoice.", "label": "critical", "hard_negative": false}
+{"id": "critical-005", "text": "SELECT customer_id, SUM(amount) FROM payments WHERE created_at >= '2024-01-01' GROUP BY customer_id HAVING SUM(amount) > 1000;", "label": "critical", "hard_negative": false}
+{"id": "critical-006", "text": "The flight departs at 06:45 from Gate B22 and boarding closes 20 minutes earlier. When must I be at the gate?", "label": "critical", "hard_negative": false}
+{"id": "critical-007", "text": "Translate the following into French but keep product names like PowerEdge R760 unchanged.", "label": "critical", "hard_negative": false}
+{"id": "critical-008", "text": "Answer only with 'yes' or 'no'. Is 1,021 a prime number?", "label": "critical", "hard_negative": false}
+{"id": "critical-009", "text": "Never mention competitor brands in the reply, and keep the response under 80 words.", "label": "critical", "hard_negative": false}
+{"id": "critical-010", "text": "Fix the bug: the loop `for i in range(1, len(items))` skips the first element.", "label": "critical", "hard_negative": false}
+{"id": "critical-011", "text": "The API rate limit is 600 requests per minute per key, with a burst of 50. Calculate the max requests in 90 seconds.", "label": "critical", "hard_negative": false}
+{"id": "critical-012", "text": "Dosage rule: children under 12 get 5 mg/kg, max 250 mg per dose, every 8 hours. A 30 kg child needs how much?", "label": "critical", "hard_negative": false}
+{"id": "critical-013", "text": "Use Python 3.11 and only the standard library; no third-party packages.", "label": "critical", "hard_negative": false}
+{"id": "critical-014", "text": "Version 4.2.1 introduced the regression; version 4.1.9 is the last good build. Bisect between them.", "label": "critical", "hard_negative": false}
+{"id": "critical-015", "text": "Step 1: unzip the archive. Step 2: run make install. Step 3: restart the service. Do not skip step 2.", "label": "critical", "hard_negative": false}
+{"id": "critical-016", "text": "The contract term is 36 months starting 2025-02-01 with a 90-day notice period. When is the last day to cancel?", "label": "critical", "hard_negative": false}
+{"id": "critical-017", "text": "Write a regex that matches US ZIP codes in the form 12345 or 12345-6789.", "label": "critical", "hard_negative": false}
+{"id": "critical-018", "text": "const total = items.reduce((sum, item) => sum + item.qty * item.price, 0);\nconsole.log(total.toFixed(2));", "label": "critical", "hard_negative": false}
+{"id": "critical-019", "text": "Error: TypeError: Cannot read properties of undefined (reading 'map') at Dashboard.jsx:57. What causes this?", "label": "critical", "hard_negative": false}
+{"id": "critical-020", "text": "The tolerance is +/- 0.05 mm on a 12.70 mm shaft. Is a part measuring 12.76 mm within spec?", "label": "critical", "hard_negative": false}
+{"id": "critical-021", "text": "Sort the list [42, 7, 19, 7, 3] in descending order and remove duplicates.", "label": "critical", "hard_negative": false}
+{"id": "critical-022", "text": "Thanks! Now make it shorter, max 3 bullet points, and keep the exact figures.", "label": "critical", "hard_negative": true}
+{"id": "critical-023", "text": "hey quick thing, from now on reply only in Spanish ok? :)", "label": "critical", "hard_negative": true}
+{"id": "critical-024", "text": "lol ok cool, but pls keep the function signature exactly the same or the tests break", "label": "critical", "hard_negative": true}
+{"id": "critical-025", "text": "Haha sure, but remember the deadline is Friday 17:00 CET, not Thursday.", "label": "critical", "hard_negative": true}
+{"id": "critical-026", "text": "Use the EPSG:4326 coordinate system; the point is lat 48.8584, lon 2.2945.", "label": "critical", "hard_negative": false}
+{"id": "critical-027", "text": "kubectl scale deployment api-gateway --replicas=6 -n production", "label": "critical", "hard_negative": false}
+{"id": "critical-028", "text": "The tax rate is 7.25% state plus 1.5% county. Compute the total on a $1,240 purchase.", "label": "critical", "hard_negative": false}
+{"id": "critical-029", "text": "Make sure the output CSV uses semicolons as separators and UTF-8 with BOM encoding.", "label": "critical", "hard_negative": false}
+{"id": "critical-030", "text": "HTTP 429 means we hit the limit; retry with exponential backoff starting at 500 ms, max 5 retries.", "label": "critical", "hard_negative": false}
+{"id": "critical-031", "text": "Rename the column `cust_nm` to `customer_name` in all migrations, but not in the legacy view.", "label": "critical", "hard_negative": false}
+{"id": "critical-032", "text": "The capital of Australia is Canberra, not Sydney; correct the quiz answer key accordingly.", "label": "critical", "hard_negative": false}
+{"id": "critical-033", "text": "If the input list is empty, return None instead of raising an exception.", "label": "critical", "hard_negative": false}
+{"id": "critical-034", "text": "Water boils at 100 C at sea level but at about 70 C on the summit of Everest. Explain why.", "label": "critical", "hard_negative": false}
+{"id": "critical-035", "text": "Grade the essay using this rubric: thesis 30%, evidence 40%, style 20%, grammar 10%.", "label": "critical", "hard_negative": false}
+{"id": "critical-036", "text": "Compare the two files and list only lines that differ; ignore whitespace changes.", "label": "critical", "hard_negative": false}
+{"id": "critical-037", "text": "The meeting is in room 4.17 on floor 4, building C, at 14:30 UTC.", "label": "critical", "hard_negative": false}
+{"id": "critical-038", "text": "Calculate compound interest on $10,000 at 4.5% annually for 7 years.", "label": "critical", "hard_negative": false}
+{"id": "critical-039", "text": "git rebase -i HEAD~3 then squash the last two commits into the first one.", "label": "critical", "hard_negative": false}
+{"id": "critical-040", "text": "Respond in exactly three sentences, the second of which must be a question.", "label": "critical", "hard_negative": false}
+{"id": "critical-041", "text": "Patch CVE-2024-3094 by pinning xz-utils to 5.4.6 and rebuilding the image.", "label": "critical", "hard_negative": false}
+{"id": "critical-042", "text": "The answer must cite section 4.3(b) of the policy, not section 4.2.", "label": "critical", "hard_negative": false}
+{"id": "critical-043", "text": "ok ty! one more: change the color to #1A73E8 and the font size to 14px", "label": "critical", "hard_negative": true}
+{"id": "critical-044", "text": "Remember: the user's tier is 'gold', so apply the 15% discount, not the 10% one.", "label": "critical", "hard_negative": false}
+{"id": "critical-045", "text": "Parse the timestamp 2024-11-05T23:59:59+05:30 and convert it to UTC.", "label": "critical", "hard_negative": false}
+{"id": "critical-046", "text": "Given f(x) = 3x^2 - 2x + 1, compute f'(4).", "label": "critical", "hard_negative": false}
+{"id": "critical-047", "text": "Set max_tokens to 512, temperature to 0, and stop on the sequence '###'.", "label": "critical", "hard_negative": false}
+{"id": "critical-048", "text": "The pallet weighs 1,180 kg and the forklift limit is 1,200 kg. Can it lift a 25 kg box on top too?", "label": "critical", "hard_negative": false}
+{"id": "critical-049", "text": "np.where(arr > 0, arr, 0) should replace negatives with zero; why does it return a tuple here?", "label": "critical", "hard_negative": false}
+{"id": "critical-050", "text": "Hi there! Could you keep the reply in plain text, no markdown at all? Thanks!", "label": "critical", "hard_negative": true}
+{"id": "critical-051", "text": "Include the ticket number JIRA-4521 in the commit message title.", "label": "critical", "hard_negative": false}
+{"id": "critical-052", "text": "The train leaves Platform 9 at 10:10 and arrives at 12:55; how long is the trip?", "label": "critical", "hard_negative": false}
+{"id": "critical-053", "text": "Only use data from the attached table; do not use outside knowledge.", "label": "critical", "hard_negative": false}
+{"id": "critical-054", "text": "Swap the arguments: it should be copy(dst, src), not copy(src, dst).", "label": "critical", "hard_negative": false}
+{"id": "critical-055", "text": "The ISBN is 978-0-306-40615-7; verify the check digit.", "label": "critical", "hard_negative": false}
+{"id": "non_sensitive-001", "text": "The city park was renovated last year and now has a larger playground and a walking trail along the river.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-002", "text": "Many people enjoy hiking in autumn because the weather is cooler and the leaves change color.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-003", "text": "Our team discussed general password hygiene in today's training, such as using a password manager.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-004", "text": "In NLP, a 'token' is a unit of text such as a word or sub-word that a model processes.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-005", "text": "I read about 3 books last month and enjoyed the mystery novel the most.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-006", "text": "The bakery on the corner sells sourdough bread and croissants every morning.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-007", "text": "The history of the printing press shows how information spread faster across Europe in the 1500s.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-008", "text": "Coffee is grown in many tropical regions, including Brazil, Colombia, Ethiopia, and Vietnam.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-009", "text": "The article describes how remote work changed commuting patterns in large cities.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-010", "text": "Our company newsletter this month covers the new cafeteria menu and the summer volunteering event.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-011", "text": "Photosynthesis lets plants turn sunlight, water and carbon dioxide into sugar and oxygen.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-012", "text": "The museum's new exhibit features impressionist paintings on loan from several European galleries.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-013", "text": "Blog draft: five reasons why indoor plants can make a small apartment feel more welcoming.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-014", "text": "The football match ended in a draw after both teams scored in the second half.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-015", "text": "Electric cars are becoming more common, and charging stations are appearing in shopping centers.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-016", "text": "The novel follows a young sailor who travels across the Pacific and learns about different cultures.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-017", "text": "Healthy eating often includes more vegetables, whole grains and fewer processed foods.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-018", "text": "The conference had about 200 attendees and sessions on design, marketing and product strategy.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-019", "text": "Our product team is exploring ways to make the onboarding experience smoother for new users.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-020", "text": "Jazz developed in New Orleans in the early twentieth century, blending blues and ragtime.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-021", "text": "The town holds a farmers market every Saturday where local growers sell fruit and cheese.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-022", "text": "This report summarizes general customer feedback, which was mostly positive about delivery speed.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-023", "text": "Bananas are one of the most popular fruits worldwide and are rich in potassium.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-024", "text": "The weather in Lisbon is usually mild in spring, with occasional rain showers.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-025", "text": "Our office moved to a building with more natural light and a rooftop terrace.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-026", "text": "Learning a second language can help with travel and with understanding other cultures.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-027", "text": "The documentary explores how coral reefs are affected by rising ocean temperatures.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-028", "text": "Cybersecurity awareness month encourages people to learn about phishing and safe browsing.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-029", "text": "The bank on Main Street has a nice old facade that architecture students like to photograph.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-030", "text": "Volunteers cleaned up the beach and collected several bags of plastic waste.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-031", "text": "Chess is a strategy game that has been played for centuries in many parts of the world.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-032", "text": "A typical sprint in our team lasts two weeks, followed by a short retrospective meeting.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-033", "text": "Some hospitals have started using robots to deliver supplies between departments.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-034", "text": "The bookstore added a reading corner with comfortable chairs and a small coffee bar.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-035", "text": "The movie received good reviews for its soundtrack and cinematography.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-036", "text": "Many startups use cloud services so they do not have to maintain their own servers.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-037", "text": "Spring cleaning is a tradition in many households after the long winter months.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-038", "text": "The lecture covered the basic ideas of supply and demand in a market economy.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-039", "text": "Our neighborhood has a lot of cyclists, especially on weekends when the roads are quieter.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-040", "text": "The garden has tomatoes, basil and a few sunflowers that grow taller every week.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-041", "text": "Mountains in the region attract skiers in winter and hikers during the summer months.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-042", "text": "People often keep a journal to reflect on their day and organize their thoughts.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-043", "text": "The company picnic will include games, food trucks and live music for families.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-044", "text": "Our support team answered a wide range of questions about shipping and returns this week.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-045", "text": "Public libraries offer free access to books, newspapers and sometimes workshops.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-046", "text": "The podcast episode was about how ancient Romans built their roads and aqueducts.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-047", "text": "Customers liked the new packaging because it is easier to recycle.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-048", "text": "Some legal systems use juries while others rely mainly on professional judges.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-049", "text": "The tech blog compared different note-taking apps and their general features.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-050", "text": "Meditation is a practice many people use to reduce stress and improve focus.", "label": "non_sensitive", "hard_negative": true}
+{"id": "non_sensitive-051", "text": "The river flows through three countries before reaching the sea.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-052", "text": "The school organized a science fair where students showed projects on renewable energy.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-053", "text": "Most smartphones today have cameras good enough for everyday photography.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-054", "text": "A good team meeting usually has a clear agenda and ends with agreed next steps.", "label": "non_sensitive", "hard_negative": false}
+{"id": "non_sensitive-055", "text": "The city's old train station was turned into a market hall with small food stalls.", "label": "non_sensitive", "hard_negative": false}
+{"id": "less_important-001", "text": "Hi there! Hope you're having a great day.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-002", "text": "Thanks so much, you're the best!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-003", "text": "Good morning :) how's it going?", "label": "less_important", "hard_negative": false}
+{"id": "less_important-004", "text": "Ok cool, sounds good.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-005", "text": "Haha, that's funny.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-006", "text": "Just to repeat what I said above, as mentioned before, like I said earlier, the same thing again.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-007", "text": "Hope you had a great weekend! 2 days off felt like 20 minutes lol", "label": "less_important", "hard_negative": true}
+{"id": "less_important-008", "text": "Hello hello! It's me again, back with more questions, haha.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-009", "text": "Sorry for the long message, I tend to ramble a bit, bear with me.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-010", "text": "Anyway, whatever, it doesn't really matter much.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-011", "text": "Thank you in advance for your time and help, I really appreciate it!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-012", "text": "Lol yeah, totally agree with you.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-013", "text": "Cheers, have a nice evening!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-014", "text": "Um, so, like, I was just thinking, you know, kind of.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-015", "text": "As we already discussed in the previous messages, and as I mentioned a few times already.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-016", "text": "Wow, nice! Love it!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-017", "text": "Hey! Long time no see, how have you been?", "label": "less_important", "hard_negative": false}
+{"id": "less_important-018", "text": "Ok ok, got it, thanks.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-019", "text": "Great, perfect, awesome, thank you!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-020", "text": "I hope this message finds you well.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-021", "text": "No worries at all, take your time!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-022", "text": "Hmm, interesting, let me think about that for a second.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-023", "text": "Have a lovely day and talk soon!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-024", "text": "Yes yes, exactly what I was saying, exactly that.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-025", "text": "By the way, it's raining here again, typical Monday lol.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-026", "text": "Anyway, enough small talk from me.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-027", "text": "Thanks for the quick reply, much appreciated as always.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-028", "text": "Sorry, I keep repeating myself, it's been a long day.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-029", "text": "Morning! Coffee first, questions later :)", "label": "less_important", "hard_negative": false}
+{"id": "less_important-030", "text": "Nice one, that made me laugh.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-031", "text": "Hope your team is doing well too! Say hi to everyone for me.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-032", "text": "Just following up on my previous message, again, as mentioned.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-033", "text": "Happy Friday!! Almost weekend time.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-034", "text": "Ahh I see, okay okay.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-035", "text": "Please and thank you, kind regards, best wishes.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-036", "text": "I was going to say something but I forgot what it was, haha.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-037", "text": "You're awesome, seriously, thanks a million.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-038", "text": "Alright, talk later, bye for now!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-039", "text": "It's been a crazy week, 5 meetings a day, you know how it is.", "label": "less_important", "hard_negative": true}
+{"id": "less_important-040", "text": "Fun fact, I had 3 coffees already today, lol.", "label": "less_important", "hard_negative": true}
+{"id": "less_important-041", "text": "Hey, sorry to bother you again, I know you're busy, really sorry.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-042", "text": "Okay so as I said, same as before, nothing new really.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-043", "text": "Lovely, thank you, have a good one!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-044", "text": "Gotcha, makes sense, thanks!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-045", "text": "Hi! I'm Sam, nice to meet you :)", "label": "less_important", "hard_negative": true}
+{"id": "less_important-046", "text": "Thanks, that's all for now, really appreciate the help, have a great day ahead!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-047", "text": "Hope your holidays were relaxing and fun!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-048", "text": "Hah, my cat just walked across the keyboard, ignore that.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-049", "text": "Sure thing, no problem at all.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-050", "text": "Just saying hi before the meeting, nothing urgent!", "label": "less_important", "hard_negative": false}
+{"id": "less_important-051", "text": "Kind regards and best wishes to you and your family.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-052", "text": "Lol I typed that wrong, my bad, ignore the typo.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-053", "text": "Yeah, I guess, maybe, we'll see.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-054", "text": "Hello! Thanks for being so patient with me.", "label": "less_important", "hard_negative": false}
+{"id": "less_important-055", "text": "Ok that's it from me, see ya!", "label": "less_important", "hard_negative": false}

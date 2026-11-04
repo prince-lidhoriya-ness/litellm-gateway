@@ -1,0 +1,11 @@
+# Overhead baseline: run the gateway with telemetry off, measure, then restore.
+#   docker compose -f docker-compose.quickstart.yml -f monitoring/overhead/no-telemetry.override.yml up -d litellm
+#   ...measure...
+#   docker compose -f docker-compose.quickstart.yml up -d litellm      # back to the normal config
+services:
+  litellm:
+    volumes:
+      - ./monitoring/overhead/litellm_config.no-telemetry.yaml:/app/config.yaml
+    environment:
+      LITELLM_OTEL_V2: "false"
+      OBS_ENABLED: "false"
