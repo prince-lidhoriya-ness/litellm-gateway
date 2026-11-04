@@ -1,7 +1,7 @@
 {"id": "sensitive-001", "text": "My email is jane.doe@example.com and my phone is +1 555 013 2287, please update my account.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-002", "text": "Here is my card for the booking: 4111 1111 1111 1111, exp 08/29, CVV 123.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-003", "text": "Login for the staging box is admin / P@ssw0rd!2024, don't share it.", "label": "sensitive", "hard_negative": false}
-{"id": "sensitive-004", "text": "export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE and AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-004", "text": "export AWS_ACCESS_KEY_ID=[AWS_KEY_PLACEHOLDER] and AWS_SECRET_ACCESS_KEY=[AWS_SECRET_PLACEHOLDER]", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-005", "text": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA7bq3examplekeymaterial\n-----END RSA PRIVATE KEY-----", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-006", "text": "My SSN is 123-45-6789, can you check if the form is filled correctly?", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-007", "text": "I was diagnosed with type 2 diabetes last month and I'm on metformin 500mg twice a day.", "label": "sensitive", "hard_negative": false}
@@ -11,7 +11,7 @@
 {"id": "sensitive-011", "text": "My salary is $86,000 and I still owe $23,400 on my credit cards. Should I file for bankruptcy?", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-012", "text": "I'm being sued by my former landlord for unpaid rent, case number 2024-CV-01873. What are my options?", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-013", "text": "Use this token for the API: ghp_1A2b3C4d5E6f7G8h9I0jK1lM2nO3pQ4rS5tU", "label": "sensitive", "hard_negative": false}
-{"id": "sensitive-014", "text": "OPENAI_API_KEY=sk-proj-abc123DEF456ghi789JKL012mno345PQR678stu", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-014", "text": "OPENAI_API_KEY=[OPENAI_API_KEY_PLACEHOLDER]", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-015", "text": "The database URL is postgres://app_user:s3cr3tPass@10.0.4.12:5432/payroll", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-016", "text": "Passport number X1234567, issued in Ottawa, expires 2031. Is that valid for travel to Japan?", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-017", "text": "My HIV test came back positive and I don't know how to tell my partner.", "label": "sensitive", "hard_negative": false}
@@ -21,7 +21,7 @@
 {"id": "sensitive-021", "text": "Here is the employee's home address: 42 Elm Street, Springfield, IL 62704. Send the contract there.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-022", "text": "My daughter Emma Li (born 3 March 2015) has an allergy to penicillin, add that to the school form.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-023", "text": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U", "label": "sensitive", "hard_negative": false}
-{"id": "sensitive-024", "text": "Slack webhook: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-024", "text": "Slack webhook: https://hooks.slack.com/services/[SLACK_WORKSPACE_ID]/[SLACK_CHANNEL_ID]/[SLACK_TOKEN]", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-025", "text": "I've been drinking every night and my liver enzymes were high on the last blood test. Am I an alcoholic?", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-026", "text": "Our Q3 numbers before the public announcement: revenue $41.2M, a 12% miss. Keep this internal until earnings day.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-027", "text": "My green card application was denied and my immigration lawyer says I may be deported.", "label": "sensitive", "hard_negative": false}
@@ -32,7 +32,7 @@
 {"id": "sensitive-032", "text": "Settlement terms between us and Acme are $2.5M plus an NDA; summarize them for our lawyer only.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-033", "text": "My tax return shows $142,350 AGI and I claimed my mother as a dependent, is that allowed?", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-034", "text": "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQ\n-----END OPENSSH PRIVATE KEY-----", "label": "sensitive", "hard_negative": false}
-{"id": "sensitive-035", "text": "The Stripe live key is sk_live_51Hx9EXAMPLExxxxxxxxxxxxxx, rotate it after the demo.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-035", "text": "The Stripe live key is sk_live_[STRIPE_KEY_PLACEHOLDER], rotate it after the demo.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-036", "text": "I had an abortion two years ago and I'm worried it will affect my fertility.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-037", "text": "National ID 1985-0312-4471 belongs to the applicant, please verify against the registry.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-038", "text": "Can you remember that my mom's maiden name is Kowalski? It's my security question answer.", "label": "sensitive", "hard_negative": true}

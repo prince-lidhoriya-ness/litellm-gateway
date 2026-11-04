@@ -4,7 +4,7 @@
 {"id": "sensitive-027", "text": "My green card application was denied and my immigration lawyer says I may be deported.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-045", "text": "My boyfriend checks my phone and threatened me last week; how can I get a restraining order quietly?", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-040", "text": "My son was arrested last night for possession; what should we say at the bail hearing?", "label": "sensitive", "hard_negative": false}
-{"id": "sensitive-024", "text": "Slack webhook: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-024", "text": "Slack webhook: https://hooks.slack.com/services/[SLACK_WEBHOOK_TOKEN]", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-046", "text": "Please store my MasterCard 5555 5555 5555 4444 for future orders.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-036", "text": "I had an abortion two years ago and I'm worried it will affect my fertility.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-029", "text": "Customer record: Maria Gonzalez, maria.g@example.org, 555-0199, account 00123987, balance overdue.", "label": "sensitive", "hard_negative": false}
@@ -19,8 +19,8 @@
 {"id": "sensitive-028", "text": "Here's the root password for the router, it's tiger-lily-9921. Can you write the config?", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-002", "text": "Here is my card for the booking: 4111 1111 1111 1111, exp 08/29, CVV 123.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-054", "text": "I was fired for a DUI and need to explain the gap on my resume without mentioning it.", "label": "sensitive", "hard_negative": false}
-{"id": "sensitive-014", "text": "OPENAI_API_KEY=sk-proj-abc123DEF456ghi789JKL012mno345PQR678stu", "label": "sensitive", "hard_negative": false}
-{"id": "sensitive-035", "text": "The Stripe live key is sk_live_51Hx9EXAMPLExxxxxxxxxxxxxx, rotate it after the demo.", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-014", "text": "OPENAI_API_KEY=[OPENAI_API_KEY_PLACEHOLDER]", "label": "sensitive", "hard_negative": false}
+{"id": "sensitive-035", "text": "The Stripe live key is sk_live_[STRIPE_KEY_PLACEHOLDER], rotate it after the demo.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-005", "text": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA7bq3examplekeymaterial\n-----END RSA PRIVATE KEY-----", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-009", "text": "Patient John Carter, DOB 1979-04-12, MRN 448812, presented with chest pain and elevated troponin.", "label": "sensitive", "hard_negative": false}
 {"id": "sensitive-051", "text": "Our merger with Globex is not public yet; the price is $34 per share. Draft the internal memo.", "label": "sensitive", "hard_negative": false}
