@@ -148,7 +148,7 @@ cardinality; they belong in Langfuse/Jaeger/spend logs.
 |---|---|
 | Sensitive prompts never raw in Langfuse/logs | `turn_off_message_logging: true` (global) + `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=no_content`; our spans/logs carry only sha256, char length, token count, label. Tests assert no raw text in captured spans/logs. |
 | Redact PII before export with the classifier's rule layer | `observability.privacy.scrub()` runs `prompt_compression.rules.redact()` over every free-text log/span value (error messages, reasons); collector `attributes/scrub` drops `gen_ai.prompt`/`gen_ai.completion`-style attributes as defence in depth |
-| Pre/post-compression text only for non_sensitive and less_important, only if enabled | `OBS_CAPTURE_TEXT=false` (default). When `true`, the observer adds `prompt.text.before/after` span attributes for those two labels only, after `rules.redact()`; never for sensitive/critical |
+| Pre/post-compression text only for the general (non-sensitive) category, only if enabled | `OBS_CAPTURE_TEXT=false` (default). When `true`, the observer adds `prompt.text.before/after` span attributes for those two labels only, after `rules.redact()`; never for sensitive/critical |
 | Hash user IDs and API keys, never export a raw key | `observability.privacy.hash_id()` = sha256(`OBS_HASH_SALT` + id)[:16] for user/team/end-user ids; keys only as LiteLLM's existing `user_api_key_hash`; Prometheus built-ins drop `user`, `user_email`, `end_user`, `client_ip`, `user_agent`, `api_key_alias` via `prometheus_exclude_labels` |
 | Prompts in spend logs | stay off (`store_prompts_in_spend_logs` default false) |
 
@@ -222,7 +222,7 @@ flowchart LR
 | `/metrics` auth | disabled (`require_auth_for_metrics_endpoint: false`); proxy port is bound to 127.0.0.1 by `LITELLM_BIND` |
 | Prometheus identity labels | drop user/email/end_user/ip/user_agent/key alias; keep `hashed_api_key` and `team` for budget gauges |
 | CPU hourly rate | 0.10 USD/h (laptop estimate) |
-| Storing text for non_sensitive/less_important | off (`OBS_CAPTURE_TEXT=false`) |
+| Storing text for the general (non-sensitive) category | off (`OBS_CAPTURE_TEXT=false`) |
 | Sentry | not added |
 | Periodic eval | not scheduled and not exported; add a Pushgateway or a Langfuse score if you want it on a dashboard |
 | Multi-worker proxy | single worker assumed; with `--num_workers > 1` set `PROMETHEUS_MULTIPROC_DIR` and our metrics switch to multiprocess mode (documented, untested) |

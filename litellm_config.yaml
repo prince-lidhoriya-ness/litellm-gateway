@@ -10,6 +10,13 @@ model_list:
       input_cost_per_token: 0.000001
       output_cost_per_token: 0.000002
 
+  # Optional LLM-as-judge for quality evaluations (must differ from the model under test). Callers opt out of
+  # compression with metadata.prompt_compression=false so the judge sees the text verbatim.
+  - model_name: judge-nemotron
+    litellm_params:
+      model: openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
+      api_key: os.environ/OPENROUTER_API_KEY
+
   # Fixed-latency local mock (prompt_compression/dev/mock_openai_server.py on the host, port 4010):
   # used only to measure gateway/telemetry overhead without provider noise.
   - model_name: obs-mock

@@ -1,0 +1,8 @@
+# Cold-cache latency arm: the classifier result cache is off, so every request runs a real classification
+# (the default 2048-entry cache answered 217/220 requests of the repeated-prompt latency benchmark).
+# Code unchanged; env only.
+#   docker compose -f docker-compose.quickstart.yml -f reports/pipeline-proof/scripts/cold_cache.override.yml up -d litellm
+services:
+  litellm:
+    environment:
+      CLASSIFIER_CACHE_SIZE: "0"

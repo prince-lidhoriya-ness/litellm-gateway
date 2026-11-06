@@ -1,31 +1,62 @@
 # prompt_compression
 
-Classify -> route -> compress pipeline for every `chat/completions` request
-that passes through the LiteLLM proxy. The classifier labels each message,
-the router decides how hard (or whether) to compress it, and
-[LLMLingua-2](https://github.com/microsoft/LLMLingua) (the compressor from
-`ai-features/promptCompression/PromptCompressionWithLLMLingua-2`, used
-unmodified through `compressor_adapter.py`) does the compression.
+A prompt-compression pipeline for every `chat/completions` request that passes through the LiteLLM proxy. It follows
+one architecture, stage by stage:
 
 ```
-request -> async_pre_call_hook -> per message: rules -> NLI classifier -> route -> LLMLingua-2 -> provider
+Client request  (messages + metadata)
+      |
+      v
+ Gate ------------------ opt-out, size, timeout -- on a timeout or an error: Fail open (send the original)
+      |
+      v
+ Segment and classify -- content type (code, structured data, identifier-dense text, prose) and sensitivity
+      |
+      v
+ Router ---------------- the task type picks the action
+      |
+      +--> Keep verbatim   code, data, PII, the instruction and the question
+      +--> Select or drop  whole old turns, passages, log lines
+      +--> Compress text   running prose through LLMLingua-2, 3x cap
+      |
+      v
+ Reassemble in order --- ratio and tokens logged
+      |
+      v
+ Model  (closed API or local)            (shadow mode: the model gets the original)
 ```
+
+The design and the evidence behind every choice are in
+[`../reports/compression-fit/REPORT.md`](../reports/compression-fit/REPORT.md), sections 4 and 7. The short version:
+token-level compression damaged exactly the text that is read for exact strings (log field names, identifiers, dates,
+names), so only running prose is compressed, at a modest ratio, and whole units are dropped instead of pruned.
+
+There is no importance label any more. An earlier version asked a zero-shot classifier whether a *message* was
+`critical`, `non_sensitive` or `less_important` and compressed only the last two; with the shipped model most prompts
+scored below its confidence floor and fell back to `critical`, so almost nothing was compressed. What matters now is
+what kind of text a block is, and whether it is sensitive.
 
 ## Layout
 
-| File | Purpose |
-|---|---|
-| `labels.py` | Label names, priority, label wording for the NLI model |
-| `rules.py` | Regex + checksum rules (email, phone, IDs, Luhn cards, IBAN, keys, tokens, private keys, passwords); a hit forces `sensitive`; `redact()` |
-| `classifier.py` | Zero-shot classifier: rules first, confidence fallback, chunking, LRU cache, loaded once |
-| `router.py` | Label -> compression decision (the routing table below) |
-| `compressor_adapter.py` | Thin wrapper over `llmlingua.PromptCompressor` (LLMLingua-2, CPU) |
-| `pipeline.py` | Walks `messages`, preserves what must not change, records token counts |
-| `prompt_compression_callback.py` | LiteLLM `CustomLogger.async_pre_call_hook` (fail mode, timeout, opt-out, metadata, logging) |
-| `settings.py` | All environment variables |
-| `eval/` | Dataset, dev/test split, benchmark script, saved results |
-| `tests/` | pytest suite |
-| `dev/` | Mock OpenAI-compatible provider and an end-to-end verification client |
+| Stage | File | Purpose |
+|---|---|---|
+| Gate | `gate.py` | Disabled, not a chat call, per-request opt-out, too few tokens |
+| Gate, Fail open | `prompt_compression_callback.py` | LiteLLM `CustomLogger.async_pre_call_hook`: timeout, fail open / closed, shadow mode, metadata, logging |
+| Segment and classify | `segmenter.py` | Splits a message into blocks and says what each is; never changes a character |
+| | `rules.py` | Regex + checksum rules (e-mail, phone, IDs, Luhn cards, IBAN, keys, tokens, private keys, passwords); `redact()` |
+| | `sensitivity.py` | Sensitive or not: rules, then topics, then the model's probability against a threshold |
+| | `topics.py` | Sensitive-topic lexicon (health, personal money, legal, identity, abuse, employment, non-public news) |
+| | `embedding_classifier.py` | Default model: all-MiniLM-L6-v2 embedding + trained logistic-regression head (`models/sensitivity_head.json`) |
+| | `labels.py` | Candidate labels of the legacy zero-shot backend (`SENSITIVITY_BACKEND=nli`) |
+| Router | `router.py` | Decides keep / select / compress for every unit, and which old turns to drop |
+| Actions | `actions.py` | Carries the plan out: redaction, record and passage selection, LLMLingua-2 with a ratio cap |
+| | `selectors.py` | BM25 passage ranking, record (line) selection, chat-history trimming |
+| | `compressor_adapter.py` | Thin wrapper over `llmlingua.PromptCompressor` (LLMLingua-2, CPU) |
+| Reassemble | `pipeline.py` | Runs the stages over `messages`, joins the blocks back in order, builds the report |
+| shared | `units.py`, `texts.py`, `settings.py` | The unit passed between stages, message/token helpers, all environment variables |
+| | `eval/` | Datasets, benchmarks, saved results |
+| | `tests/` | pytest suite |
+| | `dev/` | Mock OpenAI-compatible provider and an end-to-end verification client |
 
 ## Setup
 
@@ -51,147 +82,252 @@ litellm_settings:
 ```
 
 LiteLLM 1.106.0 resolves that dotted path relative to the config file and loads
-`prompt_compression/prompt_compression_callback.py`; the module adds the
-gateway folder to `sys.path` so the package imports work.
+`prompt_compression/prompt_compression_callback.py`; the module adds the gateway folder to `sys.path` so the package
+imports work. LiteLLM only calls a callback whose own class defines `async_pre_call_hook`, so a subclass of the hook
+has to define it too, even if it only delegates (`observability/observed_callback.py` does).
 
 ## Environment variables
 
-All optional; see `../prompt_compression.env.example` for the full list with defaults.
+All optional; `../prompt_compression.env.example` lists every variable with its default and a comment.
 
-| Variable | Default | Meaning |
+| Stage | Variable | Default | Meaning |
+|---|---|---|---|
+| Gate | `PROMPT_COMPRESSION_ENABLED` | `true` | Global switch |
+| | `PROMPT_COMPRESSION_MIN_TOKENS` | `50` | Requests with fewer text tokens skip the pipeline |
+| | `PROMPT_COMPRESSION_TIMEOUT_S` | `10` | Budget for the whole pipeline per request |
+| | `PROMPT_COMPRESSION_FAIL_MODE` | `open` | `open`: send the original prompt + warning; `closed`: reject with HTTP 503 |
+| | `PROMPT_COMPRESSION_MODE` | `enforce` | `shadow`: run and report everything but send the original prompt |
+| Classify | `SENSITIVITY_BACKEND` | `embedding` | `embedding` (trained head) or `nli` (legacy zero-shot model) |
+| | `SENSITIVITY_THRESHOLD` | head: `0.37` | Probability at or above this keeps a text verbatim (empty = backend default; nli: 0.35) |
+| | `CLASSIFIER_MODEL` / `_LABEL_FORMAT` / `_QUANTIZE` | distilbert-mnli / `descriptive` / `none` | `nli` backend only |
+| | `CLASSIFIER_CACHE_SIZE` / `_MAX_CHUNK_TOKENS` | `2048` / `400` | LRU entries; tokens per chunk for long texts |
+| | `PROMPT_COMPRESSION_EXACT_DENSITY` | `0.15` | Share of identifier-like words that makes a paragraph "exact text" |
+| Router | `PROMPT_COMPRESSION_ROUTES` | `narrative,passages,records` | Active actions: `narrative`, `passages`, `records`, `history` |
+| Keep | `REDACT_SENSITIVE` | `false` | Replace PII spans in sensitive blocks with `[EMAIL]`, `[PHONE]`, ... |
+| | `PROMPT_COMPRESSION_PRESERVE_LAST_USER` | `false` | Never touch the latest user message |
+| | `PROMPT_COMPRESSION_PROTECT_EDGES` | `true` | Never compress the first and last paragraph of the latest user message |
+| Compress | `PROMPT_COMPRESSION_RATE` | `0.4` | LLMLingua-2 rate, the fraction of tokens kept (about 2x on prose); digits are always kept |
+| | `PROMPT_COMPRESSION_MAX_RATIO` | `3.0` | Largest ratio accepted per block; above it: one lighter retry, then the block is left as it was |
+| | `PROMPT_COMPRESSION_MIN_CHARS` / `_MAX_CALLS` | `200` / `6` | Shortest prose run worth compressing; LLMLingua-2 calls per message |
+| | `PROMPT_COMPRESSION_MODEL` / `_EAGER_LOAD` | LLMLingua-2 mBERT / `true` | Checkpoint; load models at proxy start |
+| Select | `PROMPT_COMPRESSION_MIN_PASSAGES` / `_MIN_PASSAGE_TOKENS` / `_PASSAGE_KEEP_RATIO` | `6` / `100` / `0.5` | `passages` route guards and target |
+| | `PROMPT_COMPRESSION_RECORD_MIN_LINES` / `_RECORD_CONTEXT_LINES` | `10` / `1` | `records` route guard and neighbour lines |
+| | `PROMPT_COMPRESSION_HISTORY_MAX_TOKENS` / `_HISTORY_KEEP_MESSAGES` | `0` / `6` | `history` route budget (0 = off) and the tail that is always kept |
+
+Per-request opt-out: send `"metadata": {"prompt_compression": false}` (or `{"disable_prompt_compression": true}`) in
+the request body. With the OpenAI SDK: `extra_body={"metadata": {"prompt_compression": False}}`.
+
+## The stages
+
+### Gate
+
+Cheap checks before anything else (`gate.py`): compression switched off, not a chat call, a per-request opt-out, or fewer
+than `MIN_TOKENS` tokens in the whole request (the earlier local pipeline run found that classifying a tiny prompt costs
+more than compression can save). The hook wraps the whole pipeline in a timeout. A timeout or any error sends the
+original prompt (**Fail open**) or rejects the request with HTTP 503 (`FAIL_MODE=closed`).
+
+### Segment and classify
+
+Every message the pipeline may touch is split into blocks (`segmenter.py`), each with a kind, and each block gets a
+sensitivity verdict. Never touched at all: `system` and `developer` messages, `tool` and `function` results, assistant
+messages carrying `tool_calls` / `function_call`, non-text content parts, tool definitions (`tools`, which live outside
+`messages`), message roles and order.
+
+| Kind | Examples | Why it matters (research report) |
 |---|---|---|
-| `CLASSIFIER_MODEL` | see "Model comparison" | HF id of the zero-shot NLI model |
-| `CLASSIFIER_LABEL_FORMAT` | `descriptive` | `descriptive` (full label descriptions) or `plain` (label words) |
-| `CLASSIFIER_QUANTIZE` | `none` | `int8`: torch dynamic quantization (hurt DeBERTa accuracy badly in the benchmark) |
-| `CLASSIFIER_MIN_CONFIDENCE` | `0.6` | Below this top score -> `critical` |
-| `CLASSIFIER_LATENCY_BUDGET_MS` | `300` | Selection budget for the benchmark (not enforced at runtime) |
-| `CLASSIFIER_CACHE_SIZE` | `2048` | LRU entries, keyed by sha256 of the text |
-| `CLASSIFIER_MAX_CHUNK_TOKENS` | `400` | Premise tokens per chunk for long prompts |
-| `PROMPT_COMPRESSION_ENABLED` | `true` | Global switch |
-| `PROMPT_COMPRESSION_FAIL_MODE` | `open` | `open`: send original prompt + warning; `closed`: reject with HTTP 503 |
-| `PROMPT_COMPRESSION_TIMEOUT_S` | `10` | Budget for classify + compress per request |
-| `REDACT_SENSITIVE` | `false` | Replace PII spans in sensitive messages with `[EMAIL]`, `[PHONE]`, ... |
-| `PROMPT_COMPRESSION_PRESERVE_LAST_USER` | `false` | Never compress the latest user message |
-| `PROMPT_COMPRESSION_MIN_CHARS` | `200` | Shorter messages are never compressed |
-| `PROMPT_COMPRESSION_MODEL` | `microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank` | LLMLingua-2 checkpoint |
-| `PROMPT_COMPRESSION_RATE_NON_SENSITIVE` | `0.6` | LLMLingua-2 rate (fraction of tokens kept) |
-| `PROMPT_COMPRESSION_RATE_LESS_IMPORTANT` | `0.3` | LLMLingua-2 rate for filler |
-| `PROMPT_COMPRESSION_EAGER_LOAD` | `true` | Load models at proxy start |
-| `PROMPT_COMPRESSION_LOG_LEVEL` | `INFO` | Log level of the `prompt_compression` logger |
+| `code` | fenced or unfenced code, shell, SQL | identifiers were split (`MAX_WINDOW_PB` became `MAX WINDOW _ PB`), keywords dropped |
+| `structured` | JSON, JSON lines, log lines, tables, CSV, `key=value`, stack traces | LLMLingua-2 kept none of the six log field names, so the model saw bare numbers |
+| `exact` | prose dense in numbers, ids, paths, addresses, camelCase or mid-sentence names | dates lost their separators, numbers were dropped; an early benchmark run lost an answer name ("Tanaka") from a paragraph with two digit-words, so names count |
+| `prose` | everything else | the only kind a compressor may touch |
 
-Per-request opt-out: send `"metadata": {"prompt_compression": false}` (or
-`{"disable_prompt_compression": true}`) in the request body. With the OpenAI SDK:
-`extra_body={"metadata": {"prompt_compression": False}}`.
+A short label line directly above data ("Here is the log:" with no blank line between) does not hide the data. The
+guard is a set of cheap regexes, not a model, and errs towards "exact".
 
-## Routing table
+**Sensitivity** is decided per block. The deterministic rules (`rules.py`) and the topic lexicon (`topics.py`, reported
+as rule hits `topic_<name>`) run on every block. The model (default: sentence embedding + trained head) runs on
+consecutive prose blocks merged into one run (and on exact-text runs too when a route could drop them whole, `history`
+or `passages`); a run is sensitive when the model's probability reaches `SENSITIVITY_THRESHOLD`. A rules or topic
+hit protects only its own block; a sensitive run is protected whole. A failed inference counts as sensitive; if the
+model cannot be loaded, the hook's fail mode applies.
 
-| Label | Action | LLMLingua-2 setting |
-|---|---|---|
-| `sensitive` | Not compressed. With `REDACT_SENSITIVE=true`, rule-detected PII is replaced by placeholders. | none |
-| `critical` | Not compressed. LLMLingua-2 has no lossless setting, so "most conservative" is "skip it". | none |
-| `non_sensitive` | Standard compression | `rate=0.6`, `force_reserve_digit=True` |
-| `less_important` | Aggressive compression | `rate=0.3` |
+### Router
 
-Always preserved, whatever the label: `system` and `developer` messages, `tool`
-and `function` results, assistant messages carrying `tool_calls` /
-`function_call`, non-text content parts, tool definitions (`tools`, which live
-outside `messages`), message roles and order. Messages shorter than
-`PROMPT_COMPRESSION_MIN_CHARS` are left alone. The latest user message follows
-the routing table unless `PROMPT_COMPRESSION_PRESERVE_LAST_USER=true`.
+The task type picks the action for every block (`router.py`); it only decides:
 
-The request-level category written to the metadata is the most restrictive
-message label (`sensitive > critical > non_sensitive > less_important`).
+| Block | Action |
+|---|---|
+| sensitive text, code, structured data, exact text, the latest user message's first and last paragraph | **Keep verbatim** (`REDACT_SENSITIVE=true` replaces PII spans) |
+| passages the question does not need (route `passages`) | **Select or drop**: whole passages, ranked by BM25 against the question; no lexical signal means nothing is dropped |
+| log / JSON-lines / CSV lines the question does not name (route `records`) | **Select or drop**: matches and their neighbours stay |
+| the oldest whole chat turns (route `history`, needs `HISTORY_MAX_TOKENS`) | **Select or drop**: never a turn with tool calls or results, never one containing sensitive text, never the last `HISTORY_KEEP_MESSAGES` messages |
+| running prose (route `narrative`) | **Compress text** |
 
-Note: the Streamlit demo (`app.py`) uses a different, lighter policy (sensitive
-rate 0.9, critical 0.85, code 0.95, less important 0.3). The gateway follows the
-stricter policy above so sensitive and critical prompts reach the model byte for
-byte; set the rates via env vars if you want to move closer to the demo.
+`narrative`, `passages` and `records` are on by default (until 2026-11-06 only `narrative` was, with guards of 300
+tokens / 20 lines that kept the selection routes from firing on typical prompts; the benchmark prompts then saved 11% on
+QA and 0% on logs, against 39% and 66% now, see `reports/playground-ab/REPORT.md`). A latest user message that is a single paragraph is both instruction and content,
+so it is not compressed; to compress a long pasted document, put the instruction and the question in their own
+paragraphs.
 
-## Classifier behaviour
+### Actions
 
-1. Rules (`rules.py`) run first. Any hit -> `sensitive`, score 1.0, model not called.
-2. Long text is split into token chunks that fit the model window; each chunk is
-   classified and the most restrictive chunk label wins.
-3. A top score below `CLASSIFIER_MIN_CONFIDENCE` -> `critical`.
-4. An inference error -> `critical` (not cached, so a transient error is retried).
-5. If the model cannot be loaded, `ClassifierUnavailable` is raised and the
-   hook's fail mode applies (open: original prompt; closed: HTTP 503). The load
-   error is remembered; restart the proxy to retry.
+Select runs before compress, so a dropped passage never reaches the compressor. Consecutive prose blocks are merged into
+one LLMLingua-2 call (at most `MAX_CALLS` per message, longest first), at `RATE`, with digits reserved. A block whose
+ratio exceeds `MAX_RATIO` is retried once at a lighter rate and left as it was if it still exceeds the cap. A block
+whose result is empty or not shorter is left as it was.
 
-Models are loaded once (at proxy start by default) in float32. transformers 5
-otherwise keeps the checkpoint dtype, and fp16 DeBERTa-v3 checkpoints were about
-10x slower on this CPU. All label hypotheses of a chunk are scored in one batched
-forward pass. The hook runs the CPU-bound pipeline in a worker thread
-(`asyncio.to_thread`) under `asyncio.wait_for(PROMPT_COMPRESSION_TIMEOUT_S)`.
+### Reassemble
 
-## Logging and metadata
+Each message's blocks are joined back in their original order with their original blank-line separators, so roles and
+layout are unchanged; only the text of dropped or compressed blocks differs. The summary goes to
+`metadata.prompt_compression` and `metadata.spend_logs_metadata.prompt_compression`. Per message: `category`
+(`sensitive` / `general`), `score` (the model's probability, 1.0 for a rules hit), `source` (`rules`, `model`, `error`,
+`none`), `rule_hits`, `classify_ms`, `compress_ms`, `tokens_before` / `tokens_after`, `segments` (block counts by kind and
+action counters) and `action`: `compressed`, `selected_passages`, `selected_records`, `redacted`, `sensitive`, `guarded`
+(protected blocks and nothing else changed), `unchanged`, `below_min_chars`, `preserved_role`, `preserved_last_user`,
+`no_text`, `dropped_history`. The request summary adds `kept` (why blocks were kept verbatim: `sensitive`, `code`, `edge`,
+...). `index` always refers to the original request; with the `history` route `new_index` is the position in the result.
 
-Log lines never contain prompt text, only category, scores, source (rules/model/
-fallback), rule names, model names, token counts, ratio and timings:
+## Sensitivity
+
+A false alarm costs only compression (the text is kept); a miss means a sensitive text may be compressed. So recall
+comes first, but a check that flags most ordinary text makes the whole pipeline pointless.
+
+**Why the zero-shot model was replaced (2026-11-06).** The earlier model (`typeform/distilbert-base-uncased-mnli`, a
+softmax over four candidate labels) does not separate the classes: its P("sensitive") was 0.38-0.67 on sensitive prompts
+and up to 0.57 on chit-chat, code questions and company prose. At 0.35 it reached 0.97 test recall only by flagging
+67.6% of ordinary prompts and 79.5% of the company-prose paragraphs of the research benchmark, so almost nothing was
+compressed (a Playground prompt about suppliers and manufacturers scored 0.44 and was kept whole). No threshold or
+hypothesis wording fixed it (`reports/playground-ab/raw/sensitivity_variants.json`).
+
+**Current decision** (`eval/train_sensitivity_head.py`, `eval/results/sensitivity_head.md`): rules, then topics, then
+`all-MiniLM-L6-v2` + a logistic-regression head trained on `eval/sensitivity_train.jsonl` and the dev split (345
+prompts, 150 sensitive). Threshold 0.37 = largest value with 5-fold out-of-fold recall of at least 0.95. Nothing below
+was used for training:
+
+| set | decision | sensitive recall | false-positive rate |
+|---|---|---|---|
+| test (148 prompts) | zero-shot at 0.35 (old) | 0.973 | 0.676 |
+| | rules + topics + head (new) | 0.973 (36 of 37) | 0.072 |
+| fresh holdout (100 prompts) | zero-shot at 0.35 (old) | 1.000 | 0.917 |
+| | rules + topics + head (new) | 1.000 (40 of 40) | 0.083 |
+| QA company prose (112 runs) | old / new | - | 0.795 / 0.000 |
+| PII case notes (50) | old / new | 1.000 / 1.000 | - |
+
+The one test miss is a placeholder Slack webhook URL (a rules-test artefact, see "Tests"). The fresh holdout and the
+training file were written by the same author as the topic lexicon, so they share its blind spots; check the decision
+on your own traffic in shadow mode, and retrain with your own labelled examples by adding them to
+`eval/sensitivity_train.jsonl` and rerunning the training script. Scoring costs about 14 ms per text on this CPU (the
+zero-shot model: about 250 ms). `SENSITIVITY_BACKEND=nli` restores the old model.
+
+## What it does on the research benchmark
+
+`eval/guard_eval.py` runs this pipeline (real LLMLingua-2, `--detector real` = the production sensitivity check) on the
+benchmark items of `reports/compression-fit` and sends every changed prompt to the same local model the report used
+(40 items per family; `eval/results/guard_eval_real.md`, raw rows in `reports/compression-fit/raw/gateway_eval/`):
+
+| Family | Condition | Accuracy (baseline) | Prompts changed | Token ratio |
+|---|---|---|---|---|
+| QA over distractor paragraphs | prose route | 1.000 (1.000) | 18 of 40 | 1.06x |
+| | prose route at rate 0.28 | 1.000 | 14 of 40 | 1.05x |
+| | + passages route | 1.000 | 29 of 40 | 1.39x |
+| Lookups in logs and JSON | prose route | 1.000 (1.000) | 0 of 40 | 1.00x |
+| | + records route | 1.000 | 40 of 40 | 2.95x |
+| Lookups of constants in code | prose route | 0.875 (0.875) | 0 of 40 | 1.00x |
+
+Quality equals the uncompressed baseline everywhere (whole-message LLMLingua-2 at the gateway's old mild setting lost
+0.575 on logs and 0.125 on code). The yield of the prose route is small on this data, for two reasons that the same
+benchmark run with `--detector rules` (no NLI model, `guard_eval_rules.md`) separates: the exact-text guard alone, which
+keeps fact paragraphs (numbers, names) verbatim, caps QA at 1.12x (32 of 40 prompts changed; passages route 1.64x), and
+the sensitivity check at its default threshold takes it down to 1.06x by keeping 22 of the 40 QA prompts whole. Logs and
+code are identical in both runs (no prose to compress; records route 2.95x). The `passages` and `records` routes save
+more because they drop units instead of pruning tokens, but those numbers are a best case: the synthetic questions
+share rare words with their evidence. The history route and the sensitivity decision were measured separately (above,
+and in `tests/`). The table above was measured with the earlier zero-shot sensitivity model; the QA prose rows are
+therefore lower than with the current embedding head (which flags none of the 112 QA prose paragraphs).
+
+**Through the gateway, current defaults.** `reports/playground-ab/REPORT.md` (run B2) sends 170 benchmark prompts to the
+proxy twice, once with `metadata.prompt_compression=false`. The current defaults gave:
+- prompt tokens −27.5% overall: QA −35%, logs −63%, code and PII 0%;
+- 0 answers lost and 0 gained on the 69 changed prompts;
+- mean end-to-end latency −3.5 s with the local CPU model.
+
+**CPU cost.**
+- **Sensitivity head:** about 14–16 ms per text. The old NLI check took about 0.25 s per prose run.
+- **Selection routes:** a few milliseconds.
+- **LLMLingua-2:** each call takes 0.2–1 s on this CPU.
+- **Through the proxy:** the pipeline adds 22 ms at p50 and 0.43 s at p95 (run B2).
+- **Capacity:** in front of an instant mock model the proxy tops out at about 7 req/s with compression, against 30
+  without it. Size proxy CPU accordingly.
+- **Timeouts:** if the pipeline exceeds `PROMPT_COMPRESSION_TIMEOUT_S`, it fails open and sends the original prompt.
+  - Repeated turns hit the sensitivity cache.
+  - Raise the timeout if long conversations are common.
+  - Do not run evaluations on the same CPU as the proxy.
+
+## Rolling it out
+
+Set `PROMPT_COMPRESSION_MODE=shadow` first. The whole pipeline runs and the summary (`status: shadow`, the tokens it would
+have saved, the per-message actions) is logged and exported, but the provider receives the original prompt;
+`observability` counts the hypothetical saving separately (`prompt_pipeline_shadow_tokens_saved_total`). Then switch one
+route at a time to `enforce`. Check quality on your own prompts first: 30 to 50 items per route with reference answers,
+the same inputs with and without compression. The report (section 7.5) explains why 40 items cannot show a loss below
+about 15 points. Keep the per-request opt-out.
+
+**Not implemented, on purpose.** Few-shot demonstration trimming (research: GSM8K held to 14x, BBH only to 3x) needs a
+task-type signal the gateway does not have. A question-aware model such as CPC or LongLLMLingua needs a GPU-hosted 7B
+model; `selectors.rank_units` is the seam where one would replace the BM25 ranking.
+
+## Logging
+
+Log lines never contain prompt text, only category, scores, source, rule names, model names, token counts, ratio and
+timings:
 
 ```
-prompt compression: category=less_important tokens_before=78 tokens_after=31 ratio=2.516 ...
+prompt compression: category=general tokens_before=193 tokens_after=130 ratio=1.485 elapsed_ms=1655.7 ...
 ```
 
-The same summary goes to `metadata.prompt_compression` and
-`metadata.spend_logs_metadata.prompt_compression`. `spend_logs_metadata` is part
-of LiteLLM's `StandardLoggingMetadata`, so the summary appears in spend logs and
-in every logging callback (Langfuse, OTel, ...). Token counts use tiktoken
-`cl100k_base`, the same encoding LLMLingua-2 reports with.
+Token counts use tiktoken `cl100k_base`, the same encoding LLMLingua-2 reports with. Models are loaded once (at proxy
+start by default) in float32; transformers 5 otherwise keeps the checkpoint dtype, and fp16 DeBERTa-v3 checkpoints were
+about 10x slower on this CPU. The hook runs the CPU-bound pipeline in a worker thread (`asyncio.to_thread`) under
+`asyncio.wait_for(PROMPT_COMPRESSION_TIMEOUT_S)`.
 
-## Model comparison
+## Model comparison (historical)
 
-Full record, candidate sources and licenses: [`eval/results/SELECTION.md`](eval/results/SELECTION.md).
-Raw per-run output (metrics, confusion matrix, every prediction): `eval/results/*.json`.
-
-Held-out test set (148 prompts, 37 per class), descriptive labels, CPU (i7-10610U, 4 cores):
+`eval/benchmark.py` compares NLI checkpoints as four-way classifiers; the pipeline now uses only the "sensitive"
+probability. Full record, candidate sources and licenses: [`eval/results/SELECTION.md`](eval/results/SELECTION.md), written
+when the model also served as an importance classifier (its "production classifier" and `critical`-fallback figures
+describe the removed design). Held-out test set (148 prompts, 37 per class), descriptive labels, CPU (i7-10610U):
 
 | model | sensitive recall | macro-F1 | p95 ms | params |
 |---|---|---|---|---|
-| **typeform/distilbert-base-uncased-mnli (baseline, kept)** | **0.919** | 0.307 | 194 | 67M |
+| **typeform/distilbert-base-uncased-mnli (kept)** | **0.919** | 0.307 | 194 | 67M |
 | MoritzLaurer/deberta-v3-base-zeroshot-v2.0 | 0.460 | 0.445 | 692 | 184M |
 | MoritzLaurer/DeBERTa-v3-base-mnli-fever-anli | 0.054 | 0.322 | 764 | 184M |
 | MoritzLaurer/deberta-v3-xsmall-zeroshot-v1.1-all-33 | 0.000 | 0.284 | 214 | 71M |
 
-Switch rule: sensitive recall not lower, macro-F1 at least +0.02, p95 within
-`CLASSIFIER_LATENCY_BUDGET_MS` (300). No candidate passed, so the baseline stays.
-The DeBERTa-v3-base models are clearly better on macro-F1 but lose sensitive
-recall and run at 2-4x the latency budget on this CPU. The baseline's model card
-states no license; confirm it is acceptable before production use.
+Those "sensitive recall" figures are for the argmax label; the pipeline's threshold decision is measured in the
+"Sensitivity" section above. The baseline's model card states no license; confirm it is acceptable before production use.
+To try another model: `CLASSIFIER_MODEL=<hf id>` (and optionally `CLASSIFIER_LABEL_FORMAT=plain`), rerun the benchmark on
+dev, then `sensitivity_eval` and pick the threshold on dev.
 
-Production classifier on test (rules + 0.6 confidence fallback): every sensitive
-prompt stays uncompressed (37/37, 19 of them caught by rules), but only 6 of 74
-compressible prompts get compressed, because the baseline's top score is usually
-below 0.6. `SELECTION.md` has the threshold trade-off measured on dev.
-
-To try another model: `CLASSIFIER_MODEL=<hf id>` (and optionally
-`CLASSIFIER_LABEL_FORMAT=plain`), then rerun the benchmark on dev first.
-
-## Adding or changing labels
-
-1. `labels.py`: add the constant, include it in `LABELS`, give it a `PRIORITY`
-   (lower = more restrictive), a `PLAIN_LABELS` word and a `DESCRIPTIONS` sentence.
-2. `router.py`: add a `Route` for it in `build_routes()` (startup fails if a label has no route).
-3. `eval/build_dataset.py`: add at least 40 examples, including hard negatives;
-   rerun it, then rerun the benchmark on dev, and only at the end on test.
-4. To reword a label, change only `DESCRIPTIONS`/`PLAIN_LABELS` and rerun the
-   dev benchmark; the wording changes zero-shot accuracy noticeably.
-
-## Tests and benchmark
+## Tests and evaluation
 
 ```bash
 cd prompt_compression
-../.venv-compression/Scripts/python -m pytest            # includes loading the configured model
-SKIP_MODEL_TESTS=1 ../.venv-compression/Scripts/python -m pytest   # no model download
+../.venv-compression/Scripts/python -m pytest
 cd ..
+# the sensitivity decision (rules + model + threshold) on the labelled dev and test splits
+.venv-compression/Scripts/python -m prompt_compression.eval.sensitivity_eval
+# does the pipeline keep the quality the research report says whole-message compression loses?
+# (needs Ollama with llama3.2:3b and reports/compression-fit; writes eval/results/guard_eval_<detector>.md)
+.venv-compression/Scripts/python -m prompt_compression.eval.guard_eval --detector real
+.venv-compression/Scripts/python -m prompt_compression.eval.guard_eval --detector rules   # router only, no NLI model
+# model comparison
 .venv-compression/Scripts/python -m prompt_compression.eval.build_dataset
 .venv-compression/Scripts/python -m prompt_compression.eval.benchmark --split dev --formats plain descriptive --models <id> ...
-.venv-compression/Scripts/python -m prompt_compression.eval.benchmark --split test --formats <format> --models <id> ...
-.venv-compression/Scripts/python -m prompt_compression.eval.benchmark --split test --full   # production classifier
 ```
 
-Results land in `eval/results/` (one JSON per run with per-class metrics,
-confusion matrix, latency and every prediction, plus `summary_<split>.md`).
+Two tests in `tests/test_rules.py` fail because their API-key examples were replaced by placeholders that the rules do not
+match; they are unrelated to the pipeline.
 
 ## Verification (local, no API key)
 
@@ -203,5 +339,4 @@ confusion matrix, latency and every prediction, plus `summary_<split>.md`).
 .venv-compression/Scripts/python prompt_compression/dev/verify_gateway.py
 ```
 
-The mock provider echoes the messages it received, so the client can show
-whether each prompt reached the model unchanged.
+The mock provider echoes the messages it received, so the client can show whether each prompt reached the model unchanged.

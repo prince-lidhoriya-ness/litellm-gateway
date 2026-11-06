@@ -1,0 +1,7 @@
+# Fault injection E11 (timeout): the whole classify+compress budget is 1 ms, so every request times out.
+# Expected: fail open (original prompt sent, warning logged). Code unchanged; env only.
+#   docker compose -f docker-compose.quickstart.yml -f reports/pipeline-proof/scripts/inject_timeout.override.yml up -d litellm
+services:
+  litellm:
+    environment:
+      PROMPT_COMPRESSION_TIMEOUT_S: "0.001"

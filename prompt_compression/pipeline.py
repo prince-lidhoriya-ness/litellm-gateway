@@ -1,9 +1,16 @@
-"""classify -> route -> compress over an OpenAI-style messages list.
+"""The pipeline, stage by stage, over an OpenAI-style messages list (the gate runs in the hook before this).
 
-Never touched: system/developer messages, tool and function results, assistant
-messages that carry tool_calls/function_call, non-text content parts (images,
-audio), and anything outside data["messages"] such as tool definitions. Roles
-and order are kept; only the text of eligible messages changes.
+    1. Segment and classify   every eligible message is split into blocks (what kind of text: segmenter.py) and each
+                              block is checked for sensitivity (sensitivity.py: rules, and the NLI model on prose)
+    2. Router                 the task type picks an action per block: keep, select or drop, compress (router.py)
+    3. Actions                keep does nothing; select drops whole units; compress calls LLMLingua-2 (actions.py)
+    4. Reassemble             the blocks of each message are joined back in their original order
+
+Never touched: system/developer messages, tool and function results, assistant messages that carry
+tool_calls/function_call, non-text content parts (images, audio), and anything outside data["messages"] such as tool
+definitions. Roles and order are kept; only the text of eligible messages changes, and the oldest whole turns can be
+dropped when the "history" route is on. The report keeps original message indexes and adds "new_index" for the position
+in the returned list.
 """
 
 import copy
@@ -13,8 +20,6 @@ from contextlib import nullcontext
 from dataclasses import dataclass, field
 from typing import Optional
 
-import tiktoken
-
 try:
     # Spans are no-ops unless the host process (e.g. the LiteLLM proxy with OTel) configures a provider.
     from opentelemetry import trace as _otel_trace
@@ -23,22 +28,22 @@ try:
 except ImportError:  # OTel is optional for the pipeline itself
     _tracer = None
 
-from prompt_compression.classifier import PromptClassifier, get_classifier
+from prompt_compression import actions, router
 from prompt_compression.compressor_adapter import LLMLinguaCompressor
-from prompt_compression.labels import most_restrictive
-from prompt_compression import rules
-from prompt_compression.router import build_routes
+from prompt_compression.segmenter import EXACT, PROSE, split_segments
+from prompt_compression.sensitivity import GENERAL_CATEGORY, SENSITIVE_CATEGORY, SensitivityDetector, get_detector
 from prompt_compression.settings import PipelineSettings
+from prompt_compression.texts import all_text_tokens, count_tokens, message_tokens, set_text, text_parts
+from prompt_compression.units import Unit
 
 logger = logging.getLogger("prompt_compression.pipeline")
 
 PRESERVED_ROLES = frozenset({"system", "developer", "tool", "function"})
-# Same encoding LLMLingua-2 reports origin/compressed tokens with (gpt-3.5-turbo).
-_ENCODING = tiktoken.get_encoding("cl100k_base")
+# Prose runs shorter than this are not worth a model call: nothing could be done with them anyway.
+_MIN_MODEL_CHARS = 40
 
-
-def count_tokens(text: str) -> int:
-    return len(_ENCODING.encode(text)) if text else 0
+# Kept under their old names: observability/observed_callback.py imports them from here.
+_text_parts = text_parts
 
 
 def _span(name: str, attributes: dict):
@@ -62,6 +67,13 @@ class PipelineReport:
     tokens_after: int = 0
     elapsed_ms: float = 0.0
     messages: list = field(default_factory=list)
+    mode: str = "enforce"
+    routes: list = field(default_factory=list)
+    history_dropped: int = 0
+    # Sum over all messages of the block counts ("code", "structured", "exact", "prose", "sensitive", ...).
+    segments: dict = field(default_factory=dict)
+    # Why blocks were kept verbatim: reason -> number of blocks ("code", "sensitive", "edge", ...).
+    kept: dict = field(default_factory=dict)
 
     @property
     def ratio(self) -> float:
@@ -76,148 +88,249 @@ class PipelineReport:
             "tokens_after": self.tokens_after,
             "compression_ratio": self.ratio,
             "elapsed_ms": self.elapsed_ms,
+            "mode": self.mode,
+            "routes": list(self.routes),
+            "history_dropped": self.history_dropped,
+            "segments": dict(self.segments),
+            "kept": dict(self.kept),
             "messages": self.messages,
         }
 
 
-def _text_parts(message: dict) -> list[tuple[Optional[int], str]]:
-    """(part index or None for a plain string, text) for every text segment."""
-    content = message.get("content")
-    if isinstance(content, str):
-        return [(None, content)]
-    if isinstance(content, list):
-        return [
-            (i, part.get("text", ""))
-            for i, part in enumerate(content)
-            if isinstance(part, dict) and part.get("type") == "text" and isinstance(part.get("text"), str)
-        ]
-    return []
-
-
-def _set_text(message: dict, part_index: Optional[int], text: str) -> None:
-    if part_index is None:
-        message["content"] = text
-    else:
-        message["content"][part_index]["text"] = text
-
-
-def _all_text_tokens(messages: list) -> int:
-    return sum(count_tokens(text) for message in messages for _, text in _text_parts(message))
+def _tail_paragraph(text: str, max_chars: int = 600) -> Optional[str]:
+    """The last non-empty paragraph, if it is short enough to be a question or an instruction."""
+    blocks = [segment.text for segment in split_segments(text) if segment.text.strip()]
+    if not blocks:
+        return None
+    tail = blocks[-1].strip()
+    return tail if len(tail) <= max_chars else None
 
 
 class PromptPipeline:
     def __init__(
         self,
         settings: Optional[PipelineSettings] = None,
-        classifier: Optional[PromptClassifier] = None,
+        detector: Optional[SensitivityDetector] = None,
         compressor: Optional[LLMLinguaCompressor] = None,
     ):
         self.settings = settings or PipelineSettings.from_env()
-        self.classifier = classifier or get_classifier()
+        self.detector = detector or get_detector()
         self.compressor = compressor or LLMLinguaCompressor(self.settings.compression_model)
-        self.routes = build_routes(self.settings)
 
     def load(self) -> None:
-        self.classifier.load()
+        self.detector.load()
         self.compressor.load()
+
+    # ---- stage 1: segment and classify ----------------------------------------------------------------------------
+
+    def _segment(self, index: int, parts: list) -> list:
+        units = []
+        for part_index, text in parts:
+            for segment in split_segments(text, self.settings.exact_density):
+                units.append(Unit(index, part_index, segment.kind, segment.subtype, segment.text, segment.sep))
+        return units
+
+    @staticmethod
+    def _mark(unit: Unit, sensitivity) -> None:
+        unit.sensitive = True
+        unit.sensitive_source = sensitivity.source
+        unit.rule_hits = tuple(sensitivity.rule_hits)
+
+    def _classify(self, units: list, use_model: bool) -> dict:
+        """Fill in Unit.sensitive and return the message-level summary of the checks."""
+        info = {"score": 0.0, "source": "none", "classify_ms": 0.0, "chunks": 0, "cache_hit": False}
+        checks = []
+        for unit in units:
+            if unit.filled:
+                result = self.detector.rules_only(unit.text)
+                if result.sensitive:
+                    self._mark(unit, result)
+        if use_model:
+            # Exact-text blocks are only checked when a route could drop them whole (a passage, an old turn): kept
+            # verbatim they are protected anyway, and the model's opinion would change nothing.
+            kinds = (PROSE, EXACT) if self.settings.routes & {"history", "passages"} else (PROSE,)
+            for run in _model_runs(units, kinds):
+                text = "".join(u.full for u in run[:-1]) + run[-1].text
+                if len(text.strip()) < _MIN_MODEL_CHARS:
+                    continue
+                result = self.detector.check(text)
+                checks.append(result)
+                if result.sensitive:
+                    for unit in run:
+                        self._mark(unit, result)
+        if checks:
+            info["classify_ms"] = round(sum(c.elapsed_ms for c in checks if not c.cache_hit), 1)
+            info["chunks"] = sum(c.chunks for c in checks)
+            info["cache_hit"] = all(c.cache_hit for c in checks)
+            info["score"] = max(c.score for c in checks)
+            info["source"] = "model"
+        sensitive_units = [u for u in units if u.sensitive]
+        if any(u.sensitive_source == "rules" for u in sensitive_units):
+            info["source"], info["score"] = "rules", 1.0
+        elif any(u.sensitive_source == "error" for u in sensitive_units):
+            info["source"], info["score"] = "error", 1.0
+        info["rule_hits"] = sorted({hit for u in sensitive_units for hit in u.rule_hits})
+        info["category"] = SENSITIVE_CATEGORY if sensitive_units else GENERAL_CATEGORY
+        return info
+
+    # ---- the whole request ----------------------------------------------------------------------------------------
 
     def process(self, messages: list) -> tuple[list, PipelineReport]:
         started = time.perf_counter()
+        settings = self.settings
         new_messages = copy.deepcopy(messages)
         report = PipelineReport(
-            classifier_model=self.classifier.model_name, compression_model=self.compressor.model_name
+            classifier_model=self.detector.model_name,
+            compression_model=self.compressor.model_name,
+            mode=settings.mode,
+            routes=sorted(settings.routes),
         )
-        report.tokens_before = _all_text_tokens(messages)
+        report.tokens_before = all_text_tokens(messages)
 
         last_user_index = max((i for i, m in enumerate(messages) if m.get("role") == "user"), default=None)
-        categories = []
+        query = None
+        if last_user_index is not None:
+            query = _tail_paragraph("\n".join(text for _, text in text_parts(messages[last_user_index])))
 
+        # 1. Segment and classify
+        entries: dict = {}
+        message_units: dict = {}
         for index, message in enumerate(new_messages):
             role = message.get("role")
             entry = {"index": index, "role": role}
+            entries[index] = entry
             if role in PRESERVED_ROLES or message.get("tool_calls") or message.get("function_call"):
                 entry["action"] = "preserved_role"
-                report.messages.append(entry)
                 continue
-            parts = _text_parts(message)
+            parts = text_parts(message)
             if not parts:
                 entry["action"] = "no_text"
-                report.messages.append(entry)
                 continue
-
-            text = "\n".join(part_text for _, part_text in parts)
+            units = self._segment(index, parts)
+            skip_model = not settings.routes or (settings.preserve_last_user and index == last_user_index)
             with _span("prompt.classify", {"prompt.message.index": index, "prompt.message.role": role or ""}) as span:
-                result = self.classifier.classify(text)
+                info = self._classify(units, use_model=not skip_model)
                 _set_attributes(span, {
-                    "prompt.classifier.label": result.label,
-                    "prompt.classifier.score": result.score,
-                    "prompt.classifier.source": result.source,
-                    "prompt.classifier.model": result.model_name,
-                    "prompt.classifier.rule_hits": list(result.rule_hits),
-                    "prompt.classifier.chunks": result.chunks,
-                    "prompt.classifier.cache_hit": result.cache_hit,
-                    **{f"prompt.classifier.scores.{label}": score for label, score in result.scores.items()},
+                    "prompt.classifier.label": info["category"],
+                    "prompt.classifier.score": info["score"],
+                    "prompt.classifier.source": info["source"],
+                    "prompt.classifier.model": self.detector.model_name,
+                    "prompt.classifier.rule_hits": info["rule_hits"],
+                    "prompt.classifier.chunks": info["chunks"],
+                    "prompt.classifier.cache_hit": info["cache_hit"],
                 })
-            route = self.routes[result.label]
-            with _span("prompt.route", {
-                "prompt.route.label": route.label,
-                "prompt.route.compress": route.compress,
-                "prompt.route.rate": route.rate,
-                "prompt.route.redact": route.redact,
-            }):
-                pass
-            categories.append(result.label)
-            entry.update(
-                {
-                    "category": result.label,
-                    "score": result.score,
-                    "scores": dict(result.scores),
-                    "source": result.source,
-                    "rule_hits": list(result.rule_hits),
-                    "classify_ms": result.elapsed_ms,
-                    "chunks": result.chunks,
-                    "cache_hit": result.cache_hit,
-                }
-            )
+            entry.update({
+                "category": info["category"], "score": round(info["score"], 4), "source": info["source"],
+                "rule_hits": info["rule_hits"], "classify_ms": info["classify_ms"], "chunks": info["chunks"],
+                "cache_hit": info["cache_hit"],
+            })
+            message_units[index] = units
 
-            actions = []
-            redactions = 0
-            compress_ms = 0.0
-            for part_index, part_text in parts:
-                new_text = part_text
-                if route.redact:
-                    new_text, redacted_rules, count = rules.redact_with_count(new_text)
-                    redactions += count
-                    if redacted_rules:
-                        actions.append("redacted")
-                if route.compress:
-                    if index == last_user_index and self.settings.preserve_last_user:
-                        actions.append("preserved_last_user")
-                    elif len(new_text) < self.settings.min_chars:
-                        actions.append("below_min_chars")
-                    else:
-                        with _span("prompt.compress", {"prompt.route.label": route.label, "prompt.route.rate": route.rate}) as span:
-                            compress_started = time.perf_counter()
-                            output = self.compressor.compress(new_text, route)
-                            compress_ms += (time.perf_counter() - compress_started) * 1000
-                            _set_attributes(span, {
-                                "prompt.tokens.before": output.origin_tokens,
-                                "prompt.tokens.after": output.compressed_tokens,
-                            })
-                        if output.text.strip():
-                            new_text = output.text
-                            actions.append("compressed")
-                if new_text != part_text:
-                    _set_text(message, part_index, new_text)
+        # 2. Router
+        with _span("prompt.route", {"prompt.route.routes": sorted(settings.routes)}) as span:
+            dropped = set(router.plan_history(new_messages, message_units, settings, message_tokens))
+            for index in sorted(dropped):
+                entries[index] = {"index": index, "role": new_messages[index].get("role"), "action": "dropped_history",
+                                  "tokens_before": message_tokens(messages[index]), "tokens_after": 0}
+                message_units.pop(index, None)
+            report.history_dropped = len(dropped)
+            units = [unit for index in sorted(message_units) for unit in message_units[index]]
+            plan = router.route(units, settings, query, last_user_index, count_tokens)
+            _set_attributes(span, {
+                "prompt.route.units": len(units), "prompt.route.history_dropped": len(dropped),
+                **{f"prompt.route.kept.{reason}": number for reason, number in plan.reasons.items()},
+            })
+        report.kept = dict(plan.reasons)
 
-            entry["redactions"] = redactions
-            entry["compress_ms"] = round(compress_ms, 1)
-            entry["tokens_before"] = count_tokens(text)
-            entry["tokens_after"] = sum(count_tokens(t) for _, t in _text_parts(message))
-            entry["action"] = "+".join(dict.fromkeys(actions)) or "unchanged"
-            report.messages.append(entry)
+        # 3. Actions
+        with _span("prompt.compress", {"prompt.route.rate": settings.rate}) as span:
+            before = sum(count_tokens(unit.full) for unit in units)
+            outcome = actions.execute(plan, settings, self.compressor, count_tokens)
+            after = sum(count_tokens(unit.full) for unit in units if not unit.dropped)
+            _set_attributes(span, {"prompt.tokens.before": before, "prompt.tokens.after": after})
 
-        report.request_category = most_restrictive(categories) if categories else None
-        report.tokens_after = _all_text_tokens(new_messages)
+        # 4. Reassemble
+        new_index = {}
+        for original_index in range(len(new_messages)):
+            if original_index not in dropped:
+                new_index[original_index] = len(new_index)
+        for index, message_unit_list in message_units.items():
+            message = new_messages[index]
+            by_part: dict = {}
+            for unit in message_unit_list:
+                if not unit.dropped:
+                    by_part.setdefault(unit.part, []).append(unit.full)
+            for part_index, original_text in text_parts(message):
+                joined = "".join(by_part.get(part_index, []))
+                if joined != original_text and joined.strip():
+                    set_text(message, part_index, joined)
+            self._finish_entry(entries[index], index, message, messages[index], message_unit_list, outcome, report)
+        for index, entry in entries.items():
+            if index in new_index:
+                entry["new_index"] = new_index[index]
+
+        report.messages = [entries[index] for index in sorted(entries)]
+        new_messages = [message for index, message in enumerate(new_messages) if index not in dropped]
+        categories = [e["category"] for e in report.messages if "category" in e]
+        report.request_category = (
+            SENSITIVE_CATEGORY if SENSITIVE_CATEGORY in categories else GENERAL_CATEGORY if categories else None
+        )
+        report.tokens_after = all_text_tokens(new_messages)
         report.elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
         return new_messages, report
+
+    def _finish_entry(self, entry: dict, index: int, message: dict, original: dict, units: list,
+                      outcome: actions.Outcome, report: PipelineReport) -> None:
+        filled = [u for u in units if u.filled]
+        counters = outcome.stats.get(index, {})
+        names = list(outcome.acted.get(index, []))
+        original_tokens = message_tokens(original)
+        text_length = sum(len(text) for _, text in text_parts(original))
+        if names:
+            action = "+".join(names)
+        elif filled and all(u.reason == "last_user" for u in filled):
+            action = "preserved_last_user"
+        elif any(u.sensitive for u in filled):
+            action = "sensitive"
+        elif any(u.reason in ("code", "structured", "exact", "edge") for u in filled):
+            action = "guarded"
+        elif text_length < self.settings.min_chars:
+            action = "below_min_chars"
+        else:
+            action = "unchanged"
+        segments = {
+            "blocks": len(filled),
+            "code": sum(1 for u in filled if u.kind == "code"),
+            "structured": sum(1 for u in filled if u.kind == "structured"),
+            "exact": sum(1 for u in filled if u.kind == "exact"),
+            "prose": sum(1 for u in filled if u.kind == PROSE),
+            "sensitive": sum(1 for u in filled if u.sensitive),
+            "edge_protected": sum(1 for u in filled if u.edge),
+            **{name: counters.get(name, 0) for name in actions.COUNTERS},
+        }
+        entry.update({
+            "redactions": counters.get("redactions", 0),
+            "compress_ms": outcome.compress_ms.get(index, 0.0),
+            "tokens_before": original_tokens,
+            "tokens_after": message_tokens(message),
+            "action": action,
+            "segments": segments,
+        })
+        for key, value in segments.items():
+            report.segments[key] = report.segments.get(key, 0) + value
+
+
+def _model_runs(units: list, kinds: tuple) -> list:
+    """Runs of consecutive units of the given kinds inside one message part: the text the NLI model is asked about."""
+    runs, current = [], []
+    for unit in units:
+        eligible = unit.kind in kinds and unit.filled and not unit.sensitive
+        if eligible and (not current or unit.part == current[-1].part):
+            current.append(unit)
+            continue
+        if current:
+            runs.append(current)
+        current = [unit] if eligible else []
+    if current:
+        runs.append(current)
+    return runs

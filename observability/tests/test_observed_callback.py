@@ -14,15 +14,15 @@ from observability import metrics as m
 from observability.logs import JsonFormatter, LOGGER_NAMES
 from observability.observed_callback import ObservedPromptCompressionCallback, failure_reason
 from observability.settings import ObservabilitySettings
-from prompt_compression.labels import CRITICAL, LESS_IMPORTANT, NON_SENSITIVE, SENSITIVE
+from prompt_compression.sensitivity import GENERAL_CATEGORY, SENSITIVE_CATEGORY
 from prompt_compression.pipeline import PromptPipeline
-from prompt_compression.tests.fakes import StubClassifier, StubCompressor
+from prompt_compression.tests.fakes import StubCompressor, StubDetector
 from prompt_compression.tests.test_pipeline import LONG, settings as pipeline_settings
 
 SECRET_EMAIL = "jane.doe@example.com"
 SECRET_MARKER = "UNIQUE-SENSITIVE-MARKER-4471"
 SENSITIVE_TEXT = f"my email is {SECRET_EMAIL} and my note is {SECRET_MARKER} " + LONG
-KEYWORDS = {"CHAT": LESS_IMPORTANT, "PLAIN": NON_SENSITIVE, "CRIT": CRITICAL, "jane.doe": SENSITIVE}
+SENSITIVE_KEYWORDS = ("PRIVATE-NOTE",)
 
 PIPELINE_SPANS = {"prompt.pipeline", "prompt.classify", "prompt.route", "prompt.compress"}
 EXPECTED_METRICS = {
@@ -41,9 +41,9 @@ def obs_settings(**overrides):
     return ObservabilitySettings(**values)
 
 
-def make_callback(classifier=None, obs=None, **pipeline_overrides):
+def make_callback(detector=None, obs=None, **pipeline_overrides):
     p_settings = pipeline_settings(**pipeline_overrides)
-    pipeline = PromptPipeline(settings=p_settings, classifier=classifier or StubClassifier(KEYWORDS),
+    pipeline = PromptPipeline(settings=p_settings, detector=detector or StubDetector(SENSITIVE_KEYWORDS),
                               compressor=StubCompressor())
     return ObservedPromptCompressionCallback(pipeline=pipeline, settings=p_settings, obs_settings=obs or obs_settings())
 
@@ -95,9 +95,10 @@ def test_emits_one_trace_with_pipeline_spans(spans):
     for child in ("prompt.classify", "prompt.route", "prompt.compress"):
         assert finished[child].parent.span_id == pipeline.context.span_id
     classify = finished["prompt.classify"].attributes
-    assert classify["prompt.classifier.label"] == LESS_IMPORTANT
+    assert classify["prompt.classifier.label"] == GENERAL_CATEGORY
     assert {"prompt.classifier.score", "prompt.classifier.source", "prompt.classifier.cache_hit"} <= set(classify)
-    assert finished["prompt.route"].attributes["prompt.route.compress"] is True
+    route_attrs = finished["prompt.route"].attributes
+    assert route_attrs["prompt.route.units"] >= 1 and list(route_attrs["prompt.route.routes"]) == ["narrative"]
 
 
 def test_expected_metric_names_are_exported():
@@ -107,8 +108,8 @@ def test_expected_metric_names_are_exported():
 
 
 def test_token_counts_before_and_after_are_recorded(spans, captured_logs):
-    before_counter = sample("prompt_pipeline_tokens_before_total", model="mock-echo", label=LESS_IMPORTANT)
-    after_counter = sample("prompt_pipeline_tokens_after_total", model="mock-echo", label=LESS_IMPORTANT)
+    before_counter = sample("prompt_pipeline_tokens_before_total", model="mock-echo", label=GENERAL_CATEGORY)
+    after_counter = sample("prompt_pipeline_tokens_after_total", model="mock-echo", label=GENERAL_CATEGORY)
     data = run(make_callback(), request("CHAT " + LONG))
     summary = data["metadata"]["prompt_compression"]
     assert summary["tokens_after"] < summary["tokens_before"]
@@ -120,8 +121,8 @@ def test_token_counts_before_and_after_are_recorded(spans, captured_logs):
     compress = next(s for s in spans.get_finished_spans() if s.name == "prompt.compress").attributes
     assert compress["prompt.tokens.before"] > compress["prompt.tokens.after"]
 
-    assert sample("prompt_pipeline_tokens_before_total", model="mock-echo", label=LESS_IMPORTANT) - before_counter == summary["tokens_before"]
-    assert sample("prompt_pipeline_tokens_after_total", model="mock-echo", label=LESS_IMPORTANT) - after_counter == summary["tokens_after"]
+    assert sample("prompt_pipeline_tokens_before_total", model="mock-echo", label=GENERAL_CATEGORY) - before_counter == summary["tokens_before"]
+    assert sample("prompt_pipeline_tokens_after_total", model="mock-echo", label=GENERAL_CATEGORY) - after_counter == summary["tokens_after"]
 
     completed = [json.loads(line) for line in captured_logs.getvalue().splitlines()
                  if '"prompt_pipeline.completed"' in line]
@@ -148,7 +149,7 @@ def test_sensitive_prompt_text_never_exported(spans, captured_logs):
     for secret in (SECRET_EMAIL, SECRET_MARKER, "my email is"):
         assert secret not in blob
     attrs = next(s for s in spans.get_finished_spans() if s.name == "prompt.pipeline").attributes
-    assert attrs["prompt.category"] == SENSITIVE
+    assert attrs["prompt.category"] == SENSITIVE_CATEGORY
     assert len(attrs["prompt.message.0.sha256"]) == 16
     assert attrs["prompt.message.0.chars"] == len(SENSITIVE_TEXT)
     assert "prompt.message.0.text_before" not in attrs
@@ -164,9 +165,9 @@ def test_text_capture_only_for_allowed_labels_and_only_when_enabled(spans):
     assert on["prompt.message.0.text_before"].startswith("CHAT")
     assert len(on["prompt.message.0.text_after"]) < len(on["prompt.message.0.text_before"])
     spans.clear()
-    run(make_callback(obs=obs_settings(capture_text=True)), request("CRIT " + LONG))
-    critical = next(s for s in spans.get_finished_spans() if s.name == "prompt.pipeline").attributes
-    assert "prompt.message.0.text_before" not in critical
+    run(make_callback(obs=obs_settings(capture_text=True)), request("PRIVATE-NOTE " + LONG))
+    sensitive = next(s for s in spans.get_finished_spans() if s.name == "prompt.pipeline").attributes
+    assert "prompt.message.0.text_before" not in sensitive
 
 
 def test_metric_labels_are_low_cardinality():
@@ -190,14 +191,14 @@ def test_user_ids_are_hashed_for_langfuse(spans):
     data = run(make_callback(), request("CHAT " + LONG, metadata={"trace_user_id": "alice@example.com"}), user(None, None))
     assert data["metadata"]["trace_user_id"] != "alice@example.com"
     assert len(data["metadata"]["trace_user_id"]) == 16
-    assert "prompt_category:less_important" in data["metadata"]["tags"]
+    assert "prompt_category:general" in data["metadata"]["tags"]
     data = run(make_callback(), request("CHAT " + LONG), user("user-42"))
     assert data["metadata"]["trace_user_id"] not in ("user-42", None)
 
 
 def test_fail_open_is_counted_and_logged(spans, captured_logs):
     before = sample("prompt_pipeline_failures_total", mode="open", reason="classifier_unavailable")
-    data = run(make_callback(classifier=StubClassifier({}, unavailable=True)), request("CHAT " + LONG))
+    data = run(make_callback(detector=StubDetector(unavailable=True)), request("CHAT " + LONG))
     assert data["messages"][0]["content"] == "CHAT " + LONG
     assert sample("prompt_pipeline_failures_total", mode="open", reason="classifier_unavailable") == before + 1
     span = next(s for s in spans.get_finished_spans() if s.name == "prompt.pipeline")
@@ -208,7 +209,7 @@ def test_fail_open_is_counted_and_logged(spans, captured_logs):
 def test_fail_closed_is_counted_and_reraised(spans):
     before = sample("prompt_pipeline_failures_total", mode="closed", reason="classifier_unavailable")
     with pytest.raises(HTTPException):
-        run(make_callback(classifier=StubClassifier({}, unavailable=True), fail_mode="closed"), request("CHAT " + LONG))
+        run(make_callback(detector=StubDetector(unavailable=True), fail_mode="closed"), request("CHAT " + LONG))
     assert sample("prompt_pipeline_failures_total", mode="closed", reason="classifier_unavailable") == before + 1
     span = next(s for s in spans.get_finished_spans() if s.name == "prompt.pipeline")
     assert span.status.status_code.name == "ERROR"
@@ -256,3 +257,37 @@ def test_disabled_observability_is_the_plain_hook(spans):
     data = run(make_callback(obs=obs_settings(enabled=False)), request("CHAT " + LONG))
     assert data["metadata"]["prompt_compression"]["status"] == "ok"
     assert "prompt.pipeline" not in {s.name for s in spans.get_finished_spans()}
+
+
+def test_shadow_mode_savings_go_to_their_own_counter_and_the_prompt_is_unchanged(spans):
+    shadow_before = sample("prompt_pipeline_shadow_tokens_saved_total", model="mock-echo", label=GENERAL_CATEGORY)
+    applied_before = sample("prompt_pipeline_tokens_saved_total", model="mock-echo", label=GENERAL_CATEGORY)
+    requests_before = sample("prompt_pipeline_requests_total", model="mock-echo", label=GENERAL_CATEGORY, status="shadow")
+    data = run(make_callback(mode="shadow"), request("CHAT " + LONG))
+    summary = data["metadata"]["prompt_compression"]
+    assert summary["status"] == "shadow" and data["messages"][0]["content"] == "CHAT " + LONG
+    saved = summary["tokens_before"] - summary["tokens_after"]
+    assert saved > 0
+    assert sample("prompt_pipeline_shadow_tokens_saved_total", model="mock-echo", label=GENERAL_CATEGORY) - shadow_before == saved
+    assert sample("prompt_pipeline_tokens_saved_total", model="mock-echo", label=GENERAL_CATEGORY) == applied_before
+    assert sample("prompt_pipeline_requests_total", model="mock-echo", label=GENERAL_CATEGORY, status="shadow") - requests_before == 1
+
+
+def test_history_trimming_keeps_span_attributes_on_the_original_message_indexes(spans):
+    callback = make_callback(
+        obs=obs_settings(capture_text=True), routes=frozenset({"narrative", "history"}),
+        history_max_tokens=300, history_keep_messages=3,
+    )
+    data = {"model": "mock-echo", "litellm_call_id": "req-hist", "metadata": {}, "messages": [
+        {"role": "user", "content": "CHAT first " + LONG},
+        {"role": "assistant", "content": "reply " + LONG},
+        {"role": "user", "content": "CHAT second " + LONG},
+        {"role": "assistant", "content": "reply again " + LONG},
+        {"role": "user", "content": "CHAT third " + LONG},
+    ]}
+    result = run(callback, data)
+    summary = result["metadata"]["prompt_compression"]
+    assert summary["history_dropped"] == 2 and len(result["messages"]) == 3
+    attrs = next(s for s in spans.get_finished_spans() if s.name == "prompt.pipeline").attributes
+    assert attrs["prompt.message.4.label"] == GENERAL_CATEGORY          # original index of the latest user message
+    assert "prompt.message.4.text_after" in attrs and "prompt.message.0.label" not in attrs

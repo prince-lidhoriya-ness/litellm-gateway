@@ -1,0 +1,43 @@
+{
+ "env": {
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+  "logical_cpus": 8,
+  "ram_gb": 31.6,
+  "torch": "2.15.0+cpu",
+  "torch_threads": 4,
+  "transformers": "4.46.3",
+  "llmlingua": "0.2.2",
+  "sklearn": "1.9.1",
+  "numpy": "2.5.4",
+  "tiktoken": "0.14.0",
+  "ll2_model": "microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
+  "gpt2_path": "C:\\Users\\P7120489\\.cache\\huggingface\\hub\\models--openai-community--gpt2\\snapshots\\607a30d783dfa663caf39e06633721c8d4cfcd7e"
+ },
+ "load": {
+  "ll2": {
+   "load_wall_s": 3.7855420999985654,
+   "load_cpu_s": 3.765625,
+   "rss_delta_mb": 103.42578125
+  },
+  "ll1": {
+   "load_wall_s": 0.5962644999999611,
+   "load_cpu_s": 0.921875,
+   "rss_delta_mb": 25.53515625
+  },
+  "sc": {
+   "load_wall_s": 1.2112428000000364,
+   "load_cpu_s": 1.625,
+   "rss_delta_mb": 496.265625
+  }
+ },
+ "chosen": {
+  "ll2_2x": 0.4,
+  "ll2_3x": 0.28,
+  "ll1_2x": 0.4,
+  "sc_2x": 0.45,
+  "rand_2x": 0.55,
+  "qaware_2x": 0.45
+ }
+}

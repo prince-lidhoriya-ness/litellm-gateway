@@ -19,7 +19,7 @@
 # See https://docs.litellm.ai/docs/observability/opentelemetry_v2
 services:
   litellm:
-    # Dockerfile extends the stock image with the llmlingua package (see ai-features/compression.py).
+    # Dockerfile extends the stock image with the llmlingua package (used by prompt_compression/).
     build:
       context: .
       dockerfile: Dockerfile
@@ -30,8 +30,7 @@ services:
       - "${LITELLM_BIND:-}${LITELLM_PORT:-4000}:4000"
     volumes:
       - ./litellm_config.yaml:/app/config.yaml
-      - ./ai-features/compression.py:/app/compression.py
-      # classify -> route -> compress pipeline loaded by litellm_config.yaml (see prompt_compression/README.md).
+      # gate -> segment/classify -> route -> actions -> reassemble pipeline loaded by litellm_config.yaml (see prompt_compression/README.md).
       - ./prompt_compression:/app/prompt_compression
       # Keeps downloaded classifier/LLMLingua weights across container re-creates.
       - hf_cache:/root/.cache/huggingface
@@ -39,9 +38,18 @@ services:
       - ./observability:/app/observability
     command: ["--config", "/app/config.yaml"]
     environment:
-      COMPRESSION_THRESHOLD_CHARS: ${COMPRESSION_THRESHOLD_CHARS:-4000}
-      COMPRESSION_RATE: ${COMPRESSION_RATE:-0.5}
-      COMPRESSION_MODEL: ${COMPRESSION_MODEL:-microsoft/llmlingua-2-xlm-roberta-large-meetingbank}
+      # prompt_compression/ settings (prompt_compression.env.example). Empty = the code default.
+      PROMPT_COMPRESSION_ENABLED: ${PROMPT_COMPRESSION_ENABLED:-}
+      PROMPT_COMPRESSION_MODE: ${PROMPT_COMPRESSION_MODE:-}
+      PROMPT_COMPRESSION_FAIL_MODE: ${PROMPT_COMPRESSION_FAIL_MODE:-}
+      PROMPT_COMPRESSION_TIMEOUT_S: ${PROMPT_COMPRESSION_TIMEOUT_S:-}
+      PROMPT_COMPRESSION_MIN_TOKENS: ${PROMPT_COMPRESSION_MIN_TOKENS:-}
+      PROMPT_COMPRESSION_ROUTES: ${PROMPT_COMPRESSION_ROUTES:-}
+      PROMPT_COMPRESSION_RATE: ${PROMPT_COMPRESSION_RATE:-}
+      PROMPT_COMPRESSION_MAX_RATIO: ${PROMPT_COMPRESSION_MAX_RATIO:-}
+      SENSITIVITY_BACKEND: ${SENSITIVITY_BACKEND:-}
+      SENSITIVITY_THRESHOLD: ${SENSITIVITY_THRESHOLD:-}
+      REDACT_SENSITIVE: ${REDACT_SENSITIVE:-}
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:?set it in .env - see the header of this file}
       LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:?set it in .env - see the header of this file}
       DATABASE_URL: postgresql://litellm:${POSTGRES_PASSWORD:-litellm}@db:5432/litellm
@@ -76,6 +84,8 @@ services:
       # obs-mock (overhead measurement): mock provider on the host.
       MOCK_LLM_API_BASE: ${MOCK_LLM_API_BASE:-http://host.docker.internal:4010/v1}
       MOCK_LLM_API_KEY: ${MOCK_LLM_API_KEY:-mock-not-a-secret}
+      # judge-nemotron in litellm_config.yaml (optional LLM-as-judge); set it in .env.
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
       # Shares rate limits, budgets, router state, and cache across all workers/replicas.
       REDIS_HOST: redis
       REDIS_PORT: "6379"

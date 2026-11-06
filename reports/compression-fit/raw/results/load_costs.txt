@@ -1,0 +1,3 @@
+LLMLingua-2 (mBERT) model load: 3.79 s wall, 3.77 s CPU, 103 MB resident memory added
+LLMLingua v1 (GPT-2) model load: 0.60 s wall, 0.92 s CPU, 26 MB resident memory added
+Selective-Context-style (GPT-2) model load: 1.21 s wall, 1.62 s CPU, 496 MB resident memory added

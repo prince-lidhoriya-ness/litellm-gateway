@@ -1,0 +1,830 @@
+{
+ "settings": {
+  "routes": [
+   "narrative",
+   "passages",
+   "records"
+  ],
+  "rate": 0.4,
+  "max_ratio": 3.0,
+  "min_chars": 100,
+  "exact_density": 0.15,
+  "threshold": 0.37,
+  "classifier": "sentence-transformers/all-MiniLM-L6-v2+sensitivity-head-v1"
+ },
+ "families": {
+  "qa": {
+   "n": 40,
+   "tokens_before": 13329,
+   "tokens_after": 10557,
+   "ratio": 1.263,
+   "saved_pct": 20.8,
+   "share_by_decision_pct": {
+    "exact": 50.8,
+    "compress:prose": 33.6,
+    "edge": 15.6
+   },
+   "share_by_kind_pct": {
+    "exact": 52.6,
+    "prose": 47.4
+   },
+   "request_category": {
+    "general": 40
+   },
+   "pipeline_ms_mean": 3029.6
+  },
+  "logs": {
+   "n": 40,
+   "tokens_before": 21459,
+   "tokens_after": 21459,
+   "ratio": 1.0,
+   "saved_pct": 0.0,
+   "share_by_decision_pct": {
+    "select:records": 90.8,
+    "edge": 7.9,
+    "keep:sensitive(model)": 1.3
+   },
+   "share_by_kind_pct": {
+    "structured": 90.8,
+    "prose": 8.4,
+    "exact": 0.8
+   },
+   "request_category": {
+    "general": 23,
+    "sensitive": 17
+   },
+   "pipeline_ms_mean": 8.3
+  },
+  "code": {
+   "n": 40,
+   "tokens_before": 21095,
+   "tokens_after": 21095,
+   "ratio": 1.0,
+   "saved_pct": 0.0,
+   "share_by_decision_pct": {
+    "code": 83.5,
+    "edge": 9.8,
+    "structured": 6.7
+   },
+   "share_by_kind_pct": {
+    "code": 83.5,
+    "prose": 9.8,
+    "structured": 6.7
+   },
+   "request_category": {
+    "general": 40
+   },
+   "pipeline_ms_mean": 9.9
+  },
+  "pii": {
+   "n": 50,
+   "tokens_before": 9725,
+   "tokens_after": 9725,
+   "ratio": 1.0,
+   "saved_pct": 0.0,
+   "share_by_decision_pct": {
+    "keep:sensitive(rules)": 77.4,
+    "edge": 17.0,
+    "keep:sensitive(model)": 5.7
+   },
+   "share_by_kind_pct": {
+    "exact": 77.4,
+    "prose": 22.6
+   },
+   "request_category": {
+    "sensitive": 50
+   },
+   "pipeline_ms_mean": 5.0
+  }
+ },
+ "examples": {
+  "qa": [
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Document:\nA number of universities have launched joint programmes with local employers, of"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "The Pryworks-804 line launched in September 1990 at a price of $805, and the first batch s"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "For fiscal 2016 Dorvance reported revenue of $50.4 million, a rise of 15 percent, against "
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Customers frequently cite reliability and after-sales support as the deciding factors when"
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Industry observers often note that mid-sized manufacturers adapt faster to new standards t"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "After 8 years under Alma Tanaka, leadership passed to Alma Voss in 2004, who remains chief"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "The story of Dorvance began in Utrecht in 1995, when Yara Nakamura and Inge Delacroix set "
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Recruitment has been a persistent challenge, with employers competing for engineers who co"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "In 1996 the company opened an office in Split, followed by Leeds in 2006 and Gdansk in 202"
+    },
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Question: How many units of Pryworks-804 were sold in the first batch?\nAnswer:"
+    }
+   ],
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Document:\nRecruitment has been a persistent challenge, with employers competing for engine"
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Analysts described the cost discipline as unusual for a business of this size and age, poi"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Taltrix-646, the flagship marine sensors model, went on sale in 2021 for $722; 9657 units "
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Elif Okonkwo became chief executive in 2003, succeeding Dmitri Lindqvist, who had led the "
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Morcore was founded in 1998 by Tomas Marlowe and Inge Abernathy in Lyon, initially produci"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "For fiscal 2005 Morcore reported revenue of $53.1 million, a rise of 8 percent, against op"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Expansion came in stages: an office in Ghent in 2000, one in Utrecht in 2018, and one in T"
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Industry observers often note that mid-sized manufacturers adapt faster to new standards t"
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Trade associations in the region have repeatedly called for clearer export rules, arguing "
+    },
+    {
+     "kind": "exact",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Question: Who was chief executive of Morcore before Elif Okonkwo?\nAnswer:"
+    }
+   ],
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Document:\nThe global market for industrial components has been shaped by supply chain disr"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Expansion came in stages: an office in Split in 2022, one in Bergen in 1989, and one in Ut"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Revenue reached $21.6 million in fiscal 2017, up 8 percent from the previous year, while o"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Lumcore-813, the flagship turbine blades model, went on sale in 1992 for $342; 6354 units "
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "The story of Galworks began in Gdansk in 1993, when Marta Tanaka and Dmitri Varga set up a"
+    },
+    {
+     "kind": "exact",
+     "reason": "exact",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "After 16 years under Marta Abernathy, leadership passed to Sana Marlowe in 1995, who remai"
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Trade associations in the region have repeatedly called for clearer export rules, arguing "
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Recruitment has been a persistent challenge, with employers competing for engineers who co"
+    },
+    {
+     "kind": "prose",
+     "reason": "prose",
+     "action": "compress",
+     "sensitive": false,
+     "src": "",
+     "text": "Analysts described the cost discipline as unusual for a business of this size and age, poi"
+    },
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Question: What was the revenue of Galworks in fiscal 2017, in millions of dollars?\nAnswer:"
+    }
+   ]
+  ],
+  "logs": [
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "structured",
+     "reason": "records",
+     "action": "select",
+     "sensitive": false,
+     "src": "",
+     "text": "Document:\n2026-03-14T19:06:42Z INFO  svc=report-builder req=req-a6a8e8 status=500 latency_"
+    },
+    {
+     "kind": "exact",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Question: What was the latency_ms value of request req-4be128?\nAnswer:"
+    }
+   ],
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "structured",
+     "reason": "records",
+     "action": "select",
+     "sensitive": false,
+     "src": "",
+     "text": "Document:\n[\n  {\"order_id\": \"ORD-4349\", \"customer\": \"c-2986\", \"items\": 3, \"total\": 738.39, "
+    },
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Question: What is the carrier of order ORD-7374?\nAnswer:"
+    }
+   ],
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "structured",
+     "reason": "records",
+     "action": "select",
+     "sensitive": false,
+     "src": "",
+     "text": "Document:\n2026-03-14T21:21:34Z WARN  svc=cart-service req=req-d2035e status=400 latency_ms"
+    },
+    {
+     "kind": "exact",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Question: What was the latency_ms value of request req-380539?\nAnswer:"
+    }
+   ]
+  ],
+  "code": [
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Document:\nimport logging"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "log = logging.getLogger(__name__)"
+    },
+    {
+     "kind": "structured",
+     "reason": "structured",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "MAX_WINDOW_PB = 259\nMAX_WINDOW_DO = 601\nMAX_BATCH_BL = 201"
+    },
+    {
+     "kind": "structured",
+     "reason": "structured",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def check_records_so(data, retry_limit=109):\n    \"\"\"Synchronise pending entries.\"\"\"\n    li"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def load_quotas_qq(data, timeout_s=157):\n    \"\"\"Load the next window.\"\"\"\n    limit = min(t"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def parse_batches_ls(data, retry_limit=391):\n    \"\"\"Merge partial results.\"\"\"\n    limit = "
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def sync_quotas_jo(data, chunk_len=335):\n    \"\"\"Drop invalid items.\"\"\"\n    limit = min(chu"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def sync_records_yo(data, backoff_ms=134):\n    \"\"\"Encode a payload for transport.\"\"\"\n    l"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def encode_frames_vi(data, chunk_len=54):\n    \"\"\"Build the request body.\"\"\"\n    limit = mi"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def route_quotas_tf(data, page_size=317):\n    \"\"\"Check limits before sending.\"\"\"\n    limit"
+    },
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Question: What is the value of the constant `MAX_WINDOW_PB`?\nAnswer:"
+    }
+   ],
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Document:\nimport logging"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "log = logging.getLogger(__name__)"
+    },
+    {
+     "kind": "structured",
+     "reason": "structured",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "MAX_LIMIT_UB = 341\nMAX_RETRY_OS = 418\nMAX_RETRY_SN = 571"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def parse_shards_xs(data, timeout_s=65):\n    \"\"\"Synchronise pending entries.\"\"\"\n    limit "
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def parse_batches_fs(data, chunk_len=412):\n    \"\"\"Load the next window.\"\"\"\n    limit = min"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def route_orders_kc(data, timeout_s=452):\n    \"\"\"Merge partial results.\"\"\"\n    limit = min"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def filter_orders_lo(data, chunk_len=252):\n    \"\"\"Drop invalid items.\"\"\"\n    limit = min(c"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def build_frames_rb(data, backoff_ms=217):\n    \"\"\"Encode a payload for transport.\"\"\"\n    l"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def merge_records_lv(data, page_size=310):\n    \"\"\"Build the request body.\"\"\"\n    limit = m"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def encode_quotas_fo(data, chunk_len=257):\n    \"\"\"Check limits before sending.\"\"\"\n    limi"
+    },
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Question: In the function `filter_orders_lo`, what is the default value of the parameter `"
+    }
+   ],
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Document:\nimport logging"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "log = logging.getLogger(__name__)"
+    },
+    {
+     "kind": "structured",
+     "reason": "structured",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "MAX_WINDOW_CH = 89\nMAX_LIMIT_XH = 392\nMAX_WINDOW_RJ = 846"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def check_quotas_cy(data, timeout_s=233):\n    \"\"\"Synchronise pending entries.\"\"\"\n    limit"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def filter_batches_ii(data, retry_limit=299):\n    \"\"\"Load the next window.\"\"\"\n    limit = "
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def sync_shards_gq(data, max_items=85):\n    \"\"\"Merge partial results.\"\"\"\n    limit = min(m"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def merge_records_nj(data, backoff_ms=349):\n    \"\"\"Drop invalid items.\"\"\"\n    limit = min("
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def sync_records_cz(data, timeout_s=406):\n    \"\"\"Encode a payload for transport.\"\"\"\n    li"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def merge_tokens_eq(data, backoff_ms=467):\n    \"\"\"Build the request body.\"\"\"\n    limit = m"
+    },
+    {
+     "kind": "code",
+     "reason": "code",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "def route_events_gz(data, max_items=36):\n    \"\"\"Check limits before sending.\"\"\"\n    limit "
+    },
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "Question: Which function calls `merge_records_nj`?\nAnswer:"
+    }
+   ]
+  ],
+  "pii": [
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "exact",
+     "reason": "sensitive",
+     "action": "keep",
+     "sensitive": true,
+     "src": "rules",
+     "text": "Document:\nCase note CASE-822820. The caller, Elif Nakamura, born 14/04/1984, contacted sup"
+    },
+    {
+     "kind": "prose",
+     "reason": "sensitive",
+     "action": "keep",
+     "sensitive": true,
+     "src": "model",
+     "text": "Question: What is the case reference number?\nAnswer:"
+    }
+   ],
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "exact",
+     "reason": "sensitive",
+     "action": "keep",
+     "sensitive": true,
+     "src": "rules",
+     "text": "Document:\nCase note CASE-425929. The caller, Yara Nakamura, born 02/01/2002, contacted sup"
+    },
+    {
+     "kind": "prose",
+     "reason": "sensitive",
+     "action": "keep",
+     "sensitive": true,
+     "src": "model",
+     "text": "Question: What is the case reference number?\nAnswer:"
+    }
+   ],
+   [
+    {
+     "kind": "prose",
+     "reason": "edge",
+     "action": "keep",
+     "sensitive": false,
+     "src": "",
+     "text": "[req:00000000]\nAnswer the question using only the document below. Reply with only the answ"
+    },
+    {
+     "kind": "exact",
+     "reason": "sensitive",
+     "action": "keep",
+     "sensitive": true,
+     "src": "rules",
+     "text": "Document:\nCase note CASE-458542. The caller, Felix Grimaldi, born 14/02/1973, contacted su"
+    },
+    {
+     "kind": "prose",
+     "reason": "sensitive",
+     "action": "keep",
+     "sensitive": true,
+     "src": "model",
+     "text": "Question: What is the case reference number?\nAnswer:"
+    }
+   ]
+  ]
+ }
+}

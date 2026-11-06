@@ -1,0 +1,314 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<feed xmlns:opensearch="http://a9.com/-/spec/opensearch/1.1/" xmlns:arxiv="http://arxiv.org/schemas/atom" xmlns="http://www.w3.org/2005/Atom">
+  <id>https://arxiv.org/api/XF/ilo+gcqd+RAWY/n6UDtm4kFQ</id>
+  <title>arXiv Query: search_query=&amp;id_list=2403.12968,2304.08467,2310.06201,2305.14788,2409.01227,2501.12959,2306.14048,2404.14469,2310.06839&amp;start=0&amp;max_results=20</title>
+  <updated>2026-11-05T10:26:36Z</updated>
+  <link href="https://arxiv.org/api/query?search_query=&amp;start=0&amp;max_results=20&amp;id_list=2403.12968,2304.08467,2310.06201,2305.14788,2409.01227,2501.12959,2306.14048,2404.14469,2310.06839" type="application/atom+xml"/>
+  <opensearch:itemsPerPage>20</opensearch:itemsPerPage>
+  <opensearch:totalResults>9</opensearch:totalResults>
+  <opensearch:startIndex>0</opensearch:startIndex>
+  <entry>
+    <id>http://arxiv.org/abs/2305.14788v2</id>
+    <title>Adapting Language Models to Compress Contexts</title>
+    <updated>2023-11-04T04:09:43Z</updated>
+    <link href="https://arxiv.org/abs/2305.14788v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2305.14788v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Transformer-based language models (LMs) are powerful and widely-applicable tools, but their usefulness is constrained by a finite context window and the expensive computational cost of processing long text documents. We propose to adapt pre-trained LMs into AutoCompressors. These language models are capable of compressing long contexts into compact summary vectors, which are then accessible to the model as soft prompts. Summary vectors are trained with an unsupervised objective, whereby long documents are processed in segments, and summary vectors from all previous segments are used in language modeling. We fine-tune OPT and Llama-2 models on sequences of up to 30,720 tokens and show that AutoCompressors can utilize long contexts to improve perplexity. We evaluate AutoCompressors on in-context learning by compressing task demonstrations and find that summary vectors are good substitutes for plain-text demonstrations, increasing accuracy while reducing inference costs. Finally, we explore the benefits of pre-computing summary vectors for large corpora by applying summary vectors to retrievalaugmented language modeling and a passage re-ranking task. Overall, AutoCompressors emerge as a simple and inexpensive solution to extend the context window of LMs while speeding up inference over long contexts.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-05-24T06:42:44Z</published>
+    <arxiv:comment>Accepted to EMNLP 2023; added results for Llama-2-7B model</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Alexis Chevalier</name>
+    </author>
+    <author>
+      <name>Alexander Wettig</name>
+    </author>
+    <author>
+      <name>Anirudh Ajith</name>
+    </author>
+    <author>
+      <name>Danqi Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2409.01227v3</id>
+    <title>Prompt Compression with Context-Aware Sentence Encoding for Fast and Improved LLM Inference</title>
+    <updated>2024-12-18T23:04:46Z</updated>
+    <link href="https://arxiv.org/abs/2409.01227v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2409.01227v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) have triggered a new stream of research focusing on compressing the context length to reduce the computational cost while ensuring the retention of helpful information for LLMs to answer the given question. Token-based removal methods are one of the most prominent approaches in this direction, but risk losing the semantics of the context caused by intermediate token removal, especially under high compression ratios, while also facing challenges in computational efficiency. In this work, we propose context-aware prompt compression (CPC), a sentence-level prompt compression technique where its key innovation is a novel context-aware sentence encoder that provides a relevance score for each sentence for a given question. To train this encoder, we generate a new dataset consisting of questions, positives, and negative pairs where positives are sentences relevant to the question, while negatives are irrelevant context sentences. We train the encoder in a contrastive setup to learn context-aware sentence representations. Our method considerably outperforms prior works on prompt compression on benchmark datasets and is up to 10.93x faster at inference compared to the best token-level compression method. We also find better improvement for shorter length constraints in most benchmarks, showing the effectiveness of our proposed solution in the compression of relevant information in a shorter context. Finally, we release the code and the dataset for quick reproducibility and further development: https://github.com/Workday/cpc.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-09-02T13:02:51Z</published>
+    <arxiv:comment>Accepted in AAAI Conference on Artificial Intelligence (AAAI-25)</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Barys Liskavets</name>
+    </author>
+    <author>
+      <name>Maxim Ushakov</name>
+    </author>
+    <author>
+      <name>Shuvendu Roy</name>
+    </author>
+    <author>
+      <name>Mark Klibanov</name>
+    </author>
+    <author>
+      <name>Ali Etemad</name>
+    </author>
+    <author>
+      <name>Shane Luke</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2403.12968v2</id>
+    <title>LLMLingua-2: Data Distillation for Efficient and Faithful Task-Agnostic Prompt Compression</title>
+    <updated>2024-08-12T04:48:11Z</updated>
+    <link href="https://arxiv.org/abs/2403.12968v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2403.12968v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>This paper focuses on task-agnostic prompt compression for better generalizability and efficiency. Considering the redundancy in natural language, existing approaches compress prompts by removing tokens or lexical units according to their information entropy obtained from a causal language model such as LLaMa-7B. The challenge is that information entropy may be a suboptimal compression metric: (i) it only leverages unidirectional context and may fail to capture all essential information needed for prompt compression; (ii) it is not aligned with the prompt compression objective.
+  To address these issues, we propose a data distillation procedure to derive knowledge from an LLM to compress prompts without losing crucial information, and meantime, introduce an extractive text compression dataset. We formulate prompt compression as a token classification problem to guarantee the faithfulness of the compressed prompt to the original one, and use a Transformer encoder as the base architecture to capture all essential information for prompt compression from the full bidirectional context. Our approach leads to lower latency by explicitly learning the compression objective with smaller models such as XLM-RoBERTa-large and mBERT.
+  We evaluate our method on both in-domain and out-of-domain datasets, including MeetingBank, LongBench, ZeroScrolls, GSM8K, and BBH. Despite its small size, our model shows significant performance gains over strong baselines and demonstrates robust generalization ability across different LLMs. Additionally, our model is 3x-6x faster than existing prompt compression methods, while accelerating the end-to-end latency by 1.6x-2.9x with compression ratios of 2x-5x. Our code is available at https://aka.ms/LLMLingua-2.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-03-19T17:59:56Z</published>
+    <arxiv:comment>Accepted at Findings of ACL 2024</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Zhuoshi Pan</name>
+    </author>
+    <author>
+      <name>Qianhui Wu</name>
+    </author>
+    <author>
+      <name>Huiqiang Jiang</name>
+    </author>
+    <author>
+      <name>Menglin Xia</name>
+    </author>
+    <author>
+      <name>Xufang Luo</name>
+    </author>
+    <author>
+      <name>Jue Zhang</name>
+    </author>
+    <author>
+      <name>Qingwei Lin</name>
+    </author>
+    <author>
+      <name>Victor Rühle</name>
+    </author>
+    <author>
+      <name>Yuqing Yang</name>
+    </author>
+    <author>
+      <name>Chin-Yew Lin</name>
+    </author>
+    <author>
+      <name>H. Vicky Zhao</name>
+    </author>
+    <author>
+      <name>Lili Qiu</name>
+    </author>
+    <author>
+      <name>Dongmei Zhang</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2310.06201v1</id>
+    <title>Compressing Context to Enhance Inference Efficiency of Large Language Models</title>
+    <updated>2023-10-09T23:03:24Z</updated>
+    <link href="https://arxiv.org/abs/2310.06201v1" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2310.06201v1" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large language models (LLMs) achieved remarkable performance across various tasks. However, they face challenges in managing long documents and extended conversations, due to significantly increased computational requirements, both in memory and inference time, and potential context truncation when the input exceeds the LLM's fixed context length. This paper proposes a method called Selective Context that enhances the inference efficiency of LLMs by identifying and pruning redundancy in the input context to make the input more compact. We test our approach using common data sources requiring long context processing: arXiv papers, news articles, and long conversations, on tasks of summarisation, question answering, and response generation. Experimental results show that Selective Context significantly reduces memory cost and decreases generation latency while maintaining comparable performance compared to that achieved when full context is used. Specifically, we achieve a 50\% reduction in context cost, resulting in a 36\% reduction in inference memory usage and a 32\% reduction in inference time, while observing only a minor drop of .023 in BERTscore and .038 in faithfulness on four downstream applications, indicating that our method strikes a good balance between efficiency and performance.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-10-09T23:03:24Z</published>
+    <arxiv:comment>EMNLP 2023. arXiv admin note: substantial text overlap with arXiv:2304.12102; text overlap with arXiv:2303.11076 by other authors</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Yucheng Li</name>
+    </author>
+    <author>
+      <name>Bo Dong</name>
+    </author>
+    <author>
+      <name>Chenghua Lin</name>
+    </author>
+    <author>
+      <name>Frank Guerin</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2310.06839v2</id>
+    <title>LongLLMLingua: Accelerating and Enhancing LLMs in Long Context Scenarios via Prompt Compression</title>
+    <updated>2024-08-12T03:53:35Z</updated>
+    <link href="https://arxiv.org/abs/2310.06839v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2310.06839v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>In long context scenarios, large language models (LLMs) face three main challenges: higher computational cost, performance reduction, and position bias. Research indicates that LLM performance hinges on the density and position of key information in the input prompt. Inspired by these findings, we propose LongLLMLingua for prompt compression towards improving LLMs' perception of the key information to simultaneously address the three challenges. Our extensive evaluation across various long context scenarios demonstrates that LongLLMLingua not only enhances performance but also significantly reduces costs and latency. For instance, in the NaturalQuestions benchmark, LongLLMLingua boosts performance by up to 21.4% with around 4x fewer tokens in GPT-3.5-Turbo, leading to substantial cost savings. It achieves a 94.0% cost reduction in the LooGLE benchmark. Moreover, when compressing prompts of about 10k tokens at ratios of 2x-6x, LongLLMLingua can accelerate end-to-end latency by 1.4x-2.6x. Our code is available at https://aka.ms/LongLLMLingua.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-10-10T17:59:58Z</published>
+    <arxiv:comment>Accepted at ACL 2024</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Huiqiang Jiang</name>
+    </author>
+    <author>
+      <name>Qianhui Wu</name>
+    </author>
+    <author>
+      <name>Xufang Luo</name>
+    </author>
+    <author>
+      <name>Dongsheng Li</name>
+    </author>
+    <author>
+      <name>Chin-Yew Lin</name>
+    </author>
+    <author>
+      <name>Yuqing Yang</name>
+    </author>
+    <author>
+      <name>Lili Qiu</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2501.12959v2</id>
+    <title>Efficient Prompt Compression with Evaluator Heads for Long-Context Transformer Inference</title>
+    <updated>2025-02-05T09:35:38Z</updated>
+    <link href="https://arxiv.org/abs/2501.12959v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2501.12959v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Although applications involving long-context inputs are crucial for the effective utilization of large language models (LLMs), they also result in increased computational costs and reduced performance. To address this challenge, we propose an efficient, training-free prompt compression method that retains key information within compressed prompts. We identify specific attention heads in transformer-based LLMs, which we designate as evaluator heads, that are capable of selecting tokens in long inputs that are most significant for inference. Building on this discovery, we develop EHPC, an Evaluator Head-based Prompt Compression method, which enables LLMs to rapidly "skim through" input prompts by leveraging only the first few layers with evaluator heads during the pre-filling stage, subsequently passing only the important tokens to the model for inference. EHPC achieves state-of-the-art results across two mainstream benchmarks: prompt compression and long-context inference acceleration. Consequently, it effectively reduces the complexity and costs associated with commercial API calls. We further demonstrate that EHPC attains competitive results compared to key-value cache-based acceleration methods, thereby highlighting its potential to enhance the efficiency of LLMs for long-context tasks.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2025-01-22T15:33:17Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Weizhi Fei</name>
+    </author>
+    <author>
+      <name>Xueyan Niu</name>
+    </author>
+    <author>
+      <name>Guoqing Xie</name>
+    </author>
+    <author>
+      <name>Yingqing Liu</name>
+    </author>
+    <author>
+      <name>Bo Bai</name>
+    </author>
+    <author>
+      <name>Wei Han</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2306.14048v3</id>
+    <title>H$_2$O: Heavy-Hitter Oracle for Efficient Generative Inference of Large Language Models</title>
+    <updated>2023-12-18T19:10:00Z</updated>
+    <link href="https://arxiv.org/abs/2306.14048v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2306.14048v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large Language Models (LLMs), despite their recent impressive accomplishments, are notably cost-prohibitive to deploy, particularly for applications involving long-content generation, such as dialogue systems and story writing. Often, a large amount of transient state information, referred to as the KV cache, is stored in GPU memory in addition to model parameters, scaling linearly with the sequence length and batch size. In this paper, we introduce a novel approach for implementing the KV cache which significantly reduces its memory footprint. Our approach is based on the noteworthy observation that a small portion of tokens contributes most of the value when computing attention scores. We call these tokens Heavy Hitters (H$_2$). Through a comprehensive investigation, we find that (i) the emergence of H$_2$ is natural and strongly correlates with the frequent co-occurrence of tokens in the text, and (ii) removing them results in significant performance degradation. Based on these insights, we propose Heavy Hitter Oracle (H$_2$O), a KV cache eviction policy that dynamically retains a balance of recent and H$_2$ tokens. We formulate the KV cache eviction as a dynamic submodular problem and prove (under mild assumptions) a theoretical guarantee for our novel eviction algorithm which could help guide future work. We validate the accuracy of our algorithm with OPT, LLaMA, and GPT-NeoX across a wide range of tasks. Our implementation of H$_2$O with 20% heavy hitters improves the throughput over three leading inference systems DeepSpeed Zero-Inference, Hugging Face Accelerate, and FlexGen by up to 29$\times$, 29$\times$, and 3$\times$ on OPT-6.7B and OPT-30B. With the same batch size, H2O can reduce the latency by up to 1.9$\times$. The code is available at https://github.com/FMInference/H2O.</summary>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-06-24T20:11:14Z</published>
+    <arxiv:primary_category term="cs.LG"/>
+    <author>
+      <name>Zhenyu Zhang</name>
+    </author>
+    <author>
+      <name>Ying Sheng</name>
+    </author>
+    <author>
+      <name>Tianyi Zhou</name>
+    </author>
+    <author>
+      <name>Tianlong Chen</name>
+    </author>
+    <author>
+      <name>Lianmin Zheng</name>
+    </author>
+    <author>
+      <name>Ruisi Cai</name>
+    </author>
+    <author>
+      <name>Zhao Song</name>
+    </author>
+    <author>
+      <name>Yuandong Tian</name>
+    </author>
+    <author>
+      <name>Christopher Ré</name>
+    </author>
+    <author>
+      <name>Clark Barrett</name>
+    </author>
+    <author>
+      <name>Zhangyang Wang</name>
+    </author>
+    <author>
+      <name>Beidi Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2404.14469v2</id>
+    <title>SnapKV: LLM Knows What You are Looking for Before Generation</title>
+    <updated>2024-06-17T03:01:58Z</updated>
+    <link href="https://arxiv.org/abs/2404.14469v2" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2404.14469v2" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Large Language Models (LLMs) have made remarkable progress in processing extensive contexts, with the Key-Value (KV) cache playing a vital role in enhancing their performance. However, the growth of the KV cache in response to increasing input length poses challenges to memory and time efficiency. To address this problem, this paper introduces SnapKV, an innovative and fine-tuning-free approach that efficiently minimizes KV cache size while still delivering comparable performance in real-world applications.
+  We discover that each attention head in the model consistently focuses on specific prompt attention features during generation. Meanwhile, this robust pattern can be obtained from an 'observation' window located at the end of the prompts. Drawing on this insight, SnapKV automatically compresses KV caches by selecting clustered important KV positions for each attention head. Our approach significantly reduces the growing computational overhead and memory footprint when processing long input sequences. Specifically, SnapKV achieves a consistent decoding speed with a 3.6x increase in generation speed and an 8.2x enhancement in memory efficiency compared to the baseline when processing inputs of 16K tokens. At the same time, it maintains comparable performance to the baseline models across 16 long sequence datasets. Moreover, SnapKV can process up to 380K context tokens on a single A100-80GB GPU using HuggingFace implementation with minor changes, exhibiting only a negligible accuracy drop in the Needle-in-a-Haystack test. Further comprehensive studies suggest SnapKV's potential for practical applications.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <category term="cs.AI" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2024-04-22T17:42:58Z</published>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Yuhong Li</name>
+    </author>
+    <author>
+      <name>Yingbing Huang</name>
+    </author>
+    <author>
+      <name>Bowen Yang</name>
+    </author>
+    <author>
+      <name>Bharat Venkitesh</name>
+    </author>
+    <author>
+      <name>Acyr Locatelli</name>
+    </author>
+    <author>
+      <name>Hanchen Ye</name>
+    </author>
+    <author>
+      <name>Tianle Cai</name>
+    </author>
+    <author>
+      <name>Patrick Lewis</name>
+    </author>
+    <author>
+      <name>Deming Chen</name>
+    </author>
+  </entry>
+  <entry>
+    <id>http://arxiv.org/abs/2304.08467v3</id>
+    <title>Learning to Compress Prompts with Gist Tokens</title>
+    <updated>2024-02-12T19:03:18Z</updated>
+    <link href="https://arxiv.org/abs/2304.08467v3" rel="alternate" type="text/html"/>
+    <link href="https://arxiv.org/pdf/2304.08467v3" rel="related" type="application/pdf" title="pdf"/>
+    <summary>Prompting is the primary way to utilize the multitask capabilities of language models (LMs), but prompts occupy valuable space in the input context window, and repeatedly encoding the same prompt is computationally inefficient. Finetuning and distillation methods allow for specialization of LMs without prompting, but require retraining the model for each task. To avoid this trade-off entirely, we present gisting, which trains an LM to compress prompts into smaller sets of "gist" tokens which can be cached and reused for compute efficiency. Gist models can be trained with no additional cost over standard instruction finetuning by simply modifying Transformer attention masks to encourage prompt compression. On decoder (LLaMA-7B) and encoder-decoder (FLAN-T5-XXL) LMs, gisting enables up to 26x compression of prompts, resulting in up to 40% FLOPs reductions, 4.2% wall time speedups, and storage savings, all with minimal loss in output quality.</summary>
+    <category term="cs.CL" scheme="http://arxiv.org/schemas/atom"/>
+    <published>2023-04-17T17:47:37Z</published>
+    <arxiv:comment>NeurIPS 2023, 26 pages. Version 3 updates preprint to camera-ready version and clarifies some writing in places</arxiv:comment>
+    <arxiv:primary_category term="cs.CL"/>
+    <author>
+      <name>Jesse Mu</name>
+    </author>
+    <author>
+      <name>Xiang Lisa Li</name>
+    </author>
+    <author>
+      <name>Noah Goodman</name>
+    </author>
+  </entry>
+</feed>

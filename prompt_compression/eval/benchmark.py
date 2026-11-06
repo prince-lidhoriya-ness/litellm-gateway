@@ -1,15 +1,15 @@
 """Benchmarks zero-shot NLI checkpoints on the classifier dataset (CPU only).
 
-Model-only mode scores the raw transformers zero-shot pipeline, which is what
-the model comparison uses. --full scores the production classifier instead
-(rule layer + confidence fallback + chunking) for the configured model.
+Scores the raw transformers zero-shot pipeline as a four-way classifier, which is
+what the comparison between NLI checkpoints uses. The pipeline itself only uses
+the probability of the "sensitive" label; how well that works as a decision
+(rules + model + threshold + chunking) is measured by eval/sensitivity_eval.py.
 
 Examples:
   python -m prompt_compression.eval.benchmark --split dev --formats plain descriptive \
       --models typeform/distilbert-base-uncased-mnli
   python -m prompt_compression.eval.benchmark --split test --formats descriptive \
       --models typeform/distilbert-base-uncased-mnli MoritzLaurer/deberta-v3-base-zeroshot-v2.0
-  python -m prompt_compression.eval.benchmark --split test --full
 
 Each run writes eval/results/<split>__<format>__<model>.json and appends a row
 to eval/results/summary_<split>.md.
@@ -28,7 +28,7 @@ import torch
 import transformers
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
-from prompt_compression.classifier import load_zero_shot_pipeline
+from prompt_compression.sensitivity import load_zero_shot_pipeline
 from prompt_compression.labels import CRITICAL, LABEL_FORMATS, LABELS, SENSITIVE
 
 EVAL_DIR = Path(__file__).resolve().parent
@@ -136,31 +136,6 @@ def run_model_only(model_name: str, label_format: str, rows: list[dict], quantiz
     return report
 
 
-def run_full(rows: list[dict]) -> tuple[str, dict]:
-    from prompt_compression.classifier import get_classifier
-
-    classifier = get_classifier()
-    classifier.load()
-    classifier.cache_clear()
-    for row in rows[:WARMUP_CALLS]:
-        classifier.classify(row["text"])
-    classifier.cache_clear()
-
-    predictions, latencies_ms, details = [], [], []
-    for row in rows:
-        started = time.perf_counter()
-        result = classifier.classify(row["text"])
-        latencies_ms.append((time.perf_counter() - started) * 1000)
-        predictions.append(result.label)
-        details.append(
-            {"id": row["id"], "gold": row["label"], "pred": result.label, "score": result.score, "source": result.source}
-        )
-
-    report = score(rows, predictions, latencies_ms)
-    report["predictions"] = details
-    return classifier.model_name, report
-
-
 def _summary_row(model: str, label_format: str, report: dict) -> str:
     sensitive = report["per_class"][SENSITIVE]
     params = report.get("params")
@@ -191,7 +166,6 @@ def main() -> None:
     parser.add_argument("--split", choices=["dev", "test"], default="dev")
     parser.add_argument("--models", nargs="*", default=[])
     parser.add_argument("--formats", nargs="*", choices=list(LABEL_FORMATS), default=["descriptive"])
-    parser.add_argument("--full", action="store_true", help="score the production classifier (rules + fallback)")
     parser.add_argument("--quantize", choices=["none", "int8"], default="none", help="model-only runs: int8 dynamic quantization")
     args = parser.parse_args()
 
@@ -210,9 +184,6 @@ def main() -> None:
     }
 
     def runs():
-        if args.full:
-            model_name, report = run_full(rows)
-            yield model_name, "full-pipeline", report
         for model_name in args.models:
             for label_format in args.formats:
                 name = model_name + (f"@{args.quantize}" if args.quantize != "none" else "")

@@ -1,0 +1,6 @@
+{"run": "B2", "model": "obs-mock", "arm": "baseline", "concurrency": 1, "requests": 24, "ok": 24, "wall_s": 0.799, "rps": 30.0404, "lat_p50": 0.0318, "lat_p95": 0.0393, "prompt_tokens": 24}
+{"run": "B2", "model": "obs-mock", "arm": "compressed", "concurrency": 1, "requests": 24, "ok": 24, "wall_s": 3.526, "rps": 6.8057, "lat_p50": 0.0605, "lat_p95": 0.673, "prompt_tokens": 24}
+{"run": "B2", "model": "obs-mock", "arm": "baseline", "concurrency": 4, "requests": 24, "ok": 24, "wall_s": 0.799, "rps": 30.0517, "lat_p50": 0.1286, "lat_p95": 0.162, "prompt_tokens": 24}
+{"run": "B2", "model": "obs-mock", "arm": "compressed", "concurrency": 4, "requests": 24, "ok": 24, "wall_s": 3.346, "rps": 7.1736, "lat_p50": 0.4103, "lat_p95": 1.6467, "prompt_tokens": 24}
+{"run": "B2", "model": "obs-mock", "arm": "baseline", "concurrency": 8, "requests": 24, "ok": 24, "wall_s": 0.752, "rps": 31.8947, "lat_p50": 0.2372, "lat_p95": 0.2596, "prompt_tokens": 24}
+{"run": "B2", "model": "obs-mock", "arm": "compressed", "concurrency": 8, "requests": 24, "ok": 24, "wall_s": 3.125, "rps": 7.6805, "lat_p50": 0.7537, "lat_p95": 1.7768, "prompt_tokens": 24}

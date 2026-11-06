@@ -1,0 +1,1581 @@
+{
+ "current: rules or model>=0.35": {
+  "dev": {
+   "recall": 1.0,
+   "fpr": 0.759,
+   "tp": 18,
+   "pos": 18,
+   "fp": 41,
+   "neg": 54,
+   "missed": [],
+   "false_alarms": [
+    [
+     "critical",
+     "Translate the following into French but keep product names like PowerEdge R760 unchanged."
+    ],
+    [
+     "critical",
+     "The answer must cite section 4.3(b) of the policy, not section 4.2."
+    ],
+    [
+     "critical",
+     "The API rate limit is 600 requests per minute per key, with a burst of 50. Calculate the max request"
+    ],
+    [
+     "critical",
+     "np.where(arr > 0, arr, 0) should replace negatives with zero; why does it return a tuple here?"
+    ],
+    [
+     "critical",
+     "Fix the bug: the loop `for i in range(1, len(items))` skips the first element."
+    ],
+    [
+     "critical",
+     "Convert 72 degrees Fahrenheit to Celsius and round to one decimal place."
+    ],
+    [
+     "critical",
+     "ok ty! one more: change the color to #1A73E8 and the font size to 14px"
+    ],
+    [
+     "critical",
+     "Only use data from the attached table; do not use outside knowledge."
+    ],
+    [
+     "critical",
+     "Parse the timestamp 2024-11-05T23:59:59+05:30 and convert it to UTC."
+    ],
+    [
+     "critical",
+     "The tolerance is +/- 0.05 mm on a 12.70 mm shaft. Is a part measuring 12.76 mm within spec?"
+    ],
+    [
+     "critical",
+     "Haha sure, but remember the deadline is Friday 17:00 CET, not Thursday."
+    ],
+    [
+     "critical",
+     "The flight departs at 06:45 from Gate B22 and boarding closes 20 minutes earlier. When must I be at "
+    ],
+    [
+     "non_sensitive",
+     "Many people enjoy hiking in autumn because the weather is cooler and the leaves change color."
+    ],
+    [
+     "non_sensitive",
+     "A typical sprint in our team lasts two weeks, followed by a short retrospective meeting."
+    ],
+    [
+     "non_sensitive",
+     "The conference had about 200 attendees and sessions on design, marketing and product strategy."
+    ],
+    [
+     "non_sensitive",
+     "Our office moved to a building with more natural light and a rooftop terrace."
+    ],
+    [
+     "non_sensitive",
+     "The river flows through three countries before reaching the sea."
+    ],
+    [
+     "non_sensitive",
+     "The history of the printing press shows how information spread faster across Europe in the 1500s."
+    ],
+    [
+     "non_sensitive",
+     "The documentary explores how coral reefs are affected by rising ocean temperatures."
+    ],
+    [
+     "non_sensitive",
+     "Mountains in the region attract skiers in winter and hikers during the summer months."
+    ],
+    [
+     "non_sensitive",
+     "Chess is a strategy game that has been played for centuries in many parts of the world."
+    ],
+    [
+     "non_sensitive",
+     "Our support team answered a wide range of questions about shipping and returns this week."
+    ],
+    [
+     "non_sensitive",
+     "Some legal systems use juries while others rely mainly on professional judges."
+    ],
+    [
+     "non_sensitive",
+     "The garden has tomatoes, basil and a few sunflowers that grow taller every week."
+    ],
+    [
+     "non_sensitive",
+     "The weather in Lisbon is usually mild in spring, with occasional rain showers."
+    ],
+    [
+     "non_sensitive",
+     "The podcast episode was about how ancient Romans built their roads and aqueducts."
+    ],
+    [
+     "non_sensitive",
+     "Some hospitals have started using robots to deliver supplies between departments."
+    ],
+    [
+     "less_important",
+     "Nice one, that made me laugh."
+    ],
+    [
+     "less_important",
+     "Ok ok, got it, thanks."
+    ],
+    [
+     "less_important",
+     "Ok cool, sounds good."
+    ],
+    [
+     "less_important",
+     "Okay so as I said, same as before, nothing new really."
+    ],
+    [
+     "less_important",
+     "Yes yes, exactly what I was saying, exactly that."
+    ],
+    [
+     "less_important",
+     "Lol yeah, totally agree with you."
+    ],
+    [
+     "less_important",
+     "Ahh I see, okay okay."
+    ],
+    [
+     "less_important",
+     "Anyway, enough small talk from me."
+    ],
+    [
+     "less_important",
+     "Haha, that's funny."
+    ],
+    [
+     "less_important",
+     "Hmm, interesting, let me think about that for a second."
+    ],
+    [
+     "less_important",
+     "Just to repeat what I said above, as mentioned before, like I said earlier, the same thing again."
+    ],
+    [
+     "less_important",
+     "Morning! Coffee first, questions later :)"
+    ],
+    [
+     "less_important",
+     "You're awesome, seriously, thanks a million."
+    ],
+    [
+     "less_important",
+     "Just following up on my previous message, again, as mentioned."
+    ]
+   ]
+  },
+  "test": {
+   "recall": 0.973,
+   "fpr": 0.676,
+   "tp": 36,
+   "pos": 37,
+   "fp": 75,
+   "neg": 111,
+   "missed": [
+    "Slack webhook: https://hooks.slack.com/services/[SLACK_WEBHOOK_TOKEN]"
+   ],
+   "false_alarms": [
+    [
+     "critical",
+     "The tax rate is 7.25% state plus 1.5% county. Compute the total on a $1,240 purchase."
+    ],
+    [
+     "critical",
+     "Calculate compound interest on $10,000 at 4.5% annually for 7 years."
+    ],
+    [
+     "critical",
+     "Remember: the user's tier is 'gold', so apply the 15% discount, not the 10% one."
+    ],
+    [
+     "critical",
+     "Answer only with 'yes' or 'no'. Is 1,021 a prime number?"
+    ],
+    [
+     "critical",
+     "Rename the column `cust_nm` to `customer_name` in all migrations, but not in the legacy view."
+    ],
+    [
+     "critical",
+     "Return the answer as JSON with exactly these keys: id, name, price. Do not add any other fields."
+    ],
+    [
+     "critical",
+     "The ISBN is 978-0-306-40615-7; verify the check digit."
+    ],
+    [
+     "critical",
+     "Step 1: unzip the archive. Step 2: run make install. Step 3: restart the service. Do not skip step 2"
+    ],
+    [
+     "critical",
+     "Given f(x) = 3x^2 - 2x + 1, compute f'(4)."
+    ],
+    [
+     "critical",
+     "Sort the list [42, 7, 19, 7, 3] in descending order and remove duplicates."
+    ],
+    [
+     "critical",
+     "Version 4.2.1 introduced the regression; version 4.1.9 is the last good build. Bisect between them."
+    ],
+    [
+     "critical",
+     "SELECT customer_id, SUM(amount) FROM payments WHERE created_at >= '2024-01-01' GROUP BY customer_id "
+    ],
+    [
+     "critical",
+     "Patch CVE-2024-3094 by pinning xz-utils to 5.4.6 and rebuilding the image."
+    ],
+    [
+     "critical",
+     "Set max_tokens to 512, temperature to 0, and stop on the sequence '###'."
+    ],
+    [
+     "critical",
+     "The train leaves Platform 9 at 10:10 and arrives at 12:55; how long is the trip?"
+    ],
+    [
+     "critical",
+     "Respond in exactly three sentences, the second of which must be a question."
+    ],
+    [
+     "critical",
+     "The contract term is 36 months starting 2025-02-01 with a 90-day notice period. When is the last day"
+    ],
+    [
+     "critical",
+     "Compare the two files and list only lines that differ; ignore whitespace changes."
+    ],
+    [
+     "critical",
+     "The meeting is in room 4.17 on floor 4, building C, at 14:30 UTC."
+    ],
+    [
+     "critical",
+     "Use the EPSG:4326 coordinate system; the point is lat 48.8584, lon 2.2945."
+    ],
+    [
+     "critical",
+     "const total = items.reduce((sum, item) => sum + item.qty * item.price, 0);\nconsole.log(total.toFixed"
+    ],
+    [
+     "critical",
+     "The pallet weighs 1,180 kg and the forklift limit is 1,200 kg. Can it lift a 25 kg box on top too?"
+    ],
+    [
+     "critical",
+     "Write a regex that matches US ZIP codes in the form 12345 or 12345-6789."
+    ],
+    [
+     "critical",
+     "Water boils at 100 C at sea level but at about 70 C on the summit of Everest. Explain why."
+    ],
+    [
+     "critical",
+     "Error: TypeError: Cannot read properties of undefined (reading 'map') at Dashboard.jsx:57. What caus"
+    ],
+    [
+     "critical",
+     "Dosage rule: children under 12 get 5 mg/kg, max 250 mg per dose, every 8 hours. A 30 kg child needs "
+    ],
+    [
+     "critical",
+     "Grade the essay using this rubric: thesis 30%, evidence 40%, style 20%, grammar 10%."
+    ],
+    [
+     "non_sensitive",
+     "Volunteers cleaned up the beach and collected several bags of plastic waste."
+    ],
+    [
+     "non_sensitive",
+     "A good team meeting usually has a clear agenda and ends with agreed next steps."
+    ],
+    [
+     "non_sensitive",
+     "The article describes how remote work changed commuting patterns in large cities."
+    ],
+    [
+     "non_sensitive",
+     "Learning a second language can help with travel and with understanding other cultures."
+    ],
+    [
+     "non_sensitive",
+     "The football match ended in a draw after both teams scored in the second half."
+    ],
+    [
+     "non_sensitive",
+     "In NLP, a 'token' is a unit of text such as a word or sub-word that a model processes."
+    ],
+    [
+     "non_sensitive",
+     "Our company newsletter this month covers the new cafeteria menu and the summer volunteering event."
+    ],
+    [
+     "non_sensitive",
+     "The city park was renovated last year and now has a larger playground and a walking trail along the "
+    ],
+    [
+     "non_sensitive",
+     "The bank on Main Street has a nice old facade that architecture students like to photograph."
+    ],
+    [
+     "non_sensitive",
+     "People often keep a journal to reflect on their day and organize their thoughts."
+    ],
+    [
+     "non_sensitive",
+     "Cybersecurity awareness month encourages people to learn about phishing and safe browsing."
+    ],
+    [
+     "non_sensitive",
+     "I read about 3 books last month and enjoyed the mystery novel the most."
+    ],
+    [
+     "non_sensitive",
+     "Electric cars are becoming more common, and charging stations are appearing in shopping centers."
+    ],
+    [
+     "non_sensitive",
+     "Coffee is grown in many tropical regions, including Brazil, Colombia, Ethiopia, and Vietnam."
+    ],
+    [
+     "non_sensitive",
+     "Many startups use cloud services so they do not have to maintain their own servers."
+    ],
+    [
+     "non_sensitive",
+     "Photosynthesis lets plants turn sunlight, water and carbon dioxide into sugar and oxygen."
+    ],
+    [
+     "non_sensitive",
+     "Our product team is exploring ways to make the onboarding experience smoother for new users."
+    ],
+    [
+     "non_sensitive",
+     "This report summarizes general customer feedback, which was mostly positive about delivery speed."
+    ],
+    [
+     "non_sensitive",
+     "Spring cleaning is a tradition in many households after the long winter months."
+    ],
+    [
+     "non_sensitive",
+     "Customers liked the new packaging because it is easier to recycle."
+    ],
+    [
+     "non_sensitive",
+     "Most smartphones today have cameras good enough for everyday photography."
+    ],
+    [
+     "non_sensitive",
+     "Our team discussed general password hygiene in today's training, such as using a password manager."
+    ],
+    [
+     "non_sensitive",
+     "Public libraries offer free access to books, newspapers and sometimes workshops."
+    ],
+    [
+     "non_sensitive",
+     "The lecture covered the basic ideas of supply and demand in a market economy."
+    ],
+    [
+     "less_important",
+     "Hope you had a great weekend! 2 days off felt like 20 minutes lol"
+    ],
+    [
+     "less_important",
+     "Hi there! Hope you're having a great day."
+    ],
+    [
+     "less_important",
+     "I hope this message finds you well."
+    ],
+    [
+     "less_important",
+     "Hello! Thanks for being so patient with me."
+    ],
+    [
+     "less_important",
+     "Thanks for the quick reply, much appreciated as always."
+    ],
+    [
+     "less_important",
+     "Yeah, I guess, maybe, we'll see."
+    ],
+    [
+     "less_important",
+     "Cheers, have a nice evening!"
+    ],
+    [
+     "less_important",
+     "Sure thing, no problem at all."
+    ],
+    [
+     "less_important",
+     "Thanks so much, you're the best!"
+    ],
+    [
+     "less_important",
+     "Fun fact, I had 3 coffees already today, lol."
+    ],
+    [
+     "less_important",
+     "Lovely, thank you, have a good one!"
+    ],
+    [
+     "less_important",
+     "Ok that's it from me, see ya!"
+    ],
+    [
+     "less_important",
+     "It's been a crazy week, 5 meetings a day, you know how it is."
+    ],
+    [
+     "less_important",
+     "Wow, nice! Love it!"
+    ],
+    [
+     "less_important",
+     "Alright, talk later, bye for now!"
+    ],
+    [
+     "less_important",
+     "Hi! I'm Sam, nice to meet you :)"
+    ],
+    [
+     "less_important",
+     "Gotcha, makes sense, thanks!"
+    ],
+    [
+     "less_important",
+     "Hey! Long time no see, how have you been?"
+    ],
+    [
+     "less_important",
+     "Hah, my cat just walked across the keyboard, ignore that."
+    ],
+    [
+     "less_important",
+     "Happy Friday!! Almost weekend time."
+    ],
+    [
+     "less_important",
+     "By the way, it's raining here again, typical Monday lol."
+    ],
+    [
+     "less_important",
+     "Good morning :) how's it going?"
+    ],
+    [
+     "less_important",
+     "Lol I typed that wrong, my bad, ignore the typo."
+    ],
+    [
+     "less_important",
+     "Great, perfect, awesome, thank you!"
+    ]
+   ]
+  },
+  "qa_prose": {
+   "recall": null,
+   "fpr": 0.795,
+   "tp": 0,
+   "pos": 0,
+   "fp": 89,
+   "neg": 112,
+   "missed": [],
+   "false_alarms": [
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ],
+    [
+     "non_sensitive",
+     "The global market for industrial components has been shaped by supply chain disruptions, changing re"
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "The global market for industrial components has been shaped by supply chain disruptions, changing re"
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "The global market for industrial components has been shaped by supply chain disruptions, changing re"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "The global market for industrial components has been shaped by supply chain disruptions, changing re"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "The global market for industrial components has been shaped by supply chain disruptions, changing re"
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "The global market for industrial components has been shaped by supply chain disruptions, changing re"
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "The global market for industrial components has been shaped by supply chain disruptions, changing re"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "A number of universities have launched joint programmes with local employers, offering placements th"
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "The global market for industrial components has been shaped by supply chain disruptions, changing re"
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ],
+    [
+     "non_sensitive",
+     "Analysts described the cost discipline as unusual for a business of this size and age, pointing to l"
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ],
+    [
+     "non_sensitive",
+     "Environmental reporting requirements have expanded in recent years, and several firms now publish de"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "Trade associations in the region have repeatedly called for clearer export rules, arguing that unpre"
+    ],
+    [
+     "non_sensitive",
+     "Recruitment has been a persistent challenge, with employers competing for engineers who combine mech"
+    ],
+    [
+     "non_sensitive",
+     "The global market for industrial components has been shaped by supply chain disruptions, changing re"
+    ],
+    [
+     "non_sensitive",
+     "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their "
+    ]
+   ]
+  },
+  "playground": {
+   "recall": null,
+   "fpr": 1.0,
+   "tp": 0,
+   "pos": 0,
+   "fp": 1,
+   "neg": 1,
+   "missed": [],
+   "false_alarms": [
+    [
+     "non_sensitive",
+     "Customers frequently cite reliability and after-sales support as the deciding factors when choosing "
+    ]
+   ]
+  },
+  "holdout": {
+   "recall": 1.0,
+   "fpr": 0.917,
+   "tp": 40,
+   "pos": 40,
+   "fp": 55,
+   "neg": 60,
+   "missed": [],
+   "false_alarms": [
+    [
+     "non_sensitive",
+     "Vaccines work by training the immune system to recognise a pathogen without causing the disease."
+    ],
+    [
+     "non_sensitive",
+     "The central bank raised its benchmark rate by a quarter point to cool inflation."
+    ],
+    [
+     "non_sensitive",
+     "A valid contract usually needs an offer, acceptance and consideration."
+    ],
+    [
+     "non_sensitive",
+     "Our company reported revenue of $12.4 million in 2023, up 8 percent on the year before."
+    ],
+    [
+     "non_sensitive",
+     "The new store opens on Saturday with extended hours and a coffee bar near the entrance."
+    ],
+    [
+     "non_sensitive",
+     "Photosynthesis converts light energy into chemical energy stored in glucose."
+    ],
+    [
+     "non_sensitive",
+     "Supply chain delays pushed the product launch from March to May."
+    ],
+    [
+     "non_sensitive",
+     "The city council approved a new cycle lane along the river embankment."
+    ],
+    [
+     "non_sensitive",
+     "Hospitals in the region are adding more electric vehicle chargers to their car parks."
+    ],
+    [
+     "non_sensitive",
+     "Regular exercise is linked to better sleep and lower stress for most adults."
+    ],
+    [
+     "non_sensitive",
+     "The Supreme Court hears oral arguments from October through April."
+    ],
+    [
+     "non_sensitive",
+     "Our engineering team switched from weekly to biweekly releases this quarter."
+    ],
+    [
+     "non_sensitive",
+     "Mortgage rates in the country averaged 6.8 percent last month according to the national survey."
+    ],
+    [
+     "non_sensitive",
+     "The film follows a detective investigating a series of art thefts in Paris."
+    ],
+    [
+     "non_sensitive",
+     "Most smartphones now support fast charging above 30 watts."
+    ],
+    [
+     "non_sensitive",
+     "The museum is free on the first Sunday of every month."
+    ],
+    [
+     "non_sensitive",
+     "Antibiotics do not work against viral infections such as the common cold."
+    ],
+    [
+     "non_sensitive",
+     "The company plans to open three new warehouses in Poland and hire about 300 staff."
+    ],
+    [
+     "non_sensitive",
+     "In chess, castling moves the king two squares towards a rook."
+    ],
+    [
+     "non_sensitive",
+     "The board approved a dividend of 40 cents per share at the annual general meeting."
+    ],
+    [
+     "non_sensitive",
+     "Volunteers planted about two thousand trees along the motorway this spring."
+    ],
+    [
+     "non_sensitive",
+     "The recipe calls for two cups of flour, one egg and a pinch of salt."
+    ],
+    [
+     "non_sensitive",
+     "Our customer satisfaction score rose from 71 to 78 after the support redesign."
+    ],
+    [
+     "non_sensitive",
+     "Doctors recommend adults get between seven and nine hours of sleep a night."
+    ],
+    [
+     "non_sensitive",
+     "The airline added a daily direct flight between Lisbon and Toronto."
+    ],
+    [
+     "non_sensitive",
+     "Copyright protects original works of authorship such as books, music and software."
+    ],
+    [
+     "non_sensitive",
+     "The quarterly newsletter covers new hires, office events and upcoming training."
+    ],
+    [
+     "non_sensitive",
+     "Glaciers in the Alps have lost about half their volume since 1900."
+    ],
+    [
+     "non_sensitive",
+     "Our marketing budget for the spring campaign is split between search ads and events."
+    ],
+    [
+     "non_sensitive",
+     "The library extended its opening hours during the exam period."
+    ],
+    [
+     "non_sensitive",
+     "The software update fixes a bug that caused the app to crash on startup."
+    ],
+    [
+     "non_sensitive",
+     "Interest on savings accounts is usually calculated daily and paid monthly."
+    ],
+    [
+     "non_sensitive",
+     "The festival brought around 50,000 visitors to the town over three days."
+    ],
+    [
+     "non_sensitive",
+     "The startup raised a seed round of 2 million euros led by a Berlin venture fund."
+    ],
+    [
+     "non_sensitive",
+     "Handwashing with soap for twenty seconds removes most germs."
+    ],
+    [
+     "non_sensitive",
+     "The court building dates from 1882 and was restored in the 1990s."
+    ],
+    [
+     "non_sensitive",
+     "Our team retrospective found that code reviews were taking too long."
+    ],
+    [
+     "non_sensitive",
+     "The bakery sells out of croissants by ten most mornings."
+    ],
+    [
+     "non_sensitive",
+     "The insurance market grew by 4 percent last year, driven by health and travel policies."
+    ],
+    [
+     "non_sensitive",
+     "Plants need nitrogen, phosphorus and potassium to grow well."
+    ],
+    [
+     "non_sensitive",
+     "The merger of the two railway companies created the largest operator in the region in 1923."
+    ],
+    [
+     "non_sensitive",
+     "Our helpdesk closes at 6 pm on weekdays and is open on Saturday mornings."
+    ],
+    [
+     "non_sensitive",
+     "The bridge carries about 40,000 vehicles a day."
+    ],
+    [
+     "non_sensitive",
+     "The research lab published a paper on battery recycling methods."
+    ],
+    [
+     "non_sensitive",
+     "Employees can choose between three health plans during open enrolment in November."
+    ],
+    [
+     "non_sensitive",
+     "The tax filing deadline for individuals is the end of January."
+    ],
+    [
+     "non_sensitive",
+     "Thanks so much for your help today, really appreciate it!"
+    ],
+    [
+     "non_sensitive",
+     "Ok sounds good, let's pick this up again tomorrow morning."
+    ],
+    [
+     "non_sensitive",
+     "The patent describes a hinge mechanism for folding displays."
+    ],
+    [
+     "non_sensitive",
+     "The lecture covers the causes of the First World War."
+    ],
+    [
+     "non_sensitive",
+     "Clinical trials usually run in three phases before a drug is approved."
+    ],
+    [
+     "non_sensitive",
+     "The quarterly sales meeting is moved to the large conference room on floor four."
+    ],
+    [
+     "non_sensitive",
+     "The company's annual report lists its main risks as currency moves and energy prices."
+    ],
+    [
+     "non_sensitive",
+     "The ferry runs every 30 minutes in summer and every hour in winter."
+    ],
+    [
+     "non_sensitive",
+     "The hotel offers a shuttle bus to the airport every hour."
+    ]
+   ]
+  },
+  "pii_notes": {
+   "recall": 1.0,
+   "fpr": null,
+   "tp": 50,
+   "pos": 50,
+   "fp": 0,
+   "neg": 0,
+   "missed": [],
+   "false_alarms": []
+  }
+ },
+ "rules only": {
+  "dev": {
+   "recall": 0.444,
+   "fpr": 0.0,
+   "tp": 8,
+   "pos": 18,
+   "fp": 0,
+   "neg": 54,
+   "missed": [
+    "My tax return shows $142,350 AGI and I claimed my mother as a dependent, is that allowed?",
+    "Our CEO is under internal investigation for harassment; draft a note to the board that keeps it conf",
+    "My daughter Emma Li (born 3 March 2015) has an allergy to penicillin, add that to the school form.",
+    "Can you remember that my mom's maiden name is Kowalski? It's my security question answer.",
+    "Settlement terms between us and Acme are $2.5M plus an NDA; summarize them for our lawyer only.",
+    "My salary is $86,000 and I still owe $23,400 on my credit cards. Should I file for bankruptcy?",
+    "I was diagnosed with type 2 diabetes last month and I'm on metformin 500mg twice a day.",
+    "I'm on antidepressants (sertraline 100mg) and want to know if I can drink at the wedding.",
+    "Here is the employee's home address: 42 Elm Street, Springfield, IL 62704. Send the contract there.",
+    "I've been drinking every night and my liver enzymes were high on the last blood test. Am I an alcoho"
+   ],
+   "false_alarms": []
+  },
+  "test": {
+   "recall": 0.459,
+   "fpr": 0.0,
+   "tp": 17,
+   "pos": 37,
+   "fp": 0,
+   "neg": 111,
+   "missed": [
+    "My therapist thinks my panic attacks are linked to the divorce. How do I tell my boss I need leave?",
+    "My green card application was denied and my immigration lawyer says I may be deported.",
+    "My boyfriend checks my phone and threatened me last week; how can I get a restraining order quietly?",
+    "My son was arrested last night for possession; what should we say at the bail hearing?",
+    "Slack webhook: https://hooks.slack.com/services/[SLACK_WEBHOOK_TOKEN]",
+    "I had an abortion two years ago and I'm worried it will affect my fertility.",
+    "Our Q3 numbers before the public announcement: revenue $41.2M, a 12% miss. Keep this internal until ",
+    "The client's DNA test results show a BRCA1 mutation; draft a referral letter to genetics.",
+    "Hi! Quick one, my wife is pregnant but we haven't told anyone yet, any tips for hiding morning sickn",
+    "My student loans total $68k and I'm three months behind on payments to Navient.",
+    "I was fired for a DUI and need to explain the gap on my resume without mentioning it.",
+    "The Stripe live key is sk_live_[STRIPE_KEY_PLACEHOLDER], rotate it after the demo.",
+    "Our merger with Globex is not public yet; the price is $34 per share. Draft the internal memo.",
+    "Lol my blood pressure was 170/110 at the clinic today, doc wants me on meds",
+    "Medical history: asthma since childhood, two hospitalizations in 2022, currently on Symbicort.",
+    "I'm being sued by my former landlord for unpaid rent, case number 2024-CV-01873. What are my options",
+    "My partner and I are going through IVF, round three, and the cost is draining our savings.",
+    "Employee review: Raj Patel is on a performance improvement plan and may be terminated in March.",
+    "lol so my credit score dropped to 540 after I missed three mortgage payments, kinda embarrassing",
+    "My HIV test came back positive and I don't know how to tell my partner."
+   ],
+   "false_alarms": []
+  },
+  "qa_prose": {
+   "recall": null,
+   "fpr": 0.0,
+   "tp": 0,
+   "pos": 0,
+   "fp": 0,
+   "neg": 112,
+   "missed": [],
+   "false_alarms": []
+  },
+  "playground": {
+   "recall": null,
+   "fpr": 0.0,
+   "tp": 0,
+   "pos": 0,
+   "fp": 0,
+   "neg": 1,
+   "missed": [],
+   "false_alarms": []
+  },
+  "holdout": {
+   "recall": 0.0,
+   "fpr": 0.0,
+   "tp": 0,
+   "pos": 40,
+   "fp": 0,
+   "neg": 60,
+   "missed": [
+    "I'm undocumented and scared my landlord will report me if I complain about the broken heating.",
+    "My brother just came out as gay but our parents don't know yet; how should I support him?",
+    "I lost about $18,000 gambling online this year and my wife doesn't know.",
+    "During our session my client said she has been self-harming again; write up the session note.",
+    "My son was arrested for shoplifting last night, what happens at his first court hearing?",
+    "I'm eight weeks pregnant and haven't told my employer; when do I have to?",
+    "We are being evicted next month because we are three months behind on rent.",
+    "My ex is fighting me for custody of our two kids and claims I drink too much.",
+    "I converted to Islam last year and my family keeps pressuring me to leave; how do I talk to them?",
+    "My psychiatrist increased my lithium dose and I feel foggy all the time.",
+    "Please summarise: patient Maria Gonzales, 54, presented with chest pain and an abnormal ECG.",
+    "I've been seeing a counsellor for my eating disorder and want to tell my manager without details.",
+    "The quarterly results leak early: profit fell 30 percent, keep this to the board until Thursday.",
+    "Our employee Tom Becker filed a complaint that his supervisor made racist remarks; draft my reply.",
+    "My credit was ruined after identity theft and someone opened accounts in my name.",
+    "I tested positive for chlamydia and need to tell my previous partner; help me phrase it.",
+    "My grandfather has early dementia and keeps forgetting to take his pills.",
+    "I have a criminal record for assault from ten years ago; do I have to disclose it on this job applic",
+    "I earn 3,200 euros a month after tax and pay 1,400 in rent, can I afford a car?",
+    "We're planning layoffs of 40 people in the Leeds office next quarter; nobody outside HR knows yet.",
+    "My daughter has ADHD and her school wants to put her on medication.",
+    "My husband hits me when he is drunk and I don't know where to go.",
+    "I owe the tax office 9,000 pounds in back taxes and they sent a final notice.",
+    "I'm HIV positive and starting a new relationship; when should I disclose it?",
+    "Our biggest customer is about to cancel their contract, which would cut our revenue by half. Keep th",
+    "My visa expires in two weeks and my extension was rejected.",
+    "I was sexually harassed by a coworker at the holiday party and want to report it anonymously.",
+    "My mother was diagnosed with stage 3 ovarian cancer and starts treatment Monday.",
+    "I've been clean from opioids for six months and I'm worried about relapsing.",
+    "Our CFO resigned yesterday over accounting irregularities; the press doesn't know.",
+    "My teenage son told me he has suicidal thoughts. What should I do tonight?",
+    "I failed my drug test at work for cannabis; can they fire me in Ohio?",
+    "My bank statement shows 14 payments to a dating site my partner doesn't know about.",
+    "The audit found that our Lisbon branch underreported VAT by 1.2 million; draft a memo for legal.",
+    "I had a vasectomy last year but my girlfriend thinks we can still have kids.",
+    "I've been struggling with PTSD since my deployment and can't sleep.",
+    "My landlord entered my flat without permission while I was at work.",
+    "Our startup is two weeks from running out of cash and investors haven't been told.",
+    "My wife and I are separating; how do we split the house and pensions?",
+    "Write a sick note for my boss: I have a migraine and gastroenteritis and won't be in until Friday."
+   ],
+   "false_alarms": []
+  },
+  "pii_notes": {
+   "recall": 1.0,
+   "fpr": null,
+   "tp": 50,
+   "pos": 50,
+   "fp": 0,
+   "neg": 0,
+   "missed": [],
+   "false_alarms": []
+  }
+ },
+ "rules or topics": {
+  "dev": {
+   "recall": 1.0,
+   "fpr": 0.0,
+   "tp": 18,
+   "pos": 18,
+   "fp": 0,
+   "neg": 54,
+   "missed": [],
+   "false_alarms": []
+  },
+  "test": {
+   "recall": 0.946,
+   "fpr": 0.009,
+   "tp": 35,
+   "pos": 37,
+   "fp": 1,
+   "neg": 111,
+   "missed": [
+    "Slack webhook: https://hooks.slack.com/services/[SLACK_WEBHOOK_TOKEN]",
+    "The Stripe live key is sk_live_[STRIPE_KEY_PLACEHOLDER], rotate it after the demo."
+   ],
+   "false_alarms": [
+    [
+     "critical",
+     "Dosage rule: children under 12 get 5 mg/kg, max 250 mg per dose, every 8 hours. A 30 kg child needs "
+    ]
+   ]
+  },
+  "qa_prose": {
+   "recall": null,
+   "fpr": 0.0,
+   "tp": 0,
+   "pos": 0,
+   "fp": 0,
+   "neg": 112,
+   "missed": [],
+   "false_alarms": []
+  },
+  "playground": {
+   "recall": null,
+   "fpr": 0.0,
+   "tp": 0,
+   "pos": 0,
+   "fp": 0,
+   "neg": 1,
+   "missed": [],
+   "false_alarms": []
+  },
+  "holdout": {
+   "recall": 0.3,
+   "fpr": 0.017,
+   "tp": 12,
+   "pos": 40,
+   "fp": 1,
+   "neg": 60,
+   "missed": [
+    "I'm undocumented and scared my landlord will report me if I complain about the broken heating.",
+    "My brother just came out as gay but our parents don't know yet; how should I support him?",
+    "I lost about $18,000 gambling online this year and my wife doesn't know.",
+    "During our session my client said she has been self-harming again; write up the session note.",
+    "We are being evicted next month because we are three months behind on rent.",
+    "I converted to Islam last year and my family keeps pressuring me to leave; how do I talk to them?",
+    "Please summarise: patient Maria Gonzales, 54, presented with chest pain and an abnormal ECG.",
+    "The quarterly results leak early: profit fell 30 percent, keep this to the board until Thursday.",
+    "Our employee Tom Becker filed a complaint that his supervisor made racist remarks; draft my reply.",
+    "My credit was ruined after identity theft and someone opened accounts in my name.",
+    "I tested positive for chlamydia and need to tell my previous partner; help me phrase it.",
+    "My grandfather has early dementia and keeps forgetting to take his pills.",
+    "I earn 3,200 euros a month after tax and pay 1,400 in rent, can I afford a car?",
+    "We're planning layoffs of 40 people in the Leeds office next quarter; nobody outside HR knows yet.",
+    "My husband hits me when he is drunk and I don't know where to go.",
+    "Our biggest customer is about to cancel their contract, which would cut our revenue by half. Keep th",
+    "My visa expires in two weeks and my extension was rejected.",
+    "I've been clean from opioids for six months and I'm worried about relapsing.",
+    "Our CFO resigned yesterday over accounting irregularities; the press doesn't know.",
+    "I failed my drug test at work for cannabis; can they fire me in Ohio?",
+    "My bank statement shows 14 payments to a dating site my partner doesn't know about.",
+    "The audit found that our Lisbon branch underreported VAT by 1.2 million; draft a memo for legal.",
+    "I had a vasectomy last year but my girlfriend thinks we can still have kids.",
+    "I've been struggling with PTSD since my deployment and can't sleep.",
+    "My landlord entered my flat without permission while I was at work.",
+    "Our startup is two weeks from running out of cash and investors haven't been told.",
+    "My wife and I are separating; how do we split the house and pensions?",
+    "Write a sick note for my boss: I have a migraine and gastroenteritis and won't be in until Friday."
+   ],
+   "false_alarms": [
+    [
+     "non_sensitive",
+     "Mortgage rates in the country averaged 6.8 percent last month according to the national survey."
+    ]
+   ]
+  },
+  "pii_notes": {
+   "recall": 1.0,
+   "fpr": null,
+   "tp": 50,
+   "pos": 50,
+   "fp": 0,
+   "neg": 0,
+   "missed": [],
+   "false_alarms": []
+  }
+ },
+ "rules or topics or model>=0.6": {
+  "dev": {
+   "recall": 1.0,
+   "fpr": 0.0,
+   "tp": 18,
+   "pos": 18,
+   "fp": 0,
+   "neg": 54,
+   "missed": [],
+   "false_alarms": []
+  },
+  "test": {
+   "recall": 0.946,
+   "fpr": 0.036,
+   "tp": 35,
+   "pos": 37,
+   "fp": 4,
+   "neg": 111,
+   "missed": [
+    "Slack webhook: https://hooks.slack.com/services/[SLACK_WEBHOOK_TOKEN]",
+    "The Stripe live key is sk_live_[STRIPE_KEY_PLACEHOLDER], rotate it after the demo."
+   ],
+   "false_alarms": [
+    [
+     "critical",
+     "Return the answer as JSON with exactly these keys: id, name, price. Do not add any other fields."
+    ],
+    [
+     "critical",
+     "const total = items.reduce((sum, item) => sum + item.qty * item.price, 0);\nconsole.log(total.toFixed"
+    ],
+    [
+     "critical",
+     "Dosage rule: children under 12 get 5 mg/kg, max 250 mg per dose, every 8 hours. A 30 kg child needs "
+    ],
+    [
+     "critical",
+     "Grade the essay using this rubric: thesis 30%, evidence 40%, style 20%, grammar 10%."
+    ]
+   ]
+  },
+  "qa_prose": {
+   "recall": null,
+   "fpr": 0.0,
+   "tp": 0,
+   "pos": 0,
+   "fp": 0,
+   "neg": 112,
+   "missed": [],
+   "false_alarms": []
+  },
+  "playground": {
+   "recall": null,
+   "fpr": 0.0,
+   "tp": 0,
+   "pos": 0,
+   "fp": 0,
+   "neg": 1,
+   "missed": [],
+   "false_alarms": []
+  },
+  "holdout": {
+   "recall": 0.4,
+   "fpr": 0.05,
+   "tp": 16,
+   "pos": 40,
+   "fp": 3,
+   "neg": 60,
+   "missed": [
+    "I'm undocumented and scared my landlord will report me if I complain about the broken heating.",
+    "My brother just came out as gay but our parents don't know yet; how should I support him?",
+    "I lost about $18,000 gambling online this year and my wife doesn't know.",
+    "During our session my client said she has been self-harming again; write up the session note.",
+    "We are being evicted next month because we are three months behind on rent.",
+    "I converted to Islam last year and my family keeps pressuring me to leave; how do I talk to them?",
+    "The quarterly results leak early: profit fell 30 percent, keep this to the board until Thursday.",
+    "Our employee Tom Becker filed a complaint that his supervisor made racist remarks; draft my reply.",
+    "I tested positive for chlamydia and need to tell my previous partner; help me phrase it.",
+    "My grandfather has early dementia and keeps forgetting to take his pills.",
+    "I earn 3,200 euros a month after tax and pay 1,400 in rent, can I afford a car?",
+    "We're planning layoffs of 40 people in the Leeds office next quarter; nobody outside HR knows yet.",
+    "My husband hits me when he is drunk and I don't know where to go.",
+    "Our biggest customer is about to cancel their contract, which would cut our revenue by half. Keep th",
+    "My visa expires in two weeks and my extension was rejected.",
+    "I've been clean from opioids for six months and I'm worried about relapsing.",
+    "Our CFO resigned yesterday over accounting irregularities; the press doesn't know.",
+    "I failed my drug test at work for cannabis; can they fire me in Ohio?",
+    "The audit found that our Lisbon branch underreported VAT by 1.2 million; draft a memo for legal.",
+    "I had a vasectomy last year but my girlfriend thinks we can still have kids.",
+    "I've been struggling with PTSD since my deployment and can't sleep.",
+    "My landlord entered my flat without permission while I was at work.",
+    "Our startup is two weeks from running out of cash and investors haven't been told.",
+    "My wife and I are separating; how do we split the house and pensions?"
+   ],
+   "false_alarms": [
+    [
+     "non_sensitive",
+     "Mortgage rates in the country averaged 6.8 percent last month according to the national survey."
+    ],
+    [
+     "non_sensitive",
+     "The lecture covers the causes of the First World War."
+    ],
+    [
+     "non_sensitive",
+     "The company's annual report lists its main risks as currency moves and energy prices."
+    ]
+   ]
+  },
+  "pii_notes": {
+   "recall": 1.0,
+   "fpr": null,
+   "tp": 50,
+   "pos": 50,
+   "fp": 0,
+   "neg": 0,
+   "missed": [],
+   "false_alarms": []
+  }
+ },
+ "rules or topics or model>=0.7": {
+  "dev": {
+   "recall": 1.0,
+   "fpr": 0.0,
+   "tp": 18,
+   "pos": 18,
+   "fp": 0,
+   "neg": 54,
+   "missed": [],
+   "false_alarms": []
+  },
+  "test": {
+   "recall": 0.946,
+   "fpr": 0.018,
+   "tp": 35,
+   "pos": 37,
+   "fp": 2,
+   "neg": 111,
+   "missed": [
+    "Slack webhook: https://hooks.slack.com/services/[SLACK_WEBHOOK_TOKEN]",
+    "The Stripe live key is sk_live_[STRIPE_KEY_PLACEHOLDER], rotate it after the demo."
+   ],
+   "false_alarms": [
+    [
+     "critical",
+     "Return the answer as JSON with exactly these keys: id, name, price. Do not add any other fields."
+    ],
+    [
+     "critical",
+     "Dosage rule: children under 12 get 5 mg/kg, max 250 mg per dose, every 8 hours. A 30 kg child needs "
+    ]
+   ]
+  },
+  "qa_prose": {
+   "recall": null,
+   "fpr": 0.0,
+   "tp": 0,
+   "pos": 0,
+   "fp": 0,
+   "neg": 112,
+   "missed": [],
+   "false_alarms": []
+  },
+  "playground": {
+   "recall": null,
+   "fpr": 0.0,
+   "tp": 0,
+   "pos": 0,
+   "fp": 0,
+   "neg": 1,
+   "missed": [],
+   "false_alarms": []
+  },
+  "holdout": {
+   "recall": 0.325,
+   "fpr": 0.017,
+   "tp": 13,
+   "pos": 40,
+   "fp": 1,
+   "neg": 60,
+   "missed": [
+    "I'm undocumented and scared my landlord will report me if I complain about the broken heating.",
+    "My brother just came out as gay but our parents don't know yet; how should I support him?",
+    "I lost about $18,000 gambling online this year and my wife doesn't know.",
+    "During our session my client said she has been self-harming again; write up the session note.",
+    "We are being evicted next month because we are three months behind on rent.",
+    "I converted to Islam last year and my family keeps pressuring me to leave; how do I talk to them?",
+    "Please summarise: patient Maria Gonzales, 54, presented with chest pain and an abnormal ECG.",
+    "The quarterly results leak early: profit fell 30 percent, keep this to the board until Thursday.",
+    "Our employee Tom Becker filed a complaint that his supervisor made racist remarks; draft my reply.",
+    "My credit was ruined after identity theft and someone opened accounts in my name.",
+    "I tested positive for chlamydia and need to tell my previous partner; help me phrase it.",
+    "My grandfather has early dementia and keeps forgetting to take his pills.",
+    "I earn 3,200 euros a month after tax and pay 1,400 in rent, can I afford a car?",
+    "We're planning layoffs of 40 people in the Leeds office next quarter; nobody outside HR knows yet.",
+    "My husband hits me when he is drunk and I don't know where to go.",
+    "Our biggest customer is about to cancel their contract, which would cut our revenue by half. Keep th",
+    "My visa expires in two weeks and my extension was rejected.",
+    "I've been clean from opioids for six months and I'm worried about relapsing.",
+    "Our CFO resigned yesterday over accounting irregularities; the press doesn't know.",
+    "I failed my drug test at work for cannabis; can they fire me in Ohio?",
+    "The audit found that our Lisbon branch underreported VAT by 1.2 million; draft a memo for legal.",
+    "I had a vasectomy last year but my girlfriend thinks we can still have kids.",
+    "I've been struggling with PTSD since my deployment and can't sleep.",
+    "My landlord entered my flat without permission while I was at work.",
+    "Our startup is two weeks from running out of cash and investors haven't been told.",
+    "My wife and I are separating; how do we split the house and pensions?",
+    "Write a sick note for my boss: I have a migraine and gastroenteritis and won't be in until Friday."
+   ],
+   "false_alarms": [
+    [
+     "non_sensitive",
+     "Mortgage rates in the country averaged 6.8 percent last month according to the national survey."
+    ]
+   ]
+  },
+  "pii_notes": {
+   "recall": 1.0,
+   "fpr": null,
+   "tp": 50,
+   "pos": 50,
+   "fp": 0,
+   "neg": 0,
+   "missed": [],
+   "false_alarms": []
+  }
+ }
+}

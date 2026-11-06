@@ -55,7 +55,7 @@ span hooks in `../prompt_compression/pipeline.py`.
 .venv-compression/Scripts/python monitoring/scripts/verify_observability.py
 ```
 
-Sends one request per category (sensitive, critical, non_sensitive, less_important) plus a streaming
+Sends one request per prompt type (the names are historical: sensitive, critical, non_sensitive, less_important) plus a streaming
 one to `obs-priced-llama` (local Ollama `llama3.2:3b` with TEST prices), then checks each backend.
 Last run: `results/verification.txt` (all checks passed).
 
@@ -92,5 +92,5 @@ difference is below LLMLingua's run-to-run variance (hundreds of ms on this CPU)
 - **Jaeger pinned to 2.20.0**: 2.21+ dropped the legacy `/api/services` API that Grafana 13.2.5's
   Jaeger datasource uses. Jaeger storage is in memory (dev).
 - **Langfuse shows the generation span only**: pipeline spans go to Jaeger; Langfuse gets the
-  category as a trace tag (`prompt_category:<label>`), plus hashed user, session and usage/cost.
+  category as a trace tag (`prompt_category:<sensitive|general>`), plus hashed user, session and usage/cost.
 - On Windows, scripts use `127.0.0.1`: `localhost` costs ~2 s per request in Python while IPv6 `::1` times out.

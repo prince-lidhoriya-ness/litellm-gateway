@@ -1,4 +1,8 @@
-"""LiteLLM proxy hook: classify -> route -> compress every chat/completions request.
+"""LiteLLM proxy hook: gate -> segment and classify -> route -> actions -> reassemble, for every chat/completions request.
+
+This file is the gate (opt-out, size, timeout) and the "Fail open" branch: any timeout or pipeline error sends the
+original prompt (or rejects the request with HTTP 503 when PROMPT_COMPRESSION_FAIL_MODE=closed). The stages after the
+gate are in pipeline.py.
 
 Registered in config.yaml as
     litellm_settings:
@@ -28,6 +32,8 @@ if _GATEWAY_DIR not in sys.path:
 from fastapi import HTTPException  # noqa: E402
 from litellm.integrations.custom_logger import CustomLogger  # noqa: E402
 
+from prompt_compression import gate  # noqa: E402
+from prompt_compression.gate import CHAT_CALL_TYPES, METADATA_KEY  # noqa: E402,F401  (re-exported for observability)
 from prompt_compression.pipeline import PromptPipeline  # noqa: E402
 from prompt_compression.settings import PipelineSettings  # noqa: E402
 
@@ -38,24 +44,6 @@ if not logger.handlers:
     logger.addHandler(_handler)
     logger.setLevel(os.getenv("PROMPT_COMPRESSION_LOG_LEVEL", "INFO").upper())
     logger.propagate = False
-
-CHAT_CALL_TYPES = frozenset({"completion", "acompletion"})
-METADATA_KEY = "prompt_compression"
-
-
-def _metadata_dicts(data: dict) -> list[dict]:
-    return [data[key] for key in ("metadata", "litellm_metadata") if isinstance(data.get(key), dict)]
-
-
-def _opted_out(data: dict) -> bool:
-    """Per-request opt-out: metadata {"prompt_compression": false} or {"disable_prompt_compression": true}."""
-    for metadata in _metadata_dicts(data):
-        if metadata.get(METADATA_KEY) is False or str(metadata.get(METADATA_KEY)).lower() == "false":
-            return True
-        if metadata.get("disable_prompt_compression") in (True, "true", "True"):
-            return True
-    return False
-
 
 def _write_metadata(data: dict, summary: dict) -> None:
     key = "litellm_metadata" if "litellm_metadata" in data and "metadata" not in data else "metadata"
@@ -108,13 +96,12 @@ class PromptCompressionCallback(CustomLogger):
         return data
 
     async def async_pre_call_hook(self, user_api_key_dict, cache, data: dict, call_type):
-        if call_type not in CHAT_CALL_TYPES or not isinstance(data.get("messages"), list):
-            return data
-        if not self.settings.enabled:
-            return data
-        if _opted_out(data):
-            _write_metadata(data, {"status": "skipped", "reason": "request_opt_out"})
-            logger.info("prompt compression skipped: per-request opt-out")
+        # Stage 1, the gate: disabled, not a chat call, per-request opt-out, too few tokens.
+        decision = gate.check(data, call_type, self.settings)
+        if not decision.allow:
+            if not decision.silent:
+                _write_metadata(data, {"status": "skipped", "reason": decision.reason})
+                logger.info("prompt compression skipped: %s", decision.reason)
             return data
 
         pipeline = self._build_pipeline(load=False)
@@ -130,12 +117,17 @@ class PromptCompressionCallback(CustomLogger):
         except Exception as exc:
             return self._fail(data, "pipeline error", exc)
 
-        summary = {"status": "ok", **report.as_metadata()}
-        data["messages"] = new_messages
+        # Shadow mode runs the whole pipeline and reports what it would have sent, but the provider gets the original
+        # prompt. tokens_after in the summary is then the hypothetical figure, and status is "shadow", not "ok".
+        shadow = self.settings.mode == "shadow"
+        summary = {"status": "shadow" if shadow else "ok", **report.as_metadata()}
+        if not shadow:
+            data["messages"] = new_messages
         _write_metadata(data, summary)
         logger.info(
-            "prompt compression: category=%s tokens_before=%d tokens_after=%d ratio=%.3f elapsed_ms=%.1f "
+            "prompt compression%s: category=%s tokens_before=%d tokens_after=%d ratio=%.3f elapsed_ms=%.1f "
             "classifier=%s messages=%s",
+            " (shadow, original sent)" if shadow else "",
             report.request_category, report.tokens_before, report.tokens_after, report.ratio, report.elapsed_ms,
             report.classifier_model,
             [

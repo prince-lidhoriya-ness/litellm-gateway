@@ -1,0 +1,197 @@
+{
+ "dev_items": 30,
+ "grid": {
+  "ll2@0.6": {
+   "model": "ll2",
+   "requested_rate": 0.6,
+   "achieved_ratio": 1.3528057869355545,
+   "mean_wall_s": 1.628366059999856,
+   "by_family": {
+    "qa": 1.6759036144578314,
+    "logs": 1.2394257882594206,
+    "code": 1.3264103283749649
+   }
+  },
+  "ll2@0.5": {
+   "model": "ll2",
+   "requested_rate": 0.5,
+   "achieved_ratio": 1.6011155791931508,
+   "mean_wall_s": 2.1583684466666453,
+   "by_family": {
+    "qa": 1.9772565742714996,
+    "logs": 1.4506450645064506,
+    "code": 1.5917817446951836
+   }
+  },
+  "ll2@0.4": {
+   "model": "ll2",
+   "requested_rate": 0.4,
+   "achieved_ratio": 1.9774110861903236,
+   "mean_wall_s": 2.5473937000000055,
+   "by_family": {
+    "qa": 2.3757472245943636,
+    "logs": 1.7907407407407407,
+    "code": 1.9932517924926192
+   }
+  },
+  "ll2@0.33": {
+   "model": "ll2",
+   "requested_rate": 0.33,
+   "achieved_ratio": 2.3865042536736274,
+   "mean_wall_s": 3.062363826666539,
+   "by_family": {
+    "qa": 2.7931726907630523,
+    "logs": 2.1789094186570526,
+    "code": 2.4149207971384774
+   }
+  },
+  "ll2@0.28": {
+   "model": "ll2",
+   "requested_rate": 0.28,
+   "achieved_ratio": 2.7780778753094757,
+   "mean_wall_s": 1.3731812800000625,
+   "by_family": {
+    "qa": 3.172177879133409,
+    "logs": 2.547418335089568,
+    "code": 2.8333333333333335
+   }
+  },
+  "ll2@0.22": {
+   "model": "ll2",
+   "requested_rate": 0.22,
+   "achieved_ratio": 3.496600566572238,
+   "mean_wall_s": 2.7699931333333554,
+   "by_family": {
+    "qa": 3.890909090909091,
+    "logs": 3.2211858760826115,
+    "code": 3.5966514459665144
+   }
+  },
+  "ll2@0.15": {
+   "model": "ll2",
+   "requested_rate": 0.15,
+   "achieved_ratio": 4.99918995544755,
+   "mean_wall_s": 1.5829526399999243,
+   "by_family": {
+    "qa": 5.190298507462686,
+    "logs": 4.644572526416907,
+    "code": 5.298206278026906
+   }
+  },
+  "ll1@0.5": {
+   "model": "ll1",
+   "requested_rate": 0.5,
+   "achieved_ratio": 1.8108861502347418,
+   "mean_wall_s": 5.68865151000003,
+   "by_family": {
+    "qa": 1.973049645390071,
+    "logs": 2.086750107898144,
+    "code": 1.529944966008417
+   }
+  },
+  "ll1@0.4": {
+   "model": "ll1",
+   "requested_rate": 0.4,
+   "achieved_ratio": 2.107033117104814,
+   "mean_wall_s": 3.8567291199999696,
+   "by_family": {
+    "qa": 2.3476793248945147,
+    "logs": 2.4468623481781377,
+    "code": 1.7523173896922506
+   }
+  },
+  "ll1@0.3": {
+   "model": "ll1",
+   "requested_rate": 0.3,
+   "achieved_ratio": 2.419247353978832,
+   "mean_wall_s": 3.864410343333475,
+   "by_family": {
+    "qa": 2.8650875386199792,
+    "logs": 2.5745473908413206,
+    "code": 2.0976475810031068
+   }
+  },
+  "ll1@0.25": {
+   "model": "ll1",
+   "requested_rate": 0.25,
+   "achieved_ratio": 2.6515574650912996,
+   "mean_wall_s": 4.3025992599999885,
+   "by_family": {
+    "qa": 3.175799086757991,
+    "logs": 2.8175990675990676,
+    "code": 2.290838584585555
+   }
+  },
+  "ll1@0.2": {
+   "model": "ll1",
+   "requested_rate": 0.2,
+   "achieved_ratio": 3.0469019995062947,
+   "mean_wall_s": 3.413642463333478,
+   "by_family": {
+    "qa": 3.612987012987013,
+    "logs": 3.071791613722999,
+    "code": 2.7685998828353835
+   }
+  },
+  "ll1@0.15": {
+   "model": "ll1",
+   "requested_rate": 0.15,
+   "achieved_ratio": 3.6966157532195267,
+   "mean_wall_s": 4.01038394666654,
+   "by_family": {
+    "qa": 4.240853658536586,
+    "logs": 3.7891849529780566,
+    "code": 3.358919687277896
+   }
+  },
+  "ll1@0.1": {
+   "model": "ll1",
+   "requested_rate": 0.1,
+   "achieved_ratio": 5.125830564784053,
+   "mean_wall_s": 5.387020526666674,
+   "by_family": {
+    "qa": 5.104587155963303,
+    "logs": 5.100210970464135,
+    "code": 5.165027322404372
+   }
+  }
+ },
+ "chosen": {
+  "ll2_2x": 0.4,
+  "ll2_3x": 0.28,
+  "ll1_2x": 0.4
+ },
+ "env": {
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+  "logical_cpus": 8,
+  "ram_gb": 31.6,
+  "torch": "2.15.0+cpu",
+  "torch_threads": 4,
+  "transformers": "4.46.3",
+  "llmlingua": "0.2.2",
+  "sklearn": "1.9.1",
+  "numpy": "2.5.4",
+  "tiktoken": "0.14.0",
+  "ll2_model": "microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
+  "gpt2_path": "C:\\Users\\P7120489\\.cache\\huggingface\\hub\\models--openai-community--gpt2\\snapshots\\607a30d783dfa663caf39e06633721c8d4cfcd7e"
+ },
+ "load": {
+  "ll2": {
+   "load_wall_s": 3.4383085999998,
+   "load_cpu_s": 3.34375,
+   "rss_delta_mb": 103.1796875
+  },
+  "ll1": {
+   "load_wall_s": 0.5279636999994182,
+   "load_cpu_s": 1.203125,
+   "rss_delta_mb": 25.65234375
+  },
+  "sc": {
+   "load_wall_s": 0.5137605999998414,
+   "load_cpu_s": 1.453125,
+   "rss_delta_mb": 497.08203125
+  }
+ }
+}

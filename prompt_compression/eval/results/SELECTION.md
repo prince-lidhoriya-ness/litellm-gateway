@@ -1,5 +1,12 @@
 # Classifier selection (2026-11-03)
 
+> **Superseded in part (2026-11-06).** This record selects the NLI checkpoint as a four-way importance classifier
+> (`sensitive`, `critical`, `non_sensitive`, `less_important`), and its "production classifier" and `critical`-fallback
+> figures describe a design that has been removed: the pipeline no longer routes on importance labels. It now uses only
+> the model's probability for "sensitive", compared with `SENSITIVITY_THRESHOLD`. How well that decision works is measured
+> by `eval/sensitivity_eval.py` (`sensitivity_dev.md`, `sensitivity_test.md`). The checkpoint comparison below is still
+> the basis for choosing the model.
+
 Hardware: Intel Core i7-10610U (4 cores, 1.8 GHz), 32 GB RAM, CPU only, torch 2.15.0+cpu,
 transformers 5.20.1, Python 3.12.10. One benchmark process at a time; latency is per prompt
 (all 4 label hypotheses in one batched forward pass), after 3 warm-up calls. Models run in float32.

@@ -33,8 +33,9 @@ from observability import metrics as m  # noqa: E402
 from observability.logs import configure_logging, event, request_id_var  # noqa: E402
 from observability.privacy import fingerprint, hash_id, scrub  # noqa: E402
 from observability.settings import ObservabilitySettings  # noqa: E402
-from prompt_compression.labels import LESS_IMPORTANT, NON_SENSITIVE  # noqa: E402
-from prompt_compression.pipeline import _text_parts, count_tokens  # noqa: E402
+from prompt_compression.pipeline import _text_parts  # noqa: E402
+from prompt_compression.sensitivity import GENERAL_CATEGORY  # noqa: E402
+from prompt_compression.texts import count_tokens  # noqa: E402
 from prompt_compression.prompt_compression_callback import (  # noqa: E402
     CHAT_CALL_TYPES,
     METADATA_KEY,
@@ -45,8 +46,8 @@ logger = logging.getLogger("observability")
 tracer = trace.get_tracer("observability")
 
 # Only these categories may ever have text attached, and only with OBS_CAPTURE_TEXT=true.
-TEXT_CAPTURE_LABELS = frozenset({NON_SENSITIVE, LESS_IMPORTANT})
-MODEL_SOURCES = frozenset({"model", "fallback_low_confidence"})
+TEXT_CAPTURE_LABELS = frozenset({GENERAL_CATEGORY})
+MODEL_SOURCES = frozenset({"model"})
 
 
 def failure_reason(error: str) -> str:
@@ -94,7 +95,7 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
         pipeline = super()._build_pipeline(load=False)
         if load and pipeline is not None:
             # Same loads as the parent, timed per component.
-            for component, target in (("classifier", pipeline.classifier), ("compressor", pipeline.compressor)):
+            for component, target in (("classifier", pipeline.detector), ("compressor", pipeline.compressor)):
                 started = time.perf_counter()
                 try:
                     target.load()
@@ -191,8 +192,9 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
             span.add_event("prompt_compression.fail_open", {"reason": reason})
             attributes["prompt.failure_reason"] = reason
             event(logger, "prompt_pipeline.fail_open", logging.WARNING, reason=reason, **log_fields)
-        elif status == "ok":
-            self._record_ok(summary, model, category, originals, data["messages"], attributes, log_fields)
+        elif status in ("ok", "shadow"):
+            self._record_ok(summary, model, category, originals, data["messages"], attributes, log_fields,
+                            applied=status == "ok")
 
         span.set_attributes(attributes)
         self._attribute_in_langfuse(metadata, category, user_hash, attributes)
@@ -200,14 +202,19 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
             event(logger, "prompt_pipeline.completed", **log_fields)
 
     def _record_ok(self, summary: dict, model: str, category: str, originals: dict, new_messages: list,
-                   attributes: dict, log_fields: dict) -> None:
+                   attributes: dict, log_fields: dict, applied: bool = True) -> None:
+        # applied=False is shadow mode: the pipeline ran but the provider got the original prompt, so the token
+        # figures are what compression *would* have saved and go to their own counter.
         before = int(summary.get("tokens_before") or 0)
         after = int(summary.get("tokens_after") or 0)
         ratio = float(summary.get("compression_ratio") or 1.0)
-        m.TOKENS_BEFORE.labels(model, category).inc(before)
-        m.TOKENS_AFTER.labels(model, category).inc(after)
-        m.TOKENS_SAVED.labels(model, category).inc(max(0, before - after))
-        m.COMPRESSION_RATIO.labels(category).observe(ratio)
+        if applied:
+            m.TOKENS_BEFORE.labels(model, category).inc(before)
+            m.TOKENS_AFTER.labels(model, category).inc(after)
+            m.TOKENS_SAVED.labels(model, category).inc(max(0, before - after))
+            m.COMPRESSION_RATIO.labels(category).observe(ratio)
+        else:
+            m.SHADOW_TOKENS_SAVED.labels(model, category).inc(max(0, before - after))
 
         classify_seconds = compress_seconds = 0.0
         for message in summary.get("messages") or []:
@@ -238,8 +245,10 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
             attributes[f"prompt.message.{index}.chars"] = len(text)
             attributes[f"prompt.message.{index}.tokens_before"] = int(message.get("tokens_before") or count_tokens(text))
             attributes[f"prompt.message.{index}.tokens_after"] = int(message.get("tokens_after") or 0)
-            if self.obs.capture_text and label in TEXT_CAPTURE_LABELS:
-                after_text = "\n".join(t for _, t in _text_parts(new_messages[index]))
+            # `index` is the message's position in the original request; history trimming can shift it in the result.
+            result_index = message.get("new_index", index)
+            if applied and self.obs.capture_text and label in TEXT_CAPTURE_LABELS and result_index < len(new_messages):
+                after_text = "\n".join(t for _, t in _text_parts(new_messages[result_index]))
                 attributes[f"prompt.message.{index}.text_before"] = scrub(text)
                 attributes[f"prompt.message.{index}.text_after"] = scrub(after_text)
 

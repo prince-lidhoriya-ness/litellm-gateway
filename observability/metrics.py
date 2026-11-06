@@ -46,6 +46,10 @@ TOKENS_AFTER = Counter(
 TOKENS_SAVED = Counter(
     "prompt_pipeline_tokens_saved", "Prompt tokens removed by compression.", ["model", "label"],
 )
+SHADOW_TOKENS_SAVED = Counter(
+    "prompt_pipeline_shadow_tokens_saved",
+    "Tokens compression would have removed in shadow mode (the original prompt was sent).", ["model", "label"],
+)
 COMPRESSION_RATIO = Histogram(
     "prompt_pipeline_compression_ratio", "tokens_before / tokens_after per request.", ["label"],
     buckets=(1.0, 1.1, 1.25, 1.5, 2.0, 3.0, 4.0, 6.0, 10.0),

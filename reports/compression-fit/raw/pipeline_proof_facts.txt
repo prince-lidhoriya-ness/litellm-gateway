@@ -1,0 +1,28 @@
+# lines copied from reports/pipeline-proof/REPORT.md (prior local run R1 on this machine), with their line numbers
+(copy-line 1) 
+(copy-line 2) | Stage | Fit | Note |
+(copy-line 3) |---|---|---|
+(copy-line 4) | Classifier | 0.058 s + 3.21 ms/token | reaches the 10 s budget at about 3,095 tokens |
+(copy-line 5) | Compressor, non_sensitive | 0.43 s + 1.71 ms/token | |
+(copy-line 6) | Compressor, less_important | 0.47 s + 1.55 ms/token | |
+(copy-line 7) 
+(copy-line 8) ### 6.4 Break-even
+(copy-line 9) 
+(copy-line 10) Model in `scripts/analyze.py` (`break_even`): pipeline cost = classifier(N) + compressor(N), compared with the provider prefill time saved.
+(copy-line 11) 
+(copy-line 12) **Uncached prefill rate** of llama3.2:3b on this CPU (`raw/bench_prefill_R1.jsonl`, 15 runs, 131–1,762 tokens):
+(copy-line 13) - median 29.7 ms per token;
+(copy-line 14) - fit 32.5 ms per token.
+(copy-line 15) 
+(copy-line 16) When Ollama has the prompt cached, prefill is close to zero: the median TTFT for E2-01 (1,433 tokens) was 0.45 s across the warm benchmark runs, against about 43 s uncached at the median rate of 29.7 ms per token.
+(copy-line 17) 
+(copy-line 18) | Label | Net saving, uncached | Break-even, uncached | Break-even, cached | Upper limit |
+(copy-line 19) |---|---|---|---|---|
+(copy-line 20) | less_important (ratio 0.25) | 19.7 ms per token | about 27 tokens | none | about 3,095 tokens (10 s budget) |
+(copy-line 21) | non_sensitive (ratio 0.54) | 10.1 ms per token | about 48 tokens | none | about 3,095 tokens |
+(copy-line 22) 
+(copy-line 23) The 200-character minimum (about 50 tokens) sits at or above both break-even points, so the practical window is about 50–3,100 tokens. That holds only for prompts the provider hasn't cached, and only when the classifier labels them compressible.
+(copy-line 24) 
+(copy-line 25) The classifier's 3.2 ms per token is paid on every request, including the 70% that fall back to `critical` and the protected ones that save nothing. On this suite, the result is a net loss (§6.3).
+(copy-line 26) 
+(copy-line 27) The cost break-even at test prices is about 42 tokens (non_sensitive) and 23 tokens (less_important). At LiteLLM's real Ollama price of $0, there is no cost break-even.

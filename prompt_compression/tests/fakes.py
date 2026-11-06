@@ -1,10 +1,11 @@
-"""Test doubles for the transformers pipeline, the classifier and LLMLingua."""
+"""Test doubles for the transformers pipeline, the sensitivity detector and LLMLingua."""
 
 import re
 
-from prompt_compression.classifier import ClassificationResult, ClassifierUnavailable
+from prompt_compression import rules
 from prompt_compression.compressor_adapter import CompressionOutput
-from prompt_compression.pipeline import count_tokens
+from prompt_compression.sensitivity import ClassifierUnavailable, Sensitivity
+from prompt_compression.texts import count_tokens
 
 
 class FakeTokenizer:
@@ -22,7 +23,9 @@ class FakeTokenizer:
 
 
 class FakeZeroShotPipeline:
-    """Picks the label whose candidate text is mapped by `keyword_to_label`, else a flat distribution."""
+    """Scores the four candidate labels (descriptive order: sensitive, critical, non_sensitive, less_important).
+
+    `keyword_scores` maps a keyword to the score list used when the keyword is in the text, else `default_scores`."""
 
     def __init__(self, keyword_scores, default_scores, raise_on=None):
         self.tokenizer = FakeTokenizer()
@@ -47,27 +50,59 @@ class FakeZeroShotPipeline:
         return outputs
 
 
-class StubClassifier:
-    """Classifier double: label chosen by keyword in the text."""
+class StubDetector:
+    """Sensitivity detector double: the real rules, plus a keyword list standing in for the NLI model."""
 
-    model_name = "stub-classifier"
+    model_name = "stub-detector"
 
-    def __init__(self, keyword_labels, default="non_sensitive", unavailable=False):
-        self.keyword_labels = keyword_labels
-        self.default = default
+    def __init__(self, sensitive_keywords=(), unavailable=False):
+        self.sensitive_keywords = tuple(sensitive_keywords)
         self.unavailable = unavailable
+        self.checked = []          # texts sent to check(): what the "model" was asked about
 
     def load(self):
         if self.unavailable:
             raise ClassifierUnavailable("stub cannot load")
 
-    def classify(self, text):
+    def rules_only(self, text):
+        hits = tuple(rules.rule_hits(text)) if text and text.strip() else ()
+        if hits:
+            return Sensitivity(True, 1.0, "rules", self.model_name, rule_hits=hits)
+        return Sensitivity(False, 0.0, "none", self.model_name)
+
+    def check(self, text):
         if self.unavailable:
             raise ClassifierUnavailable("stub cannot load")
-        for keyword, label in self.keyword_labels.items():
-            if keyword in text:
-                return ClassificationResult(label, 0.9, "model", self.model_name)
-        return ClassificationResult(self.default, 0.9, "model", self.model_name)
+        self.checked.append(text)
+        hits = tuple(rules.rule_hits(text))
+        if hits:
+            return Sensitivity(True, 1.0, "rules", self.model_name, rule_hits=hits)
+        if any(keyword in text for keyword in self.sensitive_keywords):
+            return Sensitivity(True, 0.9, "model", self.model_name, chunks=1)
+        return Sensitivity(False, 0.1, "model", self.model_name, chunks=1)
+
+
+class RateStubCompressor:
+    """Keeps the fraction `rate` of the words, evenly spread: a lighter rate compresses less."""
+
+    model_name = "rate-stub-compressor"
+
+    def __init__(self, floor=None):
+        self.calls = []
+        # Never keep a smaller share than `floor`, whatever the rate (simulates a compressor that over-compresses).
+        self.floor = floor
+
+    def load(self):
+        pass
+
+    def compress(self, text, rate):
+        self.calls.append((text, rate))
+        words = text.split()
+        share = rate if self.floor is None else min(rate, self.floor)
+        keep = max(1, round(len(words) * share))
+        step = len(words) / keep
+        kept = " ".join(words[int(i * step)] for i in range(keep))
+        return CompressionOutput(kept, count_tokens(text), count_tokens(kept))
 
 
 class StubCompressor:
@@ -81,8 +116,8 @@ class StubCompressor:
     def load(self):
         pass
 
-    def compress(self, text, route):
-        self.calls.append((text, route.label, route.rate))
+    def compress(self, text, rate):
+        self.calls.append((text, rate))
         words = text.split()
         kept = " ".join(words[::2])
         return CompressionOutput(kept, count_tokens(text), count_tokens(kept))

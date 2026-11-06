@@ -11,8 +11,6 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 
-from prompt_compression.router import Route
-
 logger = logging.getLogger("prompt_compression.compressor")
 
 
@@ -55,15 +53,11 @@ class LLMLinguaCompressor:
                 raise
             logger.info("compressor loaded: model=%s seconds=%.1f", self.model_name, time.perf_counter() - started)
 
-    def compress(self, text: str, route: Route) -> CompressionOutput:
+    def compress(self, text: str, rate: float) -> CompressionOutput:
+        """`rate` is the fraction of tokens kept. Digits are always reserved: a dropped number is a silent change."""
         self.load()
         with self._call_lock:
-            result = self._compressor.compress_prompt(
-                [text],
-                rate=route.rate,
-                force_tokens=list(route.force_tokens),
-                force_reserve_digit=route.force_reserve_digit,
-            )
+            result = self._compressor.compress_prompt([text], rate=rate, force_reserve_digit=True)
         required_keys = {"compressed_prompt", "origin_tokens", "compressed_tokens"}
         missing_keys = required_keys.difference(result)
         if missing_keys:

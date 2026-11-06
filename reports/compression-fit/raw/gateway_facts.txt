@@ -1,0 +1,51 @@
+# gateway facts captured 2026-11-05T20:51:18+05:30 from C:/Users/P7120489/litellm-gateway (HEAD 98266be, working tree has uncommitted edits)
+## wc -l
+   71 prompt_compression/compressor_adapter.py
+  173 prompt_compression/prompt_compression_callback.py
+  223 prompt_compression/pipeline.py
+  467 total
+## hook definition
+110:    async def async_pre_call_hook(self, user_api_key_dict, cache, data: dict, call_type):
+## hook runs compression in a thread with a timeout
+125:            new_messages, report = await asyncio.wait_for(
+126:                asyncio.to_thread(pipeline.process, data["messages"]), timeout=self.settings.timeout_s
+## per-request opt-out keys
+43:METADATA_KEY = "prompt_compression"
+51:    """Per-request opt-out: metadata {"prompt_compression": false} or {"disable_prompt_compression": true}."""
+55:        if metadata.get("disable_prompt_compression") in (True, "true", "True"):
+## adapter docstring (first 6 lines)
+"""Thin adapter over llmlingua.PromptCompressor (LLMLingua-2), used unmodified.
+
+Mirrors how ai-features/promptCompression/.../app.py builds and calls it:
+PromptCompressor(model_name, device_map="cpu", use_llmlingua2=True) and
+compress_prompt([text], rate=..., force_tokens=[...]).
+"""
+## env example
+25:PROMPT_COMPRESSION_TIMEOUT_S=10
+33:PROMPT_COMPRESSION_MODEL=microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank
+35:PROMPT_COMPRESSION_RATE_NON_SENSITIVE=0.6
+36:PROMPT_COMPRESSION_RATE_LESS_IMPORTANT=0.3
+## litellm version / config callbacks
+36:  callbacks: ["otel", "langfuse_otel", "prometheus", "observability.observed_callback.observed_prompt_compression_instance"]
+litellm                                  1.106.0
+llmlingua                                0.2.2
+## litellm 1.106.0 dependency pins that conflict with transformers 4.46.3 (pip output seen during overlay install)
+litellm 1.106.0 requires huggingface-hub<2.0,>=0.34.0 ; litellm 1.106.0 requires tokenizers<1.0,>=0.21.0 ; overlay installed huggingface-hub 0.26.5 and tokenizers 0.20.3
+
+## added 2026-11-05T23:22:07+05:30: Streamlit demo presets (ai-features/promptCompression/PromptCompressionWithLLMLingua-2/app.py lines 16-19)
+    "sensitive": {"rate": 0.9, "force_tokens": ["password", "token", "key", "secret"]},
+    "critical": {"rate": 0.85, "force_tokens": []},
+    "code": {"rate": 0.95, "force_tokens": ["def", "class", "function", "import", "return"]},
+    "less important": {"rate": 0.3, "force_tokens": []},
+## router.py (prompt_compression/router.py): routes by classifier label
+30:        SENSITIVE: Route(SENSITIVE, compress=False, redact=settings.redact_sensitive),
+31:        CRITICAL: Route(CRITICAL, compress=False),
+33:        NON_SENSITIVE: Route(NON_SENSITIVE, compress=True, rate=settings.rate_non_sensitive, force_reserve_digit=True),
+34:        LESS_IMPORTANT: Route(LESS_IMPORTANT, compress=True, rate=settings.rate_less_important),
+## env defaults (prompt_compression.env.example)
+25:PROMPT_COMPRESSION_TIMEOUT_S=10
+27:REDACT_SENSITIVE=false
+29:PROMPT_COMPRESSION_PRESERVE_LAST_USER=false
+31:PROMPT_COMPRESSION_MIN_CHARS=200
+35:PROMPT_COMPRESSION_RATE_NON_SENSITIVE=0.6
+36:PROMPT_COMPRESSION_RATE_LESS_IMPORTANT=0.3

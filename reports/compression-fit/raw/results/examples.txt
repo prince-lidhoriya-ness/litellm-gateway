@@ -1,0 +1,132 @@
+=== pii-000 original (first 400 characters)
+Case note CASE-822820. The caller, Elif Nakamura, born 14/04/1984, contacted support about a delayed reimbursement. They confirmed their address as 13 Alder Way, Bergen and asked that updates be sent to elif.nakamura24@mailtest.net or by phone on +44 7890 576997. For identity verification the caller gave national insurance number GH 68 13 55 B. Payment should go to account GB81TEST66943490595126. 
+
+--- pii-000, LLMLingua-2 (~2x) (first 400 characters)
+CASE - 822820 Elif Nakamura 14 1984 reimbursement 13 Alder Way Bergen updates elif nakamura24 + 44 7890 576997 verification insurance GH 68 13 55 B Payment GB81TEST66943490595126 type 2 diabetes apologised promised reply five days
+
+--- pii-000, LLMLingua-2 (~3x) (first 400 characters)
+822820 Elif Nakamura reimbursement Alder Way updates + 44 7890 576997 insurance GH 68 13 55 B GB81TEST66943490595126 type 2 diabetes reply five days
+
+--- pii-000, LLMLingua-2 + digit protection (~2x, post-hoc) (first 400 characters)
+CASE - 822820 Elif Nakamura 14 04 1984 reimbursement 13 Alder Way Bergen updates elif nakamura24 + 44 7890 576997 verification insurance GH 68 13 55 B Payment GB81TEST66943490595126 type 2 diabetes promised reply five days
+
+--- pii-000, LLMLingua-2 at the gateway non_sensitive setting (rate 0.6 + digits, post-hoc) (first 400 characters)
+CASE - 822820 caller Elif Nakamura 14 / 04 / 1984 contacted support delayed reimbursement confirmed address 13 Alder Way Bergen asked updates elif nakamura24 mailtest net + 44 7890 576997 identity verification national insurance number GH 68 13 55 B Payment account GB81TEST66943490595126 treated type 2 diabetes claim urgent. agent explained review process apologised promised written reply five wor
+
+--- pii-000, LLMLingua v1/GPT-2 (~2x) (first 400 characters)
+Case note-8228 The,if, born, contacted a delayed their as 13lder,gen that to.amuramail on4476 For gave number GH 68 13 55. to account GB81TEST943490595126. During the call they mentioned being treated for type 2 diabetes, which is why the claim was marked as urgent. The agent explained the review process, apologised for the wait, and promised a written reply within five working days.
+
+--- pii-000, Selective-Context-style (2x) (first 400 characters)
+Case note CASE-822820. caller, Elif Nakamura, born 14/04/1984, contacted support delayed reimbursement. address 13 Alder Way, Bergen and updates elif.nakamura24@mailtest.net +44 7890 576997. identity national GH 68 13 55 B. Payment account GB81TEST66943490595126. During being treated type why marked agent review apologised wait, written
+
+--- pii-000, random word drop (2x) (first 400 characters)
+CASE-822820. born contacted about a reimbursement. They confirmed their address 13 Alder Way, Bergen and be to or on +44 7890 576997. identity verification the caller gave national insurance number GH 68 should they treated for 2 diabetes, is why the claim was urgent. The the review for wait, a written reply working days.
+
+=== logs-002 original (first 400 characters)
+2026-03-14T21:21:34Z WARN  svc=cart-service req=req-d2035e status=400 latency_ms=964 user=u-41106 region=eu-west-1
+2026-03-14T21:22:14Z ERROR svc=auth-gateway req=req-380539 status=500 latency_ms=2839 user=u-81940 region=us-east-2
+2026-03-14T21:22:32Z INFO  svc=report-builder req=req-22718c status=200 latency_ms=268 user=u-64075 region=ap-south-1
+2026-03-14T21:22:51Z INFO  svc=email-relay req=req-
+
+--- logs-002, LLMLingua-2 (~2x) (first 400 characters)
+- 14T21 : 21 : 34Z d2035e 400 964 - 41106 eu - west - 1 22 : 14Z auth - gateway 380539 500 2839 - 81940 us - east - 2 : 32Z report 22718c 200 268 - 64075 ap - south - 1 22 : 51Z email - relay 8a606b 200 733 - 71220 eu - west - 1 : 4a28bd 301 2149 - 81438 ap - south - 1 23 : 29Z 428816 301 1158 - 30407 us - east - 2 : auth - gateway 9b3333 500 119 - 89785 eu - central - 1 24 : 23Z report - builder 
+
+--- logs-002, LLMLingua-2 (~3x) (first 400 characters)
+14T21 21 : 34Z 964 41106 eu - west - 1 : 380539 2839 - 81940 us - east - 2 22718c 268 64075 ap - south - 1 : 51Z 8a606b 733 71220 eu - west - 1 4a28bd 2149 81438 ap - south - 1 23 : 29Z 428816 1158 30407 us - east - 2 119 89785 eu - central - 1 24 : 649c74 661 57813 us - east - 2 24 : 50Z 8a7cd8 502 667 31003 us - east - 2service c8eb10 171 - 66518 eu central 1 2026 03 14T21 report - 26527 eu west
+
+--- logs-002, LLMLingua-2 + digit protection (~2x, post-hoc) (first 400 characters)
+2026 03 14T21 21 : 34Z d2035e 400 964 41106 eu - west - 1 2026 03 22 : 14Z 380539 500 2839 81940 us - east - 2 2026 03 22 32Z 22718c 200 268 64075 ap - south - 1 2026 03 22 : 51Z 8a606b 200 733 71220 eu - west - 1 2026 03 23 4a28bd 301 2149 81438 ap - south - 1 2026 03 23 29Z 428816 301 1158 30407 us - east - 2 2026 03 23 9b3333 500 119 89785 eu - central - 1 2026 03 24 : 649c74 200 661 57813 us -
+
+--- logs-002, LLMLingua-2 at the gateway non_sensitive setting (rate 0.6 + digits, post-hoc) (first 400 characters)
+2026 - 03 - 14T21 : 21 : 34Z cart - service d2035e 400 latency 964 u - 41106 region eu - west - 1 2026 03 14T21 22 : 14Z auth - gateway 380539 500 latency 2839 u - 81940 region us - east - 2 2026 03 22 : 32Z report - builder 22718c 200 268 u - 64075 ap - south - 1 2026 03 14T21 22 : 51Z email - relay - 8a606b 200 733 - 71220 region eu - west - 1 2026 03 23 : 03Z report - 4a28bd 301 2149 - 81438 ap
+
+--- logs-002, LLMLingua v1/GPT-2 (~2x) (first 400 characters)
+2026-03-14T::34Z WARN  svc=cart-service req=req-d2035e=400 latency_ms=964 user=u-41106=eu-west-1
+20T:22:14Z ERROR=auth-way=-380539=500=2839=-81940=--220T::Z INFO =report-builder=-22718c=200=268=-64075=ap--120T::Z =email-=-8a606b=200=-71220=20T::Z =builder=-4a28bd=301=2-81438=-20T::-428816=301=11-30407=20T::Z=--9b3333=500=119-89785-20T:: ERROR=builder-c74=200=-57813=20T::=b--a78=502=33=20T::c8eb10=
+
+--- logs-002, Selective-Context-style (2x) (first 400 characters)
+2026-03-14T21:21:34Z WARN svc=cart-service req=req-d2035e status=400 latency_ms=964 user=u-41106 region=eu-west-1 2026-03-14T21:22:14Z svc=auth-gateway req=req-380539 latency_ms=2839 user=u-81940 svc=report-builder req=req-22718c user=u-64075 region=ap-south-1 svc=email-relay req=req-8a606b latency_ms=733 user=u-71220 req=req-4a28bd latency_ms=2149 user=u-81438 req=req-428816 latency_ms=1158 user=
+
+--- logs-002, random word drop (2x) (first 400 characters)
+2026-03-14T21:21:34Z svc=cart-service status=400 ERROR svc=auth-gateway req=req-380539 status=500 svc=report-builder user=u-64075 region=ap-south-1 2026-03-14T21:22:51Z user=u-71220 region=eu-west-1 2026-03-14T21:23:03Z INFO req=req-4a28bd status=301 latency_ms=2149 user=u-81438 2026-03-14T21:23:29Z WARN req=req-428816 status=301 latency_ms=1158 user=u-30407 2026-03-14T21:23:51Z INFO status=500 la
+
+--- logs-002, query-aware TF-IDF (2x) (first 400 characters)
+2026-03-14T21:22:14Z ERROR svc=auth-gateway req=req-380539 status=500 latency_ms=2839 user=u-81940 region=us-east-2
+2026-03-14T21:22:32Z INFO  svc=report-builder req=req-22718c status=200 latency_ms=268 user=u-64075 region=ap-south-1
+2026-03-14T21:22:51Z INFO  svc=email-relay req=req-8a606b status=200 latency_ms=733 user=u-71220 region=eu-west-1
+2026-03-14T21:23:51Z INFO  svc=auth-gateway req=req-
+
+=== code-000 original (first 400 characters)
+import logging
+
+log = logging.getLogger(__name__)
+
+MAX_WINDOW_PB = 259
+MAX_WINDOW_DO = 601
+MAX_BATCH_BL = 201
+
+def check_records_so(data, retry_limit=109):
+    """Synchronise pending entries."""
+    limit = min(retry_limit, MAX_WINDOW_DO)
+    result = load_quotas_qq(data)
+    result = parse_batches_ls(data)
+    result = sync_records_yo(data)
+    result = encode_frames_vi(data)
+    log.info("%s don
+
+--- code-000, LLMLingua-2 (~2x) (first 400 characters)
+import logging log getLogger MAX WINDOW _ PB = 259 WINDOW DO = 601 MAX BATCH _ BL = 201 def check _ records _ so ( retry limit = 109 ) Synchronise pending entries limit = min ( retry = load _ quotas _ qq parse _ batches _ ls sync _ records _ yo encode _ frames _ vi log. info load _ quotas _ qq timeout s = 157 Load next window = min = [ x for x in data log info parse _ batches _ ls 391 Merge partia
+
+--- code-000, LLMLingua-2 (~3x) (first 400 characters)
+logging log MAX WINDOW PB = 259 DO = 601 MAX BATCH BL = 201 check _ records _ so limit 109 Synchronise pending entries limit = min = load _ quotas qq parse batches ls sync _ records yo encode frames vi log load _ quotas _ qq 157 Load next window min = [ x for x data log parse _ batches ls 391 Merge partial results min sync _ quotas _ jo sync jo 335 Drop invalid items = min = [ x for x data log syn
+
+--- code-000, LLMLingua-2 + digit protection (~2x, post-hoc) (first 400 characters)
+import logging log getLogger MAX WINDOW _ PB = 259 WINDOW DO = 601 MAX BATCH _ BL = 201 def check _ records _ so ( retry limit = 109 ) Synchronise pending entries limit = min ( retry = load _ quotas _ qq parse _ batches _ ls sync _ records _ yo encode _ frames _ vi log. info load _ quotas _ qq timeout s = 157 Load next window = min = [ x for x in data log info parse _ batches _ ls 391 Merge partia
+
+--- code-000, LLMLingua-2 at the gateway non_sensitive setting (rate 0.6 + digits, post-hoc) (first 400 characters)
+import logging log = logging getLogger ( name MAX _ WINDOW _ PB = 259 MAX WINDOW _ DO = 601 MAX _ BATCH _ BL = 201 def check _ records _ so ( data retry _ limit = 109 ) Synchronise pending entries limit = min ( retry limit result = load _ quotas _ qq = parse _ batches _ ls sync _ records _ yo encode _ frames _ vi log. info ( % s done check records so return result def load _ quotas _ qq ( timeout 
+
+--- code-000, LLMLingua v1/GPT-2 (~2x) (first 400 characters)
+import logging
+log = logging.getger(____)
+_OW_PB = 259
+__DO =
+_BATCH_BL = 201
+def check_records_so(data, retry_limit=
+    """Synchronise pending entries""
+    =(limit,_OW_DO
+    result = load_quotas_qq(data)
+   result =_batches_(data
+   =_ords_(data
+   =__vi(data
+   log.info("%s done", "checkordsso
+    return result[:limit
+
+def(, timeout_s=157
+    """Load the next window."
+   =(s, MAX_B_BL
+  = [x 
+
+--- code-000, Selective-Context-style (2x) (first 400 characters)
+import logging log logging.getLogger(__name__) MAX_WINDOW_PB = 259 MAX_WINDOW_DO 601 MAX_BATCH_BL = 201 def check_records_so(data, retry_limit=109): """Synchronise pending entries.""" limit min(retry_limit, MAX_WINDOW_DO) result load_quotas_qq(data) result parse_batches_ls(data) result sync_records_yo(data) result encode_frames_vi(data) log.info("%s done", "check_records_so") return result[:limit]
+
+--- code-000, random word drop (2x) (first 400 characters)
+import = 259 MAX_WINDOW_DO = 601 check_records_so(data, retry_limit=109): pending = min(retry_limit, MAX_WINDOW_DO) = load_quotas_qq(data) result parse_batches_ls(data) = encode_frames_vi(data) log.info("%s "check_records_so") return def load_quotas_qq(data, timeout_s=157): """Load next window.""" limit = = [x in x] done", return parse_batches_ls(data, """Merge results.""" limit = min(retry_limit,
+
+--- code-000, query-aware TF-IDF (2x) (first 400 characters)
+import logging
+
+log = logging.getLogger(__name__)
+
+MAX_WINDOW_PB = 259
+MAX_WINDOW_DO = 601
+MAX_BATCH_BL = 201
+
+def check_records_so(data, retry_limit=109):
+    """Synchronise pending entries."""
+    limit = min(retry_limit, MAX_WINDOW_DO)
+    result = load_quotas_qq(data)
+    result = parse_batches_ls(data)
+    result = sync_records_yo(data)
+    result = encode_frames_vi(data)
+    log.info("%s don
