@@ -5,7 +5,7 @@
 torch==2.15.0
 litellm[proxy]==1.106.0
 llmlingua==0.2.2
-# llmlingua-2 loads fine on transformers 5.20.1 (checked here); the Dockerfile's "<5" pin predates that.
+# llmlingua-2 loads fine on transformers 5.20.1 (checked here). The image installs the same pins (docker/requirements-image.txt).
 transformers==5.20.1
 tokenizers==0.23.3
 huggingface_hub==1.33.0

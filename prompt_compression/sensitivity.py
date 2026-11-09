@@ -32,6 +32,7 @@ from collections import OrderedDict
 from dataclasses import dataclass, replace
 from typing import Optional
 
+from prompt_compression import deadline as deadlines
 from prompt_compression import rules
 from prompt_compression.labels import LABEL_FORMATS, SENSITIVE
 from prompt_compression.settings import NLI_DEFAULT_THRESHOLD, SensitivitySettings
@@ -66,7 +67,9 @@ def load_zero_shot_pipeline(model_name: str, quantize: str = "none"):
     import torch
     from transformers import pipeline
 
-    zero_shot = pipeline("zero-shot-classification", model=model_name, device=-1, dtype=torch.float32)
+    zero_shot = pipeline(
+        "zero-shot-classification", model=model_name, device=-1, dtype=torch.float32, trust_remote_code=False
+    )
     if quantize == "int8":
         from torch.ao.quantization import quantize_dynamic
 
@@ -105,7 +108,10 @@ class SensitivityDetector:
         if self.settings.backend == "embedding":
             from prompt_compression.embedding_classifier import EmbeddingSensitivityClassifier
 
-            self._classifier = EmbeddingSensitivityClassifier()  # reads the head JSON; the encoder loads in load()
+            # Reads the head JSON; the encoder loads in load().
+            self._classifier = EmbeddingSensitivityClassifier(
+                revision=self.settings.encoder_revision, batch_size=self.settings.batch_size
+            )
             default_threshold = self._classifier.threshold
         else:
             default_threshold = NLI_DEFAULT_THRESHOLD
@@ -204,7 +210,7 @@ class SensitivityDetector:
         return pieces or [text]
 
     def _infer(self, pieces: list[str]) -> list[dict]:
-        with self._infer_lock:
+        with deadlines.acquire(self._infer_lock, "classifier"):
             # One forward pass scores all label hypotheses of a chunk together.
             outputs = self._pipeline(
                 pieces,
@@ -245,11 +251,13 @@ class SensitivityDetector:
         self.load()
         try:
             if self._classifier is not None:
-                with self._infer_lock:
+                with deadlines.acquire(self._infer_lock, "classifier"):
                     top, chunks = self._classifier.score(text, self.settings.max_chunk_tokens)
             else:
                 pieces = self.chunk(text)
                 outputs = self._infer(pieces)
+        except deadlines.DeadlineExceeded:
+            raise                     # the request is out of time: the hook's fail mode decides, not "sensitive"
         except Exception as exc:
             # Not cached: a transient failure should not pin the text to "sensitive" forever.
             logger.warning("sensitivity inference failed, treating the text as sensitive: error=%s", type(exc).__name__)
@@ -296,8 +304,10 @@ class SensitivityDetector:
         if todo:
             self.load()
             try:
-                with self._infer_lock:
+                with deadlines.acquire(self._infer_lock, "classifier"):
                     scored = self._classifier.score_many([texts[i] for i, _ in todo], self.settings.max_chunk_tokens)
+            except deadlines.DeadlineExceeded:
+                raise
             except Exception as exc:
                 logger.warning("sensitivity inference failed, treating the text as sensitive: error=%s", type(exc).__name__)
                 scored = None

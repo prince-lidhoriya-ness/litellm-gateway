@@ -3,6 +3,11 @@
     disabled / not a chat call   -> pass the request through, silently
     per-request opt-out          -> skip, reported as "skipped"
     too few tokens               -> skip, reported as "skipped" (classifying a tiny prompt costs more than it can save)
+    too many tokens              -> skip, reported as "skipped" (the work would not finish inside the timeout)
+
+The token checks need a full tiktoken pass over the prompt (about 200 ms for 2 MB of text), so the hook runs them in its
+worker thread through size_check(), not on the event loop (PROJECT_AUDIT_REPORT.md, F-04); check() only runs them when
+asked to (count_tokens=True, the default, for direct callers).
 
 The timeout and the fail-open / fail-closed behaviour belong to the hook (prompt_compression_callback.py), which wraps
 the whole pipeline: on a timeout or an error the original prompt is sent ("Fail open") or the request is rejected.
@@ -39,13 +44,27 @@ def opted_out(data: dict) -> bool:
     return False
 
 
-def check(data: dict, call_type, settings: PipelineSettings) -> GateDecision:
-    if call_type not in CHAT_CALL_TYPES or not isinstance(data.get("messages"), list):
+def is_chat(data: dict, call_type) -> bool:
+    return call_type in CHAT_CALL_TYPES and isinstance(data.get("messages"), list)
+
+
+def size_check(messages: list, settings: PipelineSettings) -> GateDecision:
+    """The token-count part of the gate: below min_tokens or above max_input_tokens skips the pipeline."""
+    tokens = all_text_tokens(messages)
+    if tokens < settings.min_tokens:
+        return GateDecision(False, "below_min_size")
+    if settings.max_input_tokens > 0 and tokens > settings.max_input_tokens:
+        return GateDecision(False, "too_large")
+    return GateDecision(True)
+
+
+def check(data: dict, call_type, settings: PipelineSettings, count_tokens: bool = True) -> GateDecision:
+    if not is_chat(data, call_type):
         return GateDecision(False, "not_chat", silent=True)
     if not settings.enabled:
         return GateDecision(False, "disabled", silent=True)
     if opted_out(data):
         return GateDecision(False, "request_opt_out")
-    if all_text_tokens(data["messages"]) < settings.min_tokens:
-        return GateDecision(False, "below_min_size")
+    if count_tokens:
+        return size_check(data["messages"], settings)
     return GateDecision(True)

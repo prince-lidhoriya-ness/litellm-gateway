@@ -1,5 +1,6 @@
-# Sample LiteLLM proxy config with the prompt-compression pipeline
-# (prompt_compression/, see prompt_compression/README.md).
+# Minimal sample LiteLLM proxy config with the prompt-compression pipeline, for running the proxy locally without
+# Docker (prompt_compression/, see prompt_compression/README.md). docker-compose.quickstart.yml does NOT use this file:
+# it mounts litellm_config.yaml, which also carries the observability callbacks, timeouts, retries and the cache.
 #
 #   litellm --config config.yaml --port 4000
 #

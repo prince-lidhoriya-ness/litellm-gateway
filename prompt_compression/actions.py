@@ -8,18 +8,19 @@ Select runs before compress, so a dropped passage never reaches the compressor. 
 the pipeline reports per message.
 """
 
-import dataclasses
 import time
 from dataclasses import dataclass, field
 from typing import Callable
 
+from prompt_compression import deadline as deadlines
 from prompt_compression import rules
 from prompt_compression.router import Plan
 from prompt_compression.segmenter import label_split
 from prompt_compression.selectors import drop_trailing_comma, select_passages, select_records
 from prompt_compression.settings import PipelineSettings
 
-COUNTERS = ("passages_dropped", "record_lines_dropped", "compress_calls", "compressed_blocks", "ratio_cap_hits", "redactions")
+COUNTERS = ("passages_dropped", "record_lines_dropped", "compress_calls", "compressed_blocks", "ratio_cap_hits", "redactions",
+            "compress_cache_hits")
 
 
 @dataclass
@@ -27,6 +28,10 @@ class Outcome:
     stats: dict = field(default_factory=dict)         # message index -> counters
     acted: dict = field(default_factory=dict)         # message index -> action names, in order
     compress_ms: dict = field(default_factory=dict)   # message index -> milliseconds spent in LLMLingua-2
+    # Why compression stopped before every run was tried: "request_budget" (max_compress_calls_per_request) or
+    # "deadline" (the pipeline's deadline passed); None when every run was tried.
+    compress_stopped: str = None
+    compress_calls: int = 0                            # model calls in the whole request (cache hits excluded)
 
     def counters(self, message: int) -> dict:
         return self.stats.setdefault(message, {name: 0 for name in COUNTERS})
@@ -129,40 +134,59 @@ def _run_text(run: list) -> str:
 
 
 def _compress(plan: Plan, settings: PipelineSettings, compressor, outcome: Outcome) -> None:
-    by_message: dict = {}
-    for message, run in _runs(plan):
-        if len(_run_text(run)) >= settings.min_chars:
-            by_message.setdefault(message, []).append(run)
-    for message, runs in by_message.items():
-        runs.sort(key=lambda run: -len(_run_text(run)))          # the longest runs first: most to gain per call
+    """Compress runs longest first over the whole request, within the per-message and per-request call budgets and the
+    request's deadline. Stopping early is not an error: the remaining runs are sent as they are."""
+    runs = [(message, run) for message, run in _runs(plan) if len(_run_text(run)) >= settings.min_chars]
+    runs.sort(key=lambda item: -len(_run_text(item[1])))          # the longest runs first: most to gain per call
+    deadline = deadlines.current()
+    spent: dict = {}
+    for message, run in runs:
         counters = outcome.counters(message)
-        spent = 0.0
-        for run in runs:
-            if counters["compress_calls"] >= settings.max_compress_calls:
-                break
-            started = time.perf_counter()
-            text = _compress_with_cap(_run_text(run), settings, compressor, counters)
-            spent += (time.perf_counter() - started) * 1000
-            if text is None:
-                continue
-            tail_sep = run[-1].sep
-            run[0].text, run[0].sep = text, tail_sep
-            for unit in run[1:]:
-                unit.dropped = True
-            counters["compressed_blocks"] += 1
-            outcome.note(message, "compressed")
-        outcome.compress_ms[message] = round(spent, 1)
+        if counters["compress_calls"] >= settings.max_compress_calls:
+            continue
+        if settings.max_compress_calls_per_request > 0 and outcome.compress_calls >= settings.max_compress_calls_per_request:
+            outcome.compress_stopped = "request_budget"
+            break
+        if deadline.expired():
+            outcome.compress_stopped = "deadline"
+            break
+        started = time.perf_counter()
+        try:
+            text = _compress_with_cap(_run_text(run), settings, compressor, counters, outcome)
+        except deadlines.DeadlineExceeded:
+            outcome.compress_stopped = "deadline"
+            break
+        finally:
+            spent[message] = spent.get(message, 0.0) + (time.perf_counter() - started) * 1000
+        if text is None:
+            continue
+        tail_sep = run[-1].sep
+        run[0].text, run[0].sep = text, tail_sep
+        for unit in run[1:]:
+            unit.dropped = True
+        counters["compressed_blocks"] += 1
+        outcome.note(message, "compressed")
+    for message, milliseconds in spent.items():
+        outcome.compress_ms[message] = round(milliseconds, 1)
 
 
-def _compress_with_cap(text: str, settings: PipelineSettings, compressor, counters: dict):
+def _call(text: str, rate: float, compressor, counters: dict, outcome: Outcome):
+    output = compressor.compress(text, rate)
+    if getattr(output, "cached", False):
+        counters["compress_cache_hits"] += 1
+    else:
+        counters["compress_calls"] += 1
+        outcome.compress_calls += 1
+    return output
+
+
+def _compress_with_cap(text: str, settings: PipelineSettings, compressor, counters: dict, outcome: Outcome):
     cap = settings.max_ratio
-    counters["compress_calls"] += 1
-    output = compressor.compress(text, settings.rate)
+    output = _call(text, settings.rate, compressor, counters, outcome)
     ratio = output.origin_tokens / max(output.compressed_tokens, 1)
     if ratio > cap and settings.rate < 1.0:
         lighter = min(1.0, settings.rate * ratio / cap)
-        counters["compress_calls"] += 1
-        output = compressor.compress(text, lighter)
+        output = _call(text, lighter, compressor, counters, outcome)
         ratio = output.origin_tokens / max(output.compressed_tokens, 1)
         if ratio > cap * 1.05:
             counters["ratio_cap_hits"] += 1

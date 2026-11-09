@@ -1,4 +1,4 @@
-# Same versions as the LiteLLM 1.105.0 proxy image (litellm-gateway:llmlingua), where this package runs.
+# Local test versions. In the proxy image (LiteLLM v1.106.0, Dockerfile) the OTel packages are the ones LiteLLM ships.
 # Local tests: install on top of prompt_compression/requirements.txt.
 #   pip install -r observability/requirements.txt
 # pip reports fastapi 0.162.0 wanting opentelemetry-api>=1.44; the tests pass with 1.33.1, which is what the image ships.

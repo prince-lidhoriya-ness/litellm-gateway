@@ -12,10 +12,13 @@ model_list:
 
   # Optional LLM-as-judge for quality evaluations (must differ from the model under test). Callers opt out of
   # compression with metadata.prompt_compression=false so the judge sees the text verbatim.
+  # NOTE: a ":free" OpenRouter model is rate-limited and can disappear; point this at a paid or self-hosted
+  # deployment before relying on judge scores (PROJECT_AUDIT_REPORT.md, F-01).
   - model_name: judge-nemotron
     litellm_params:
       model: openrouter/nvidia/nemotron-3-ultra-550b-a55b:free
       api_key: os.environ/OPENROUTER_API_KEY
+      timeout: 120
 
   # Fixed-latency local mock (prompt_compression/dev/mock_openai_server.py on the host, port 4010):
   # used only to measure gateway/telemetry overhead without provider noise.
@@ -31,15 +34,56 @@ litellm_settings:
   # The last entry is prompt_compression's hook wrapped with spans/metrics/JSON logs
   # (observability/observed_callback.py). Swap it for
   # "prompt_compression.prompt_compression_callback.prompt_compression_instance" to drop the
-  # observability layer, or "compression.compression_guardrail_instance" for the old single-file
-  # compressor (never more than one of the three).
+  # observability layer (never both).
   callbacks: ["otel", "langfuse_otel", "prometheus", "observability.observed_callback.observed_prompt_compression_instance"]
   # Message text is scrubbed from every logging callback (Langfuse, OTel, custom loggers).
   turn_off_message_logging: true
-  # /metrics is scraped inside the docker network; the proxy port is bound to 127.0.0.1 (LITELLM_BIND).
+  # /metrics is scraped inside the docker network. The proxy port is bound to 127.0.0.1 by default (LITELLM_BIND in
+  # docker-compose.quickstart.yml); if you publish it on other interfaces, set this to true and give Prometheus a key.
   require_auth_for_metrics_endpoint: false
   # Identity labels stay out of Prometheus; per-user cost lives in Langfuse and spend logs.
   prometheus_exclude_labels: ["end_user", "user", "user_email", "user_alias", "api_key_alias", "client_ip", "user_agent"]
+  # Upper bound for any provider call that sets no timeout of its own. LiteLLM's default is 6,000 s, which let a hung
+  # provider hold a client connection for 100 minutes (PROJECT_AUDIT_REPORT.md, F-01).
+  request_timeout: 600
+  # Response cache in the same Redis that holds rate limits and budgets. Opt-in per request ("default_off"): a client
+  # sends {"cache": {"use-cache": true}} (or a key/team sets it), so nobody gets a cached answer without asking for one.
+  # The key is computed after the pre-call hook, i.e. over the compressed prompt, which is deterministic.
+  cache: true
+  cache_params:
+    type: redis
+    mode: default_off
+    ttl: 600
+    supported_call_types: ["acompletion", "completion"]
+
+# Reliability for every model group, including the ones stored in the DB (PROJECT_AUDIT_REPORT.md, F-01).
+router_settings:
+  # Per-attempt timeouts (seconds). stream_timeout bounds streaming calls.
+  timeout: 120
+  stream_timeout: 300
+  num_retries: 2
+  # Retry what is transient; never retry a request the provider rejected on its merits.
+  retry_policy:
+    BadRequestErrorRetries: 0
+    AuthenticationErrorRetries: 0
+    ContentPolicyViolationErrorRetries: 0
+    TimeoutErrorRetries: 1
+    RateLimitErrorRetries: 3
+    InternalServerErrorRetries: 2
+    ServiceUnavailableErrorRetries: 2
+  # A deployment that fails this many times within a minute is cooled down for cooldown_time seconds, so traffic goes
+  # to its siblings (add a second deployment with the same model_name to give a model group somewhere to go).
+  allowed_fails: 3
+  cooldown_time: 30
+  # Shared router state across workers and replicas (cooldowns, usage).
+  redis_host: os.environ/REDIS_HOST
+  redis_port: os.environ/REDIS_PORT
+  redis_password: os.environ/REDIS_PASSWORD
+  # Fallbacks between model groups. Every entry needs a second, independent model group; the local test models
+  # here have none, so the list is empty. Example for real deployments:
+  #   fallbacks: [{"gpt-4o": ["claude-sonnet"]}]
+  #   context_window_fallbacks: [{"gpt-4o-mini": ["gpt-4o"]}]
+  fallbacks: []
 
 general_settings:
   maximum_spend_logs_retention_period: "30d"

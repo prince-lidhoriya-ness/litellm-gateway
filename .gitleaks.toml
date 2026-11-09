@@ -1,0 +1,20 @@
+# gitleaks configuration for CI (.github/workflows/ci.yml): the default rules, minus directories whose purpose is to
+# hold SYNTHETIC secrets and PII (rule tests, sensitivity datasets, benchmark prompts and their recorded results).
+# Real credentials belong in .env (git-ignored) only; anything outside these paths that matches a rule fails CI.
+title = "litellm-gateway"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Synthetic secrets used to test the redaction rules and the sensitivity classifier"
+paths = [
+  '''prompt_compression/tests/''',
+  '''observability/tests/''',
+  '''prompt_compression/eval/''',
+  '''evals/cases/''',
+  '''reports/''',
+  '''\.env\.example$''',
+  '''prompt_compression\.env\.example$''',
+  '''monitoring/monitoring\.env\.example$''',
+]

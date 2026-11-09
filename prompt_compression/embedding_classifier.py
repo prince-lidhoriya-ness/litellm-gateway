@@ -19,8 +19,9 @@ import threading
 from pathlib import Path
 from typing import Optional
 
+from prompt_compression.settings import DEFAULT_ENCODER, DEFAULT_ENCODER_REVISION, resolve_revision
+
 HEAD_PATH = Path(__file__).resolve().parent / "models" / "sensitivity_head.json"
-DEFAULT_ENCODER = "sentence-transformers/all-MiniLM-L6-v2"
 _ENCODER_MAX = 256  # all-MiniLM-L6-v2 was trained on sequences of up to 256 word pieces
 
 
@@ -29,8 +30,12 @@ def load_head(path: Path = HEAD_PATH) -> dict:
 
 
 class EmbeddingEncoder:
-    def __init__(self, model_name: str = DEFAULT_ENCODER):
+    def __init__(self, model_name: str = DEFAULT_ENCODER, revision: Optional[str] = None, batch_size: int = 32):
         self.model_name = model_name
+        # Pinned Hugging Face commit (PROJECT_AUDIT_REPORT.md, F-19S); "main" only for a non-default encoder.
+        self.revision = resolve_revision(model_name, revision, DEFAULT_ENCODER, DEFAULT_ENCODER_REVISION)
+        # Windows per forward pass: a very long prompt is encoded in slices, not as one huge padded batch (F-09).
+        self.batch_size = max(1, batch_size)
         self._tokenizer = None
         self._model = None
         self._lock = threading.Lock()
@@ -71,13 +76,16 @@ class EmbeddingEncoder:
     def encode(self, texts: list[str]) -> list[list[float]]:
         import torch
 
+        vectors: list = []
         with self._lock, torch.inference_mode():
-            batch = self._tokenizer(texts, padding=True, truncation=True, max_length=_ENCODER_MAX, return_tensors="pt")
-            hidden = self._model(**batch).last_hidden_state
-            mask = batch["attention_mask"].unsqueeze(-1).to(hidden.dtype)
-            pooled = (hidden * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
-            pooled = torch.nn.functional.normalize(pooled, p=2, dim=1)
-        return pooled.tolist()
+            for start in range(0, len(texts), self.batch_size):
+                batch = self._tokenizer(texts[start:start + self.batch_size], padding=True, truncation=True,
+                                        max_length=_ENCODER_MAX, return_tensors="pt")
+                hidden = self._model(**batch).last_hidden_state
+                mask = batch["attention_mask"].unsqueeze(-1).to(hidden.dtype)
+                pooled = (hidden * mask).sum(1) / mask.sum(1).clamp(min=1e-9)
+                vectors.extend(torch.nn.functional.normalize(pooled, p=2, dim=1).tolist())
+        return vectors
 
 
 def _accepts_dtype() -> bool:
@@ -91,9 +99,10 @@ def _accepts_dtype() -> bool:
 class EmbeddingSensitivityClassifier:
     """P(sensitive) for a text: max over windows of sigmoid(w . embedding + b)."""
 
-    def __init__(self, head: Optional[dict] = None, encoder: Optional[EmbeddingEncoder] = None):
+    def __init__(self, head: Optional[dict] = None, encoder: Optional[EmbeddingEncoder] = None,
+                 revision: Optional[str] = None, batch_size: int = 32):
         self.head = head or load_head()
-        self.encoder = encoder or EmbeddingEncoder(self.head["encoder"])
+        self.encoder = encoder or EmbeddingEncoder(self.head["encoder"], revision=revision, batch_size=batch_size)
         self._w = self.head["coef"]
         self._b = self.head["intercept"]
 

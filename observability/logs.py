@@ -89,7 +89,7 @@ def configure_logging(settings: ObservabilitySettings) -> None:
         logger = logging.getLogger(name)
         if not any(isinstance(h, logging.StreamHandler) for h in logger.handlers):
             logger.addHandler(logging.StreamHandler())
-        logger.setLevel(logging.INFO)
+        logger.setLevel(getattr(logging, settings.log_level, logging.INFO))
         logger.propagate = False
         for handler in logger.handlers:
             if formatter is not None and isinstance(handler, logging.StreamHandler):

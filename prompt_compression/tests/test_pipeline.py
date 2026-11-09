@@ -282,7 +282,7 @@ def test_records_are_selected_using_the_question_of_the_latest_message():
         {"role": "assistant", "content": "Received."},
         {"role": "user", "content": question},
     ]
-    pipeline, _, _ = make_pipeline(routes=frozenset({"records"}), protect_edges=True)
+    pipeline, _, _ = make_pipeline(routes=frozenset({"records"}), protect_edges=True, selection_scope="all")
     new_messages, report = pipeline.process(messages)
     kept = [line for line in new_messages[0]["content"].splitlines() if line.startswith("2026-")]
     assert any("req-000010" in line for line in kept) and len(kept) < 10

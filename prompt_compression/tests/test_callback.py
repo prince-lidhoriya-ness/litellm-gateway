@@ -38,7 +38,17 @@ def test_compresses_and_writes_metadata():
     summary = data["metadata"]["prompt_compression"]
     assert summary["status"] == "ok" and summary["category"] == "general"
     assert summary["tokens_after"] < summary["tokens_before"] and summary["compression_ratio"] > 1
-    assert data["metadata"]["spend_logs_metadata"]["prompt_compression"] == summary
+    assert data["metadata"]["spend_logs_metadata"]["prompt_compression"] == summary   # one message: nothing trimmed
+
+
+def test_spend_logs_keep_only_the_latest_message_entries():
+    messages = [{"role": "user" if i % 2 == 0 else "assistant", "content": "plain " + LONG} for i in range(21)]
+    callback = make_callback(spend_log_messages=4)
+    data = run(callback, {"model": "mock", "messages": messages})
+    full = data["metadata"]["prompt_compression"]
+    spend = data["metadata"]["spend_logs_metadata"]["prompt_compression"]
+    assert len(full["messages"]) == 21 and spend["messages"] == full["messages"][-4:]
+    assert spend["messages_omitted"] == 17 and spend["tokens_before"] == full["tokens_before"]
     assert data["messages"][0]["content"] != "plain " + LONG
 
 

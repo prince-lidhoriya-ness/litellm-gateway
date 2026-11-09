@@ -39,6 +39,7 @@ from prompt_compression.texts import count_tokens  # noqa: E402
 from prompt_compression.prompt_compression_callback import (  # noqa: E402
     CHAT_CALL_TYPES,
     METADATA_KEY,
+    REDACTION_KEY,
     PromptCompressionCallback,
 )
 
@@ -55,6 +56,8 @@ def failure_reason(error: str) -> str:
     error = error or ""
     if error.startswith("timeout"):
         return "timeout"
+    if error.startswith("redaction failed"):
+        return "redaction_failed"
     if error.startswith("pipeline init failed"):
         return "init_failed"
     if "ClassifierUnavailable" in error:
@@ -84,7 +87,7 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
             configure_logging(self.obs)
             if not self.obs.hash_salt:
                 event(logger, "observability.config_warning", logging.WARNING,
-                      detail="OBS_HASH_SALT is empty; user and message hashes are unsalted")
+                      detail="neither OBS_HASH_SALT nor LITELLM_SALT_KEY is set; user and message hashes are unkeyed")
         super().__init__(pipeline=pipeline, settings=settings)
 
     # ----- startup -------------------------------------------------------------------
@@ -118,11 +121,9 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
 
         token = request_id_var.set(data.get("litellm_call_id"))
         model = m.bounded_model(data.get("model"), self.obs.max_model_label_values)
-        originals = {
-            index: "\n".join(text for _, text in _text_parts(message))
-            for index, message in enumerate(data["messages"])
-            if _text_parts(message)
-        }
+        # The message objects as the client sent them; their text is joined later, only for the messages that get span
+        # attributes (the pipeline works on copies, so these stay unchanged).
+        originals = list(data["messages"])
         # Under OTel V2 the server span is already current; otherwise attach to the auth span.
         parent_context = None
         if not trace.get_current_span().get_span_context().is_valid:
@@ -151,7 +152,8 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
             request_id_var.reset(token)
 
     def _record_rejected(self, span, data: dict, model: str, started: float) -> None:
-        summary = _metadata(data).get(METADATA_KEY) or {}
+        metadata = _metadata(data)
+        summary = metadata.get(METADATA_KEY) or metadata.get(REDACTION_KEY) or {}
         reason = failure_reason(summary.get("error", ""))
         elapsed = time.perf_counter() - started
         m.FAILURES.labels("closed", reason).inc()
@@ -171,6 +173,9 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
         m.REQUESTS.labels(model, category, status).inc()
         m.PIPELINE_DURATION.labels(status).observe(elapsed)
 
+        redaction = metadata.get(REDACTION_KEY) or {}
+        if redaction.get("redactions"):
+            m.REDACTIONS.labels("guardrail").inc(redaction["redactions"])
         user_hash = hash_id(getattr(user_api_key_dict, "user_id", None) or data.get("user"), self.obs.hash_salt)
         team_hash = hash_id(getattr(user_api_key_dict, "team_id", None), self.obs.hash_salt)
         attributes = {
@@ -196,7 +201,10 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
             self._record_ok(summary, model, category, originals, data["messages"], attributes, log_fields,
                             applied=status == "ok")
 
+        # Request-level attributes first: the SDK drops attributes past its limit, so these must never be the ones lost.
+        message_attributes = attributes.pop("_messages", {})
         span.set_attributes(attributes)
+        span.set_attributes(message_attributes)
         self._attribute_in_langfuse(metadata, category, user_hash, attributes)
         if status != "error":
             event(logger, "prompt_pipeline.completed", **log_fields)
@@ -217,6 +225,8 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
             m.SHADOW_TOKENS_SAVED.labels(model, category).inc(max(0, before - after))
 
         classify_seconds = compress_seconds = 0.0
+        message_attributes: dict = {}
+        labelled: list = []
         for message in summary.get("messages") or []:
             label = message.get("category")
             if label is None:
@@ -238,19 +248,27 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
                 compress_seconds += message["compress_ms"] / 1000
                 m.COMPRESS_LATENCY.labels(label).observe(message["compress_ms"] / 1000)
 
+            labelled.append((message, label))
+        # Per-message attributes for the latest max_span_messages labelled messages only (the latest turns are the ones
+        # worth looking at): the OTel SDK keeps at most 128 attributes per span and silently drops the rest.
+        limit = self.obs.max_span_messages
+        shown = labelled[-limit:] if limit else []
+        omitted = len(labelled) - len(shown)
+        for message, label in shown:
             index = message["index"]
-            text = originals.get(index, "")
-            attributes[f"prompt.message.{index}.label"] = label
-            attributes[f"prompt.message.{index}.sha256"] = fingerprint(text, self.obs.hash_salt)
-            attributes[f"prompt.message.{index}.chars"] = len(text)
-            attributes[f"prompt.message.{index}.tokens_before"] = int(message.get("tokens_before") or count_tokens(text))
-            attributes[f"prompt.message.{index}.tokens_after"] = int(message.get("tokens_after") or 0)
+            original = originals[index] if index < len(originals) else {}
+            text = "\n".join(t for _, t in _text_parts(original)) if isinstance(original, dict) else ""
+            message_attributes[f"prompt.message.{index}.label"] = label
+            message_attributes[f"prompt.message.{index}.sha256"] = fingerprint(text, self.obs.hash_salt)
+            message_attributes[f"prompt.message.{index}.chars"] = len(text)
+            message_attributes[f"prompt.message.{index}.tokens_before"] = int(message.get("tokens_before") or count_tokens(text))
+            message_attributes[f"prompt.message.{index}.tokens_after"] = int(message.get("tokens_after") or 0)
             # `index` is the message's position in the original request; history trimming can shift it in the result.
             result_index = message.get("new_index", index)
             if applied and self.obs.capture_text and label in TEXT_CAPTURE_LABELS and result_index < len(new_messages):
                 after_text = "\n".join(t for _, t in _text_parts(new_messages[result_index]))
-                attributes[f"prompt.message.{index}.text_before"] = scrub(text)
-                attributes[f"prompt.message.{index}.text_after"] = scrub(after_text)
+                message_attributes[f"prompt.message.{index}.text_before"] = scrub(text)
+                message_attributes[f"prompt.message.{index}.text_after"] = scrub(after_text)
 
         rate = self.obs.hourly_rate_usd / 3600
         cost = round((classify_seconds + compress_seconds) * rate, 10)
@@ -258,7 +276,12 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
             if seconds:
                 m.COMPUTE_SECONDS.labels(component).inc(seconds)
                 m.ESTIMATED_COMPUTE_COST.labels(component).inc(seconds * rate)
+        attributes["_messages"] = message_attributes
         attributes.update({
+            "prompt.messages.attributes_omitted": omitted,
+            "prompt.intent": summary.get("intent") or "",
+            "prompt.compress.calls": int(summary.get("compress_calls") or 0),
+            "prompt.compress.stopped": summary.get("compress_stopped") or "",
             "prompt.tokens.before": before,
             "prompt.tokens.after": after,
             "prompt.tokens.saved": max(0, before - after),
@@ -321,8 +344,12 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
         }
         if failed:
             error = payload.get("error_information") or {}
+            message = error.get("error_message")
+            # Provider error messages can echo prompt fragments, so only a keyed hash and the length leave the process
+            # (PROJECT_AUDIT_REPORT.md, F-22S); the class and code are enough to group failures.
             fields.update({"error_class": error.get("error_class"), "error_code": error.get("error_code"),
-                           "error_message": error.get("error_message")})
+                           "error_message_hash": fingerprint(str(message), self.obs.hash_salt) if message else None,
+                           "error_message_chars": len(str(message)) if message else None})
         event(logger, "llm.request.failed" if failed else "llm.request.completed",
               logging.WARNING if failed else logging.INFO, **fields)
 

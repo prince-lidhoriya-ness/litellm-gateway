@@ -1,0 +1,13 @@
+# Packages added to the LiteLLM image (Dockerfile). Same versions as prompt_compression/requirements.txt, which is what
+# both test suites run against; torch==2.15.0 (CPU) is installed separately from the PyTorch CPU index.
+# litellm itself comes from the pinned base image (v1.106.0).
+llmlingua==0.2.2
+transformers==5.20.1
+tokenizers==0.23.3
+huggingface_hub==1.33.0
+safetensors==0.8.0
+accelerate==1.15.0
+sentencepiece==0.2.2
+protobuf==7.36.2
+tiktoken==0.14.0
+numpy==2.5.4

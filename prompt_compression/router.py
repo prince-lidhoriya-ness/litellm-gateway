@@ -8,11 +8,17 @@ context (the question, which message is the latest user message). Output is a Pl
     compress  running prose goes to LLMLingua-2
 
 Evidence for each rule is in reports/compression-fit/REPORT.md, sections 4 and 7.
+
+Two limits on "select" (PROJECT_AUDIT_REPORT.md, F-06 and F-07):
+  scope   with selection_scope "latest_user" (default) only units of the latest user message may be selected; earlier
+          turns are history and are never re-selected against a new question
+  intent  a request that needs the whole text (summarise, translate, review ..., intent.py) selects nothing
 """
 
 from dataclasses import dataclass, field
 from typing import Callable, Optional
 
+from prompt_compression.intent import LOOKUP, TRANSFORM
 from prompt_compression.segmenter import CODE, EXACT, PROSE, STRUCTURED
 from prompt_compression.selectors import trim_history
 from prompt_compression.settings import PipelineSettings
@@ -28,12 +34,17 @@ class Plan:
     passages: list = field(default_factory=list)    # units a passage selection may drop
     records: list = field(default_factory=list)     # structured blocks a record selection may thin out
     reasons: dict = field(default_factory=dict)     # reason -> number of units kept verbatim for it
+    intent: str = LOOKUP
 
 
 def route(units: list, settings: PipelineSettings, query: Optional[str], last_user_index: Optional[int],
-          count_tokens: Callable[[str], int]) -> Plan:
-    plan = Plan(units=units, query=(query or "").strip() or None)
+          count_tokens: Callable[[str], int], intent: str = LOOKUP) -> Plan:
+    plan = Plan(units=units, query=(query or "").strip() or None, intent=intent)
     routes = settings.routes
+    selection_allowed = not (settings.intent_gate and intent == TRANSFORM)
+
+    def selectable(unit: Unit) -> bool:
+        return selection_allowed and (settings.selection_scope == "all" or unit.message == last_user_index)
 
     # the instruction and the question of the latest user message
     if settings.protect_edges and last_user_index is not None:
@@ -54,16 +65,18 @@ def route(units: list, settings: PipelineSettings, query: Optional[str], last_us
         elif unit.kind == CODE:
             _keep(plan, unit, "code")
         elif unit.kind == STRUCTURED:
-            if plan.query and "records" in routes and unit.subtype in RECORD_SUBTYPES:
+            if plan.query and "records" in routes and unit.subtype in RECORD_SUBTYPES and selectable(unit):
                 unit.action, unit.reason = SELECT, "records"
                 plan.records.append(unit)
             else:
                 _keep(plan, unit, "structured")
         elif unit.kind == EXACT:
             _keep(plan, unit, "exact")
-            candidates.append(unit)             # may still be dropped whole as a passage, never compressed
+            if selectable(unit):
+                candidates.append(unit)         # may still be dropped whole as a passage, never compressed
         elif unit.kind == PROSE:
-            candidates.append(unit)
+            if selectable(unit):
+                candidates.append(unit)
             if "narrative" in routes:
                 unit.action, unit.reason, unit.compressible = COMPRESS, "prose", True
             else:
@@ -73,6 +86,10 @@ def route(units: list, settings: PipelineSettings, query: Optional[str], last_us
     if plan.query and "passages" in routes and len(candidates) >= settings.min_passages:
         if sum(count_tokens(u.text) for u in candidates) >= settings.min_passage_tokens:
             for unit in candidates:
+                if unit.reason == "exact":     # counted as kept above; now it is a passage candidate instead
+                    plan.reasons["exact"] -= 1
+                    if not plan.reasons["exact"]:
+                        del plan.reasons["exact"]
                 unit.selectable = True
                 unit.action, unit.reason = SELECT, "passage"
                 plan.passages.append(unit)
