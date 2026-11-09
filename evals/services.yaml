@@ -1,0 +1,5 @@
+# Base URL of the gateway as seen by the eval runner. evals/run_evals.sh runs Gate 4 on the host, so 127.0.0.1 works (not "localhost": on Windows
+# it tries IPv6 first and adds about 2 s to every call).
+# From the quality-gates runner container use http://host.docker.internal:4000 instead.
+services:
+  litellm-gateway: http://127.0.0.1:4000

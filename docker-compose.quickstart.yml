@@ -38,6 +38,14 @@ services:
       - ./observability:/app/observability
     command: ["--config", "/app/config.yaml"]
     environment:
+      # Proxy worker processes. Each one loads its own classifier + LLMLingua-2 copy (about 1 GB RAM) and runs
+      # their calls in parallel with the others; with 1 worker every model call in the gateway is serialized
+      # (evals/REPORT.md, 4.1). LiteLLM shares Prometheus metrics across workers on its own (PROMETHEUS_MULTIPROC_DIR).
+      # Measured on 8 vCPUs, 120 mixed requests at concurrency 8 (reports/playground-ab/raw/throughput_U_*):
+      #   1 worker x 8 threads: 8.1-8.7 req/s compressed   2 x 4: 12.7-13.1   4 x 2: 8.7 (LLMLingua-2 starved of threads)
+      NUM_WORKERS: ${LITELLM_NUM_WORKERS:-2}
+      # Torch threads per worker: workers x threads = the container's CPUs (8 here).
+      OMP_NUM_THREADS: ${PROMPT_COMPRESSION_TORCH_THREADS:-4}
       # prompt_compression/ settings (prompt_compression.env.example). Empty = the code default.
       PROMPT_COMPRESSION_ENABLED: ${PROMPT_COMPRESSION_ENABLED:-}
       PROMPT_COMPRESSION_MODE: ${PROMPT_COMPRESSION_MODE:-}

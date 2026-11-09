@@ -98,7 +98,7 @@ All optional; `../prompt_compression.env.example` lists every variable with its 
 | | `PROMPT_COMPRESSION_FAIL_MODE` | `open` | `open`: send the original prompt + warning; `closed`: reject with HTTP 503 |
 | | `PROMPT_COMPRESSION_MODE` | `enforce` | `shadow`: run and report everything but send the original prompt |
 | Classify | `SENSITIVITY_BACKEND` | `embedding` | `embedding` (trained head) or `nli` (legacy zero-shot model) |
-| | `SENSITIVITY_THRESHOLD` | head: `0.37` | Probability at or above this keeps a text verbatim (empty = backend default; nli: 0.35) |
+| | `SENSITIVITY_THRESHOLD` | head: `0.36` | Probability at or above this keeps a text verbatim (empty = backend default; nli: 0.35) |
 | | `CLASSIFIER_MODEL` / `_LABEL_FORMAT` / `_QUANTIZE` | distilbert-mnli / `descriptive` / `none` | `nli` backend only |
 | | `CLASSIFIER_CACHE_SIZE` / `_MAX_CHUNK_TOKENS` | `2048` / `400` | LRU entries; tokens per chunk for long texts |
 | | `PROMPT_COMPRESSION_EXACT_DENSITY` | `0.15` | Share of identifier-like words that makes a paragraph "exact text" |
@@ -200,17 +200,24 @@ compressed (a Playground prompt about suppliers and manufacturers scored 0.44 an
 hypothesis wording fixed it (`reports/playground-ab/raw/sensitivity_variants.json`).
 
 **Current decision** (`eval/train_sensitivity_head.py`, `eval/results/sensitivity_head.md`): rules, then topics, then
-`all-MiniLM-L6-v2` + a logistic-regression head trained on `eval/sensitivity_train.jsonl` and the dev split (345
-prompts, 150 sensitive). Threshold 0.37 = largest value with 5-fold out-of-fold recall of at least 0.95. Nothing below
-was used for training:
+`all-MiniLM-L6-v2` + a logistic-regression head (`sensitivity-head-v2`) trained on `eval/sensitivity_train.jsonl` and
+the dev split (385 prompts, 164 sensitive). Threshold 0.36 = largest value with 5-fold out-of-fold recall of at least
+0.95. Nothing below was used for training:
 
 | set | decision | sensitive recall | false-positive rate |
 |---|---|---|---|
 | test (148 prompts) | zero-shot at 0.35 (old) | 0.973 | 0.676 |
-| | rules + topics + head (new) | 0.973 (36 of 37) | 0.072 |
+| | rules + topics + head v1 / v2 | 0.973 / 0.973 (36 of 37) | 0.072 / 0.099 |
 | fresh holdout (100 prompts) | zero-shot at 0.35 (old) | 1.000 | 0.917 |
-| | rules + topics + head (new) | 1.000 (40 of 40) | 0.083 |
-| QA company prose (112 runs) | old / new | - | 0.795 / 0.000 |
+| | rules + topics + head v1 / v2 | 1.000 / 1.000 (40 of 40) | 0.083 / 0.117 |
+| QA company prose (112 runs) | old / v1 / v2 | - | 0.795 / 0.000 / 0.000 |
+| QA passages one at a time (360) | v1 / v2 | - | see below / 0.006 |
+
+v2 (2026-11-08) adds 26 public leadership-history sentences as hard negatives, plus 14 confidential or personal
+employment and commercial items as positives. The gateway now scores each passage on its own (`pipeline._passage_groups`).
+v1 flagged sentences such as "leadership passed to X in 2009, who remains chief executive" (scores 0.38-0.69), so 28 of
+40 benchmark qa requests were labelled sensitive (evals/REPORT.md §0). v2 keeps the same recall, at a few more false
+alarms on general prose. v1 is in git history if a rollback is needed.
 | PII case notes (50) | old / new | 1.000 / 1.000 | - |
 
 The one test miss is a placeholder Slack webhook URL (a rules-test artefact, see "Tests"). The fresh holdout and the
@@ -218,6 +225,19 @@ training file were written by the same author as the topic lexicon, so they shar
 on your own traffic in shadow mode, and retrain with your own labelled examples by adding them to
 `eval/sensitivity_train.jsonl` and rerunning the training script. Scoring costs about 14 ms per text on this CPU (the
 zero-shot model: about 250 ms). `SENSITIVITY_BACKEND=nli` restores the old model.
+
+**What the model is asked about** (changed after `evals/REPORT.md`, 2026-11-08):
+- **Instruction and question are not sent to the model.** In a message of three or more paragraphs, the first and last
+  paragraph of the latest user message are kept verbatim by the router whatever they contain, so the model only
+  judges the content between them. Rules and topics still check them. Before this change, short lookup questions such
+  as "What was the user id of request req-1?" were labelled sensitive in 17 of 40 log prompts. That only mislabelled
+  the request, since the question is never changed. One- and two-paragraph prompts are still judged whole.
+- **Each passage is judged on its own** when the `passages` or `history` route is on. A passage shorter than 40
+  characters is judged with the next one. All passages of a request go through one batched encoder call.
+- **Why per passage:** scoring the whole document in 200-token windows let one company-finance paragraph, falling into
+  a short window, keep the entire document verbatim. Moving the window edges, even by changing an 8-character request
+  tag, flipped the decision. Now a high score protects only its own passage.
+- **With only the `narrative` route,** the prose run is compressed as a whole and is still judged as a whole.
 
 ## What it does on the research benchmark
 
@@ -256,8 +276,13 @@ proxy twice, once with `metadata.prompt_compression=false`. The current defaults
 - **Selection routes:** a few milliseconds.
 - **LLMLingua-2:** each call takes 0.2–1 s on this CPU.
 - **Through the proxy:** the pipeline adds 22 ms at p50 and 0.43 s at p95 (run B2).
-- **Capacity:** in front of an instant mock model the proxy tops out at about 7 req/s with compression, against 30
-  without it. Size proxy CPU accordingly.
+- **Capacity:** each proxy worker loads its own models (about 1 GB RAM), and inside a worker the model calls run one
+  at a time.
+  - `LITELLM_NUM_WORKERS` (default 2) and `PROMPT_COMPRESSION_TORCH_THREADS` (default 4) in
+    `docker-compose.quickstart.yml` set the split. Keep workers × threads = CPUs.
+  - On 8 vCPUs with an instant mock model and 120 mixed requests at concurrency 8, compressed throughput was
+    8.1–8.7 req/s with 1 × 8, 12.7–13.1 with 2 × 4, and 8.7 with 4 × 2 (LLMLingua-2 starved of threads).
+  - Uncompressed traffic gets 42–48 req/s at 2 × 4. Size proxy CPU, or add replicas, for the compressed rate.
 - **Timeouts:** if the pipeline exceeds `PROMPT_COMPRESSION_TIMEOUT_S`, it fails open and sends the original prompt.
   - Repeated turns hit the sensitivity cache.
   - Raise the timeout if long conversations are common.

@@ -222,6 +222,42 @@ def test_a_one_paragraph_latest_user_message_is_not_compressed_when_edges_are_pr
     assert compressor.calls == [] and report.messages[0]["action"] == "guarded"
 
 
+def test_the_model_does_not_judge_the_instruction_and_question_around_a_document():
+    # They are kept verbatim anyway; a "sensitive" opinion on them (a lookup question) would only mislabel the request.
+    question = "Question: SENS what was the user id of request req-1?"
+    messages = [{"role": "user", "content": join("Read these notes.", PROSE_1, PROSE_2, PROSE_3, question)}]
+    pipeline, compressor, detector = make_pipeline(["SENS"], protect_edges=True)
+    new_messages, report = pipeline.process(messages)
+    assert detector.checked == [join(PROSE_1, PROSE_2, PROSE_3)]
+    assert report.request_category == "general" and compressor.calls
+    assert new_messages[0]["content"].endswith(question)
+
+
+def test_rules_still_protect_an_edge_the_model_skips():
+    question = "Question: is jane.doe@example.com the account owner?"
+    messages = [{"role": "user", "content": join("Read these notes.", PROSE_1, PROSE_2, PROSE_3, question)}]
+    pipeline, _, detector = make_pipeline(protect_edges=True)
+    new_messages, report = pipeline.process(messages)
+    assert all("jane.doe" not in text for text in detector.checked)
+    assert report.request_category == "sensitive" and report.messages[0]["rule_hits"] == ["email"]
+    assert new_messages[0]["content"].endswith(question)
+
+
+def test_a_short_prompt_is_still_judged_whole_by_the_model():
+    # One or two paragraphs are all edges: the model stays the only judge of their label.
+    pipeline, _, detector = make_pipeline(["SENS"], protect_edges=True)
+    _, report = pipeline.process([{"role": "user", "content": join("SENS " + PROSE_1, PROSE_2)}])
+    assert detector.checked and report.request_category == "sensitive"
+
+
+def test_edges_are_judged_by_the_model_when_edge_protection_is_off():
+    question = "Question: SENS what was the user id of request req-1?"
+    messages = [{"role": "user", "content": join("Read these notes.", PROSE_1, PROSE_2, PROSE_3, question)}]
+    pipeline, _, detector = make_pipeline(["SENS"], protect_edges=False)
+    _, report = pipeline.process(messages)
+    assert any("SENS" in text for text in detector.checked) and report.request_category == "sensitive"
+
+
 def test_ratio_cap_retries_lighter_then_accepts():
     words = ["market", "season", "supplier", "region", "delivery", "customer", "review"]
     text = " ".join(words[i % 7] for i in range(240))
@@ -280,6 +316,36 @@ def test_passages_the_question_does_not_need_are_dropped_whole():
     assert relevant in content and content.startswith("Use the passages") and content.endswith(question)
     assert 0 < report.segments["passages_dropped"] < 9 and compressor.calls == []
     assert report.messages[0]["action"] == "selected_passages" and report.tokens_after < report.tokens_before
+
+
+def test_with_passage_selection_each_passage_is_judged_alone():
+    # A sensitive opinion on one passage protects that passage, not the whole document.
+    fillers = [
+        f"Filler paragraph number {i} about suppliers, delivery times, warehouse staffing plans and regional customer "
+        f"feedback gathered during the quarterly review meetings held across several offices, where the teams compared "
+        f"forecasts, discussed seasonal demand and agreed on the next steps for each product line." for i in range(9)
+    ]
+    flagged = fillers[2] = "SENS " + fillers[2]
+    relevant = ("The Zorvex programme delivers cold-chain loggers to regional clinics, and its coordinators report "
+                "every month to the ministry about stock levels, spoilage and transport delays in districts.")
+    fillers[6] = relevant
+    question = "What does the Zorvex programme deliver?"
+    messages = [{"role": "user", "content": join("Use the passages below.", *fillers, question)}]
+    pipeline, _, detector = make_pipeline(["SENS"], routes=frozenset({"passages"}), protect_edges=True)
+    new_messages, report = pipeline.process(messages)
+    content = new_messages[0]["content"]
+    assert len(detector.checked) == 9 and all("\n\n" not in text for text in detector.checked)
+    assert flagged in content and relevant in content and report.segments["passages_dropped"] > 0
+    assert report.segments["sensitive"] == 1 and report.request_category == "sensitive"
+
+
+def test_a_short_passage_is_judged_with_its_neighbour():
+    short = "Ok, noted."
+    paragraphs = [PROSE_1, short, PROSE_2, PROSE_3]
+    messages = [{"role": "user", "content": join("Read these notes.", *paragraphs, "Question: what is noted?")}]
+    pipeline, _, detector = make_pipeline(routes=frozenset({"passages"}), protect_edges=True)
+    pipeline.process(messages)
+    assert detector.checked == [PROSE_1, join(short, PROSE_2), PROSE_3]
 
 
 def long_turn(role, n=120):

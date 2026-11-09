@@ -1,0 +1,35 @@
+# Thresholds for the LiteLLM prompt-compression evals (format of quality-gates/thresholds.yaml: max = value must be
+# <= limit, min = value must be >= limit). Every phase except "before*" is enforced.
+baseline_phases: [before]
+
+gate4:                                # live HTTP cases against the running gateway (evals/cases/*.yaml)
+  tool_errors:                {max: 0}
+  pass_rate:                  {min: 0.95}
+  critical_failures:          {max: 0}
+  p95_latency_ms:             {max: 2000}   # mock-model cases; the single real-model case is the slowest and is excluded by p95
+
+compression:                          # scored from the B2 benchmark files by evals/score_results.py
+  # reliability
+  errors_or_timeouts:         {max: 0}      # HTTP errors, fail-open or timeout events in 680 B2 requests
+  pipeline_ms_max:            {max: 5000}   # worst single pipeline run, at most half of PROMPT_COMPRESSION_TIMEOUT_S
+  # token reduction
+  prompt_token_reduction_pct: {min: 20}     # whole mixed workload (qa, logs, code, pii)
+  compressible_reduction_pct: {min: 40}     # qa + logs, the content the pipeline is meant to shrink
+  qa_reduction_pct:           {min: 25}
+  logs_reduction_pct:         {min: 40}
+  qa_prompts_changed_pct:     {min: 90}     # long prose documents the pipeline acted on
+  # quality
+  answers_lost_on_changed:    {max: 0}      # wrong answers caused by a changed prompt
+  accuracy_drop_pts:          {max: 2}      # all families, baseline minus compressed, percentage points
+  key_strings_kept_pct:       {min: 100}    # ids/numbers the question depends on, in the forwarded prompt
+  answer_in_prompt_pct:       {min: 100}
+  # performance
+  latency_mean_diff_s:        {max: 0}      # end to end with the real model: compression must not be slower
+  real_throughput_gain_pct:   {min: 0}      # real model, concurrency 1 and 4 (worst of the two)
+  overhead_p50_ms:            {max: 100}    # pipeline time per request, echo model
+  overhead_p95_ms:            {max: 1000}
+  mock_capacity_ratio:        {min: 0.5}    # compressed / baseline req/s with an instant model, concurrency 8
+  # sensitivity labelling
+  false_sensitive_rate:       {max: 0.10}   # qa/logs/code requests labelled sensitive (none contain sensitive data)
+  savings_blocked_rate:       {max: 0.05}   # qa/logs requests left uncompressed because of that label
+  pii_kept_verbatim_pct:      {min: 100}    # pii requests forwarded unchanged

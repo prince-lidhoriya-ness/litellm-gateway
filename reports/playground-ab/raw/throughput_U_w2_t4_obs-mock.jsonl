@@ -1,0 +1,12 @@
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "baseline", "concurrency": 8, "requests": 120, "ok": 120, "wall_s": 2.671, "rps": 44.9291, "lat_p50": 0.1679, "lat_p95": 0.3006, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "compressed", "concurrency": 8, "requests": 120, "ok": 120, "wall_s": 11.236, "rps": 10.6801, "lat_p50": 0.1414, "lat_p95": 3.9704, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "baseline", "concurrency": 1, "requests": 120, "ok": 120, "wall_s": 2.808, "rps": 42.7298, "lat_p50": 0.0204, "lat_p95": 0.0426, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "compressed", "concurrency": 1, "requests": 120, "ok": 120, "wall_s": 10.759, "rps": 11.1537, "lat_p50": 0.0277, "lat_p95": 0.5874, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "baseline", "concurrency": 8, "requests": 120, "ok": 120, "wall_s": 2.518, "rps": 47.6528, "lat_p50": 0.157, "lat_p95": 0.2995, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "compressed", "concurrency": 8, "requests": 120, "ok": 120, "wall_s": 9.136, "rps": 13.1352, "lat_p50": 0.0886, "lat_p95": 3.9822, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "baseline", "concurrency": 8, "requests": 120, "ok": 120, "wall_s": 2.55, "rps": 47.0595, "lat_p50": 0.1641, "lat_p95": 0.3335, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "compressed", "concurrency": 8, "requests": 120, "ok": 120, "wall_s": 11.092, "rps": 10.8189, "lat_p50": 0.1686, "lat_p95": 3.7893, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "baseline", "concurrency": 1, "requests": 120, "ok": 120, "wall_s": 2.76, "rps": 43.4841, "lat_p50": 0.0204, "lat_p95": 0.0379, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "compressed", "concurrency": 1, "requests": 120, "ok": 120, "wall_s": 10.959, "rps": 10.95, "lat_p50": 0.0304, "lat_p95": 0.5926, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "baseline", "concurrency": 8, "requests": 120, "ok": 120, "wall_s": 2.86, "rps": 41.9613, "lat_p50": 0.1866, "lat_p95": 0.2847, "prompt_tokens": 120}
+{"run": "U_w2_t4", "model": "obs-mock", "arm": "compressed", "concurrency": 8, "requests": 120, "ok": 120, "wall_s": 9.422, "rps": 12.7356, "lat_p50": 0.13, "lat_p95": 4.3032, "prompt_tokens": 120}

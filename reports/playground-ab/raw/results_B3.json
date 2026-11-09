@@ -1,0 +1,522 @@
+{
+  "run": "B3",
+  "llm": {
+    "n_pairs": 170,
+    "errors": 0,
+    "families": {
+      "qa": {
+        "n": 40,
+        "prompt_tokens_baseline": 14386,
+        "prompt_tokens_compressed": 9497,
+        "prompt_token_reduction_pct": 33.984,
+        "total_tokens_baseline": 14526,
+        "total_tokens_compressed": 9637,
+        "total_token_reduction_pct": 33.657,
+        "completion_tokens_baseline": 140,
+        "completion_tokens_compressed": 140,
+        "prompts_with_fewer_tokens": 40,
+        "pipeline_ratio_mean": 1.593,
+        "accuracy_baseline": 1.0,
+        "accuracy_compressed": 1.0,
+        "correct_baseline": 40,
+        "correct_compressed": 40,
+        "lost_by_compression": 0,
+        "gained_by_compression": 0,
+        "mcnemar_p": 1.0,
+        "same_response": 40,
+        "latency_p50_baseline": 10.489,
+        "latency_p50_compressed": 6.995,
+        "latency_p95_baseline": 11.972,
+        "latency_p95_compressed": 7.914,
+        "latency_mean_baseline": 10.487,
+        "latency_mean_compressed": 6.967,
+        "latency_mean_diff": -3.521,
+        "latency_mean_diff_ci95": [
+          -3.784,
+          -3.29
+        ],
+        "latency_p50_diff": -3.572,
+        "pipeline_ms_p50": 14.3,
+        "pipeline_ms_p95": 1043.045,
+        "pipeline_ms_max": 1399.1,
+        "status": {
+          "ok": 40
+        },
+        "category": {
+          "sensitive": 28,
+          "general": 12
+        },
+        "actions": {
+          "selected_passages+compressed": 10,
+          "selected_passages": 30
+        },
+        "kept_reasons": {
+          "edge": 80,
+          "exact": 170,
+          "sensitive": 30
+        },
+        "spend_usd_baseline": 14.666,
+        "spend_usd_compressed": 9.777
+      },
+      "logs": {
+        "n": 40,
+        "prompt_tokens_baseline": 22534,
+        "prompt_tokens_compressed": 8337,
+        "prompt_token_reduction_pct": 63.003,
+        "total_tokens_baseline": 22682,
+        "total_tokens_compressed": 8485,
+        "total_token_reduction_pct": 62.591,
+        "completion_tokens_baseline": 148,
+        "completion_tokens_compressed": 148,
+        "prompts_with_fewer_tokens": 40,
+        "pipeline_ratio_mean": 2.996,
+        "accuracy_baseline": 0.975,
+        "accuracy_compressed": 1.0,
+        "correct_baseline": 39,
+        "correct_compressed": 40,
+        "lost_by_compression": 0,
+        "gained_by_compression": 1,
+        "mcnemar_p": 1.0,
+        "same_response": 39,
+        "latency_p50_baseline": 16.428,
+        "latency_p50_compressed": 5.961,
+        "latency_p95_baseline": 19.973,
+        "latency_p95_compressed": 7.407,
+        "latency_mean_baseline": 16.695,
+        "latency_mean_compressed": 6.043,
+        "latency_mean_diff": -10.652,
+        "latency_mean_diff_ci95": [
+          -11.405,
+          -9.945
+        ],
+        "latency_p50_diff": -10.852,
+        "pipeline_ms_p50": 8.85,
+        "pipeline_ms_p95": 15.885,
+        "pipeline_ms_max": 22.5,
+        "status": {
+          "ok": 40
+        },
+        "category": {
+          "general": 40
+        },
+        "actions": {
+          "selected_records": 40
+        },
+        "kept_reasons": {
+          "edge": 80
+        },
+        "spend_usd_baseline": 22.83,
+        "spend_usd_compressed": 8.633
+      },
+      "code": {
+        "n": 40,
+        "prompt_tokens_baseline": 22173,
+        "prompt_tokens_compressed": 22141,
+        "prompt_token_reduction_pct": 0.144,
+        "total_tokens_baseline": 22284,
+        "total_tokens_compressed": 22253,
+        "total_token_reduction_pct": 0.139,
+        "completion_tokens_baseline": 111,
+        "completion_tokens_compressed": 112,
+        "prompts_with_fewer_tokens": 0,
+        "pipeline_ratio_mean": 1.0,
+        "accuracy_baseline": 0.875,
+        "accuracy_compressed": 0.85,
+        "correct_baseline": 35,
+        "correct_compressed": 34,
+        "lost_by_compression": 1,
+        "gained_by_compression": 0,
+        "mcnemar_p": 1.0,
+        "same_response": 39,
+        "latency_p50_baseline": 16.744,
+        "latency_p50_compressed": 16.218,
+        "latency_p95_baseline": 19.039,
+        "latency_p95_compressed": 19.525,
+        "latency_mean_baseline": 16.656,
+        "latency_mean_compressed": 16.51,
+        "latency_mean_diff": -0.146,
+        "latency_mean_diff_ci95": [
+          -0.65,
+          0.39
+        ],
+        "latency_p50_diff": -0.272,
+        "pipeline_ms_p50": 12.2,
+        "pipeline_ms_p95": 28.6,
+        "pipeline_ms_max": 49.9,
+        "status": {
+          "ok": 40
+        },
+        "category": {
+          "general": 40
+        },
+        "actions": {
+          "guarded": 40
+        },
+        "kept_reasons": {
+          "code": 354,
+          "edge": 80,
+          "structured": 46
+        },
+        "spend_usd_baseline": 22.395,
+        "spend_usd_compressed": 22.365
+      },
+      "pii": {
+        "n": 50,
+        "prompt_tokens_baseline": 11039,
+        "prompt_tokens_compressed": 11052,
+        "prompt_token_reduction_pct": -0.118,
+        "total_tokens_baseline": 11298,
+        "total_tokens_compressed": 11320,
+        "total_token_reduction_pct": -0.195,
+        "completion_tokens_baseline": 259,
+        "completion_tokens_compressed": 268,
+        "prompts_with_fewer_tokens": 0,
+        "pipeline_ratio_mean": 1.0,
+        "accuracy_baseline": 0.76,
+        "accuracy_compressed": 0.74,
+        "correct_baseline": 38,
+        "correct_compressed": 37,
+        "lost_by_compression": 12,
+        "gained_by_compression": 11,
+        "mcnemar_p": 1.0,
+        "same_response": 26,
+        "latency_p50_baseline": 6.584,
+        "latency_p50_compressed": 6.596,
+        "latency_p95_baseline": 9.424,
+        "latency_p95_compressed": 8.577,
+        "latency_mean_baseline": 6.78,
+        "latency_mean_compressed": 6.806,
+        "latency_mean_diff": 0.026,
+        "latency_mean_diff_ci95": [
+          -0.191,
+          0.242
+        ],
+        "latency_p50_diff": 0.086,
+        "pipeline_ms_p50": 8.05,
+        "pipeline_ms_p95": 25.94,
+        "pipeline_ms_max": 60.7,
+        "status": {
+          "ok": 50
+        },
+        "category": {
+          "sensitive": 50
+        },
+        "actions": {
+          "sensitive": 50
+        },
+        "kept_reasons": {
+          "edge": 100,
+          "sensitive": 50
+        },
+        "spend_usd_baseline": 11.557,
+        "spend_usd_compressed": 11.588
+      },
+      "all": {
+        "n": 170,
+        "prompt_tokens_baseline": 70132,
+        "prompt_tokens_compressed": 51027,
+        "prompt_token_reduction_pct": 27.241,
+        "total_tokens_baseline": 70790,
+        "total_tokens_compressed": 51695,
+        "total_token_reduction_pct": 26.974,
+        "completion_tokens_baseline": 658,
+        "completion_tokens_compressed": 668,
+        "prompts_with_fewer_tokens": 80,
+        "pipeline_ratio_mean": 1.609,
+        "accuracy_baseline": 0.894,
+        "accuracy_compressed": 0.888,
+        "correct_baseline": 152,
+        "correct_compressed": 151,
+        "lost_by_compression": 13,
+        "gained_by_compression": 12,
+        "mcnemar_p": 1.0,
+        "same_response": 144,
+        "latency_p50_baseline": 11.364,
+        "latency_p50_compressed": 6.899,
+        "latency_p95_baseline": 19.126,
+        "latency_p95_compressed": 17.647,
+        "latency_mean_baseline": 12.309,
+        "latency_mean_compressed": 8.948,
+        "latency_mean_diff": -3.361,
+        "latency_mean_diff_ci95": [
+          -4.047,
+          -2.693
+        ],
+        "latency_p50_diff": -2.065,
+        "pipeline_ms_p50": 10.7,
+        "pipeline_ms_p95": 687.4,
+        "pipeline_ms_max": 1399.1,
+        "status": {
+          "ok": 170
+        },
+        "category": {
+          "sensitive": 78,
+          "general": 92
+        },
+        "actions": {
+          "selected_passages+compressed": 10,
+          "selected_records": 40,
+          "guarded": 40,
+          "sensitive": 50,
+          "selected_passages": 30
+        },
+        "kept_reasons": {
+          "edge": 340,
+          "exact": 170,
+          "sensitive": 80,
+          "code": 354,
+          "structured": 46
+        },
+        "spend_usd_baseline": 71.448,
+        "spend_usd_compressed": 52.363
+      }
+    },
+    "changed_subset": {
+      "n": 80,
+      "accuracy_baseline": 0.988,
+      "accuracy_compressed": 1.0,
+      "prompt_token_reduction_pct": 51.696,
+      "lost": [],
+      "gained": [
+        "logs-010"
+      ]
+    },
+    "timeouts_or_errors": []
+  },
+  "capture": {
+    "n_pairs": 170,
+    "families": {
+      "qa": {
+        "n": 40,
+        "changed": 40,
+        "baseline_unchanged": 40,
+        "tokens_orig_cl100k": 13396,
+        "tokens_sent_cl100k": 8500,
+        "token_reduction_pct": 36.548,
+        "key_strings_kept_pct": 100.0,
+        "key_strings_kept_baseline_pct": 100.0,
+        "answer_in_prompt_pct": 100.0,
+        "overhead_mean_s": 0.384,
+        "overhead_p50_s": 0.083,
+        "overhead_p95_s": 1.826,
+        "overhead_ci95": [
+          0.193,
+          0.608
+        ],
+        "baseline_latency_p50_s": 0.033
+      },
+      "logs": {
+        "n": 40,
+        "changed": 40,
+        "baseline_unchanged": 40,
+        "tokens_orig_cl100k": 21527,
+        "tokens_sent_cl100k": 7345,
+        "token_reduction_pct": 65.88,
+        "key_strings_kept_pct": 100.0,
+        "key_strings_kept_baseline_pct": 100.0,
+        "answer_in_prompt_pct": 100.0,
+        "overhead_mean_s": 0.011,
+        "overhead_p50_s": 0.009,
+        "overhead_p95_s": 0.039,
+        "overhead_ci95": [
+          0.005,
+          0.017
+        ],
+        "baseline_latency_p50_s": 0.031
+      },
+      "code": {
+        "n": 40,
+        "changed": 0,
+        "baseline_unchanged": 40,
+        "tokens_orig_cl100k": 21158,
+        "tokens_sent_cl100k": 21158,
+        "token_reduction_pct": 0.0,
+        "key_strings_kept_pct": 100.0,
+        "key_strings_kept_baseline_pct": 100.0,
+        "answer_in_prompt_pct": 100.0,
+        "overhead_mean_s": 0.012,
+        "overhead_p50_s": 0.01,
+        "overhead_p95_s": 0.047,
+        "overhead_ci95": [
+          0.004,
+          0.021
+        ],
+        "baseline_latency_p50_s": 0.031
+      },
+      "pii": {
+        "n": 50,
+        "changed": 0,
+        "baseline_unchanged": 50,
+        "tokens_orig_cl100k": 9808,
+        "tokens_sent_cl100k": 9808,
+        "token_reduction_pct": 0.0,
+        "key_strings_kept_pct": 100.0,
+        "key_strings_kept_baseline_pct": 100.0,
+        "answer_in_prompt_pct": 100.0,
+        "overhead_mean_s": 0.01,
+        "overhead_p50_s": 0.008,
+        "overhead_p95_s": 0.029,
+        "overhead_ci95": [
+          0.007,
+          0.013
+        ],
+        "baseline_latency_p50_s": 0.031
+      },
+      "all": {
+        "n": 170,
+        "changed": 80,
+        "baseline_unchanged": 170,
+        "tokens_orig_cl100k": 65889,
+        "tokens_sent_cl100k": 46811,
+        "token_reduction_pct": 28.955,
+        "key_strings_kept_pct": 100.0,
+        "key_strings_kept_baseline_pct": 100.0,
+        "answer_in_prompt_pct": 100.0,
+        "overhead_mean_s": 0.099,
+        "overhead_p50_s": 0.011,
+        "overhead_p95_s": 0.605,
+        "overhead_ci95": [
+          0.048,
+          0.16
+        ],
+        "baseline_latency_p50_s": 0.032
+      }
+    }
+  },
+  "throughput": {
+    "throughput_B3_obs-mock": [
+      {
+        "run": "B3",
+        "model": "obs-mock",
+        "arm": "baseline",
+        "concurrency": 1,
+        "requests": 120,
+        "ok": 120,
+        "wall_s": 6.374,
+        "rps": 18.8269,
+        "lat_p50": 0.0461,
+        "lat_p95": 0.122,
+        "prompt_tokens": 120
+      },
+      {
+        "run": "B3",
+        "model": "obs-mock",
+        "arm": "compressed",
+        "concurrency": 1,
+        "requests": 120,
+        "ok": 120,
+        "wall_s": 28.179,
+        "rps": 4.2586,
+        "lat_p50": 0.0605,
+        "lat_p95": 1.3008,
+        "prompt_tokens": 120
+      },
+      {
+        "run": "B3",
+        "model": "obs-mock",
+        "arm": "baseline",
+        "concurrency": 4,
+        "requests": 120,
+        "ok": 120,
+        "wall_s": 5.295,
+        "rps": 22.6616,
+        "lat_p50": 0.1418,
+        "lat_p95": 0.4226,
+        "prompt_tokens": 120
+      },
+      {
+        "run": "B3",
+        "model": "obs-mock",
+        "arm": "compressed",
+        "concurrency": 4,
+        "requests": 120,
+        "ok": 120,
+        "wall_s": 17.83,
+        "rps": 6.7301,
+        "lat_p50": 0.1238,
+        "lat_p95": 2.9832,
+        "prompt_tokens": 120
+      },
+      {
+        "run": "B3",
+        "model": "obs-mock",
+        "arm": "baseline",
+        "concurrency": 8,
+        "requests": 120,
+        "ok": 120,
+        "wall_s": 3.417,
+        "rps": 35.1159,
+        "lat_p50": 0.2237,
+        "lat_p95": 0.3524,
+        "prompt_tokens": 120
+      },
+      {
+        "run": "B3",
+        "model": "obs-mock",
+        "arm": "compressed",
+        "concurrency": 8,
+        "requests": 120,
+        "ok": 120,
+        "wall_s": 12.137,
+        "rps": 9.8874,
+        "lat_p50": 0.191,
+        "lat_p95": 5.0219,
+        "prompt_tokens": 120
+      }
+    ],
+    "throughput_B3_obs-priced-llama": [
+      {
+        "run": "B3",
+        "model": "obs-priced-llama",
+        "arm": "baseline",
+        "concurrency": 1,
+        "requests": 12,
+        "ok": 12,
+        "wall_s": 174.269,
+        "rps": 0.0689,
+        "lat_p50": 15.5787,
+        "lat_p95": 17.2819,
+        "prompt_tokens": 5604
+      },
+      {
+        "run": "B3",
+        "model": "obs-priced-llama",
+        "arm": "compressed",
+        "concurrency": 1,
+        "requests": 12,
+        "ok": 12,
+        "wall_s": 112.56,
+        "rps": 0.1066,
+        "lat_p50": 7.9437,
+        "lat_p95": 17.3055,
+        "prompt_tokens": 3571
+      },
+      {
+        "run": "B3",
+        "model": "obs-priced-llama",
+        "arm": "baseline",
+        "concurrency": 4,
+        "requests": 12,
+        "ok": 12,
+        "wall_s": 169.568,
+        "rps": 0.0708,
+        "lat_p50": 56.5063,
+        "lat_p95": 61.9913,
+        "prompt_tokens": 5614
+      },
+      {
+        "run": "B3",
+        "model": "obs-priced-llama",
+        "arm": "compressed",
+        "concurrency": 4,
+        "requests": 12,
+        "ok": 12,
+        "wall_s": 107.751,
+        "rps": 0.1114,
+        "lat_p50": 35.4786,
+        "lat_p95": 47.985,
+        "prompt_tokens": 3564
+      }
+    ]
+  }
+}

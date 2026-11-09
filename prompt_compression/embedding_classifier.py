@@ -113,6 +113,15 @@ class EmbeddingSensitivityClassifier:
         return 1.0 / (1.0 + math.exp(-z))
 
     def score(self, text: str, max_chunk_tokens: int = 200) -> tuple[float, int]:
-        pieces = self.encoder.chunks(text, max_chunk_tokens)
-        vectors = self.encoder.encode(pieces)
-        return max(self.prob_from_embedding(v) for v in vectors), len(pieces)
+        return self.score_many([text], max_chunk_tokens)[0]
+
+    def score_many(self, texts: list[str], max_chunk_tokens: int = 200) -> list[tuple[float, int]]:
+        """score() for several texts in one encoder forward pass: (max window probability, windows) per text."""
+        pieces_per_text = [self.encoder.chunks(text, max_chunk_tokens) for text in texts]
+        vectors = self.encoder.encode([piece for pieces in pieces_per_text for piece in pieces])
+        results, start = [], 0
+        for pieces in pieces_per_text:
+            probs = [self.prob_from_embedding(v) for v in vectors[start:start + len(pieces)]]
+            results.append((max(probs), len(pieces)))
+            start += len(pieces)
+        return results

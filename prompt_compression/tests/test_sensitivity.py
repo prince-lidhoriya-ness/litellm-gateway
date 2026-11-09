@@ -119,6 +119,10 @@ class FakeHead:
         self.calls.append(text)
         return (0.9 if any(k in text for k in self.keywords) else 0.05), 1
 
+    def score_many(self, texts, max_chunk_tokens=200):
+        self.batches = getattr(self, "batches", []) + [list(texts)]
+        return [self.score(text, max_chunk_tokens) for text in texts]
+
 
 def embedding_detector(threshold=None, **head_kwargs):
     d = SensitivityDetector(SensitivitySettings(backend="embedding", threshold=threshold, cache_size=8))
@@ -162,3 +166,28 @@ def test_company_finance_is_not_a_topic_hit():
     assert topic_hits("For fiscal 2016 Dorvance reported revenue of $50.4 million against operating costs.") == []
     assert topic_hits("The paintings are on loan from European galleries.") == []
     assert topic_hits("Thanks for being so patient with me.") == []
+
+
+def test_check_many_scores_uncached_texts_in_one_batch():
+    d = embedding_detector()
+    d.check("Customers value reliability when choosing suppliers.")           # now cached
+    texts = ["Customers value reliability when choosing suppliers.", "a sentence with secretword inside",
+             "my email is jane.doe@example.com", "Warehouses were moved closer to the port last year.", ""]
+    results = d.check_many(texts)
+    assert d._classifier.batches[-1] == [texts[1], texts[3]]                   # one model call; cache and rules skipped
+    assert [r.source for r in results] == ["model", "model", "rules", "model", "empty"]
+    assert [r.sensitive for r in results] == [False, True, True, False, False] and results[0].cache_hit
+
+
+def test_check_many_failure_treats_the_texts_as_sensitive_without_caching():
+    d = embedding_detector()
+
+    def boom(texts, max_chunk_tokens=200):
+        raise RuntimeError("boom")
+
+    d._classifier.score_many = boom
+    text = "Warehouses were moved closer to the port last year."
+    result = d.check_many([text])[0]
+    assert result.sensitive and result.source == "error"
+    d._classifier.score_many = FakeHead().score_many
+    assert not d.check_many([text])[0].sensitive

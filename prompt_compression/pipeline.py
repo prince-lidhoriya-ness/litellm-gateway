@@ -136,8 +136,20 @@ class PromptPipeline:
         unit.sensitive_source = sensitivity.source
         unit.rule_hits = tuple(sensitivity.rule_hits)
 
-    def _classify(self, units: list, use_model: bool) -> dict:
-        """Fill in Unit.sensitive and return the message-level summary of the checks."""
+    def _check_many(self, texts: list) -> list:
+        """One batched model call when the detector supports it (the embedding backend), else one call per text."""
+        if not texts:
+            return []
+        check_many = getattr(self.detector, "check_many", None)
+        return check_many(texts) if check_many else [self.detector.check(text) for text in texts]
+
+    def _classify(self, units: list, use_model: bool, model_exempt: frozenset = frozenset()) -> dict:
+        """Fill in Unit.sensitive and return the message-level summary of the checks.
+
+        `model_exempt` holds id()s of units the router keeps verbatim whatever they contain (the instruction and the
+        question of the latest user message): the rules and topics still check them, the model does not. Its opinion
+        could not change what is sent, and on short lookup questions ("What was the user id of request req-1?") it
+        was wrong 17 times in 40 log prompts, which only mislabelled the request (evals/REPORT.md, 4.2)."""
         info = {"score": 0.0, "source": "none", "classify_ms": 0.0, "chunks": 0, "cache_hit": False}
         checks = []
         for unit in units:
@@ -148,15 +160,21 @@ class PromptPipeline:
         if use_model:
             # Exact-text blocks are only checked when a route could drop them whole (a passage, an old turn): kept
             # verbatim they are protected anyway, and the model's opinion would change nothing.
-            kinds = (PROSE, EXACT) if self.settings.routes & {"history", "passages"} else (PROSE,)
-            for run in _model_runs(units, kinds):
-                text = "".join(u.full for u in run[:-1]) + run[-1].text
-                if len(text.strip()) < _MIN_MODEL_CHARS:
-                    continue
-                result = self.detector.check(text)
+            selecting = bool(self.settings.routes & {"history", "passages"})
+            kinds = (PROSE, EXACT) if selecting else (PROSE,)
+            # When a route can drop whole passages or turns, each passage is judged on its own (short ones together
+            # with their neighbour), so a borderline score protects that passage and not the whole document: scoring
+            # the run in 200-token windows let one company-finance paragraph that fell into a short window keep a
+            # whole document verbatim, and moving the window edges flipped the decision (evals/REPORT.md, 4.2).
+            # With only the narrative route the run is compressed as a whole, so it is judged as a whole.
+            groups = [g for run in _model_runs(units, kinds, model_exempt)
+                      for g in (_passage_groups(run) if selecting else [run])]
+            groups = [g for g in groups if len(_joined(g).strip()) >= _MIN_MODEL_CHARS]
+            results = self._check_many([_joined(g) for g in groups])
+            for group, result in zip(groups, results):
                 checks.append(result)
                 if result.sensitive:
-                    for unit in run:
+                    for unit in group:
                         self._mark(unit, result)
         if checks:
             info["classify_ms"] = round(sum(c.elapsed_ms for c in checks if not c.cache_hit), 1)
@@ -208,8 +226,16 @@ class PromptPipeline:
                 continue
             units = self._segment(index, parts)
             skip_model = not settings.routes or (settings.preserve_last_user and index == last_user_index)
+            exempt = frozenset()
+            if settings.protect_edges and index == last_user_index:
+                # The same units router.route() marks as edges: first and last filled unit of the latest user message.
+                # Only when there is content between them: a one- or two-paragraph prompt is all edges, and the model
+                # stays the only judge of its label.
+                filled = [u for u in units if u.filled]
+                if len(filled) >= 3:
+                    exempt = frozenset(id(u) for u in filled[:1] + filled[-1:])
             with _span("prompt.classify", {"prompt.message.index": index, "prompt.message.role": role or ""}) as span:
-                info = self._classify(units, use_model=not skip_model)
+                info = self._classify(units, use_model=not skip_model, model_exempt=exempt)
                 _set_attributes(span, {
                     "prompt.classifier.label": info["category"],
                     "prompt.classifier.score": info["score"],
@@ -320,11 +346,34 @@ class PromptPipeline:
             report.segments[key] = report.segments.get(key, 0) + value
 
 
-def _model_runs(units: list, kinds: tuple) -> list:
-    """Runs of consecutive units of the given kinds inside one message part: the text the NLI model is asked about."""
+def _joined(units: list) -> str:
+    return "".join(u.full for u in units[:-1]) + units[-1].text
+
+
+def _passage_groups(run: list) -> list:
+    """Split a run into passages judged one by one: each unit alone, except that units shorter than _MIN_MODEL_CHARS
+    are joined to the next one (or, at the end of the run, to the previous group), so no short sentence is judged
+    without context or skipped."""
+    groups, current = [], []
+    for unit in run:
+        current.append(unit)
+        if len(_joined(current).strip()) >= _MIN_MODEL_CHARS:
+            groups.append(current)
+            current = []
+    if current:
+        if groups:
+            groups[-1].extend(current)
+        else:
+            groups.append(current)
+    return groups
+
+
+def _model_runs(units: list, kinds: tuple, exempt: frozenset = frozenset()) -> list:
+    """Runs of consecutive units of the given kinds inside one message part: the text the model is asked about.
+    Units whose id() is in `exempt` are left out and split the run."""
     runs, current = [], []
     for unit in units:
-        eligible = unit.kind in kinds and unit.filled and not unit.sensitive
+        eligible = unit.kind in kinds and unit.filled and not unit.sensitive and id(unit) not in exempt
         if eligible and (not current or unit.part == current[-1].part):
             current.append(unit)
             continue

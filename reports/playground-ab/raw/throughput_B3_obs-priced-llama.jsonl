@@ -1,0 +1,4 @@
+{"run": "B3", "model": "obs-priced-llama", "arm": "baseline", "concurrency": 1, "requests": 12, "ok": 12, "wall_s": 174.269, "rps": 0.0689, "lat_p50": 15.5787, "lat_p95": 17.2819, "prompt_tokens": 5604}
+{"run": "B3", "model": "obs-priced-llama", "arm": "compressed", "concurrency": 1, "requests": 12, "ok": 12, "wall_s": 112.56, "rps": 0.1066, "lat_p50": 7.9437, "lat_p95": 17.3055, "prompt_tokens": 3571}
+{"run": "B3", "model": "obs-priced-llama", "arm": "baseline", "concurrency": 4, "requests": 12, "ok": 12, "wall_s": 169.568, "rps": 0.0708, "lat_p50": 56.5063, "lat_p95": 61.9913, "prompt_tokens": 5614}
+{"run": "B3", "model": "obs-priced-llama", "arm": "compressed", "concurrency": 4, "requests": 12, "ok": 12, "wall_s": 107.751, "rps": 0.1114, "lat_p50": 35.4786, "lat_p95": 47.985, "prompt_tokens": 3564}

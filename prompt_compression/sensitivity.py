@@ -270,6 +270,48 @@ class SensitivityDetector:
         self._cache_put(key, result)
         return result
 
+    def check_many(self, texts: list[str]) -> list[Sensitivity]:
+        """check() for several texts; with the embedding backend the model scores all uncached ones in one batch.
+        Each result's elapsed_ms is its share of the batch time, so summing them gives the time spent."""
+        if self._classifier is None:
+            return [self.check(text) for text in texts]
+        started = time.perf_counter()
+        results: list = [None] * len(texts)
+        todo = []
+        for i, text in enumerate(texts):
+            if not text or not text.strip():
+                results[i] = Sensitivity(False, 0.0, "empty", self.model_name)
+                continue
+            key = self._cache_key(text)
+            cached = self._cache_get(key)
+            if cached is not None:
+                results[i] = replace(cached, cache_hit=True)
+                continue
+            hits = deterministic_hits(text)
+            if hits:
+                results[i] = Sensitivity(True, 1.0, "rules", self.model_name, rule_hits=tuple(hits))
+                self._cache_put(key, results[i])
+                continue
+            todo.append((i, key))
+        if todo:
+            self.load()
+            try:
+                with self._infer_lock:
+                    scored = self._classifier.score_many([texts[i] for i, _ in todo], self.settings.max_chunk_tokens)
+            except Exception as exc:
+                logger.warning("sensitivity inference failed, treating the text as sensitive: error=%s", type(exc).__name__)
+                scored = None
+            share = round((time.perf_counter() - started) * 1000 / len(todo), 1)
+            for n, (i, key) in enumerate(todo):
+                if scored is None:
+                    results[i] = Sensitivity(True, 1.0, "error", self.model_name, elapsed_ms=share)
+                    continue
+                top, chunks = scored[n]
+                results[i] = Sensitivity(top >= self.threshold, round(top, 4), "model", self.model_name, chunks=chunks,
+                                         elapsed_ms=share)
+                self._cache_put(key, results[i])
+        return results
+
 
 _instance: Optional[SensitivityDetector] = None
 _instance_lock = threading.Lock()

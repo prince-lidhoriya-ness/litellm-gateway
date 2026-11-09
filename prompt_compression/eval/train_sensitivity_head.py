@@ -10,6 +10,7 @@ Evaluation (held out):
   eval/classifier_test.jsonl                         original labelled test split (148 prompts)
   reports/playground-ab/data/sensitivity_holdout.jsonl  100 prompts written for this evaluation (40 sensitive)
   reports/compression-fit/data/qa.jsonl prose runs   company/product paragraphs (negatives)
+  reports/compression-fit/data/qa.jsonl passages     the same documents one passage at a time, as the gateway scores them
   reports/compression-fit/data/pii.jsonl             50 case notes (positives; rules.py catches them anyway)
   the Playground prompt of 2026-11-06               (negative)
 
@@ -67,12 +68,21 @@ def qa_prose_runs() -> list:
     return [r for r in runs if len(r) >= 40]
 
 
+def qa_passages() -> list:
+    out = []
+    for row in jsonl(GATEWAY / "reports" / "compression-fit" / "data" / "qa.jsonl"):
+        out += [p.strip() for p in row["context"].split("\n\n") if len(p.strip()) >= 40]
+    return out
+
+
 def eval_sets() -> dict:
     sets = {
         "test": [(r["text"], r["label"] == "sensitive") for r in jsonl(EVAL / "classifier_test.jsonl")],
         "holdout": [(r["text"], r["label"] == "sensitive")
                     for r in jsonl(GATEWAY / "reports" / "playground-ab" / "data" / "sensitivity_holdout.jsonl")],
         "qa_prose": [(t, False) for t in qa_prose_runs()],
+        # One text per passage, as the gateway scores them (pipeline._passage_groups); never used for training.
+        "qa_passages": [(p, False) for p in qa_passages()],
         "pii_notes": [(r["context"], True) for r in jsonl(GATEWAY / "reports" / "compression-fit" / "data" / "pii.jsonl")],
         "playground": [(PLAYGROUND, False)],
     }
@@ -118,7 +128,7 @@ def main() -> None:
     clf = LogisticRegression(C=C, class_weight="balanced", max_iter=2000).fit(X, y)
     w, b = clf.coef_[0], float(clf.intercept_[0])
     head = {
-        "name": "sensitivity-head-v1", "encoder": DEFAULT_ENCODER, "dim": int(X.shape[1]),
+        "name": "sensitivity-head-v2", "encoder": DEFAULT_ENCODER, "dim": int(X.shape[1]),
         "coef": [round(float(v), 6) for v in w], "intercept": round(b, 6), "threshold": threshold,
         "trained_on": {"files": ["eval/sensitivity_train.jsonl", "eval/classifier_dev.jsonl"],
                        "n": int(len(y)), "positives": int(y.sum())},
