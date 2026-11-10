@@ -102,16 +102,17 @@ def _keep(plan: Plan, unit: Unit, reason: str) -> None:
 
 
 def plan_history(messages: list, message_units: dict, settings: PipelineSettings,
-                 message_tokens: Callable[[dict], int]) -> list:
+                 message_tokens: Callable[[dict], int], keep: frozenset = frozenset()) -> list:
     """Indexes of the oldest whole turns to drop (route "history"); [] when the route is off or under budget.
 
     A turn that contains sensitive text is never dropped: losing "I am allergic to penicillin" from the history is
-    worse than keeping the tokens."""
+    worse than keeping the tokens. Neither is a turn holding a message index in `keep` (the context-engineering
+    stage's compaction summary)."""
     if "history" not in settings.routes or settings.history_max_tokens <= 0:
         return []
 
     def protected(index: int) -> bool:
-        return any(unit.sensitive for unit in message_units.get(index, ()))
+        return index in keep or any(unit.sensitive for unit in message_units.get(index, ()))
 
     dropped, _ = trim_history(
         messages, settings.history_max_tokens, settings.history_keep_messages, message_tokens, protected=protected

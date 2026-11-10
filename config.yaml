@@ -19,9 +19,10 @@ model_list:
   #     api_key: os.environ/OPENAI_API_KEY
 
 litellm_settings:
-  # Resolved relative to this file: loads prompt_compression/prompt_compression_callback.py
-  # and runs its async_pre_call_hook before every chat/completions provider call.
-  callbacks: ["prompt_compression.prompt_compression_callback.prompt_compression_instance"]
+  # Resolved relative to this file: loads context_engineering/callback.py, then
+  # prompt_compression/prompt_compression_callback.py, and runs their async_pre_call_hooks in this order before every
+  # chat/completions provider call. Drop the first entry to run compression alone.
+  callbacks: ["context_engineering.callback.context_engineering_instance", "prompt_compression.prompt_compression_callback.prompt_compression_instance"]
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY

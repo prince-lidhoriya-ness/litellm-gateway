@@ -92,6 +92,17 @@ def _write_metadata(data: dict, summary: dict, key: str = METADATA_KEY, spend_lo
     metadata["spend_logs_metadata"] = spend_logs_metadata
 
 
+def _protected_indexes(data: dict) -> frozenset:
+    """Message indexes the context-engineering stage (context_engineering/callback.py, which runs before this hook)
+    asks to keep verbatim: its compaction summary. Missing or malformed hints mean nothing is protected."""
+    for metadata in gate.metadata_dicts(data):
+        hints = (metadata.get("context_engineering") or {}).get("hints") if isinstance(
+            metadata.get("context_engineering"), dict) else None
+        if isinstance(hints, dict) and isinstance(hints.get("protected_indexes"), list):
+            return frozenset(i for i in hints["protected_indexes"] if isinstance(i, int) and not isinstance(i, bool))
+    return frozenset()
+
+
 class PromptCompressionCallback(CustomLogger):
     def __init__(self, pipeline: PromptPipeline | None = None, settings: PipelineSettings | None = None):
         super().__init__()
@@ -176,12 +187,15 @@ class PromptCompressionCallback(CustomLogger):
         with self._in_flight_lock:
             self._in_flight -= 1
 
-    def _work(self, pipeline: PromptPipeline, messages: list, deadline: Deadline):
+    def _work(self, pipeline: PromptPipeline, messages: list, deadline: Deadline, protected: frozenset = frozenset()):
         """Runs in the worker pool: the token-count gate, then the pipeline."""
         decision = gate.size_check(messages, self.settings)
         if not decision.allow:
             return decision, None, None
-        new_messages, report = pipeline.process(messages, deadline=deadline)
+        if protected:
+            new_messages, report = pipeline.process(messages, deadline=deadline, protected=protected)
+        else:
+            new_messages, report = pipeline.process(messages, deadline=deadline)
         return decision, new_messages, report
 
     # ---- the hook ------------------------------------------------------------------------------------------------
@@ -209,7 +223,8 @@ class PromptCompressionCallback(CustomLogger):
         deadline = Deadline(self.settings.timeout_s * _DEADLINE_SHARE)
         context = contextvars.copy_context()          # trace context and request id reach the worker thread
         try:
-            future = self._executor.submit(context.run, self._work, pipeline, data["messages"], deadline)
+            future = self._executor.submit(context.run, self._work, pipeline, data["messages"], deadline,
+                                           _protected_indexes(data))
         except BaseException:
             self._release()
             raise

@@ -50,6 +50,11 @@ jobs:
       - name: observability tests
         working-directory: observability
         run: python -m pytest -q
+      - name: context_engineering tests
+        working-directory: context_engineering
+        env:
+          LITELLM_LOCAL_MODEL_COST_MAP: "True"
+        run: python -m pytest -q
 
   compose:
     runs-on: ubuntu-24.04

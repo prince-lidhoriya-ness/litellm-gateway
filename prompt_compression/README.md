@@ -153,7 +153,10 @@ stops at its next model call instead of running on and holding the locks for the
 Every message the pipeline may touch is split into blocks (`segmenter.py`), each with a kind, and each block gets a
 sensitivity verdict. Never touched at all: `system` and `developer` messages, `tool` and `function` results, assistant
 messages carrying `tool_calls` / `function_call`, non-text content parts, tool definitions (`tools`, which live outside
-`messages`), message roles and order.
+`messages`), message roles and order. Also left verbatim, and never dropped by the `history` route: messages the
+context-engineering stage (`../context_engineering/`, which runs before this hook) lists in
+`metadata.context_engineering.hints.protected_indexes`, i.e. its compaction summary (report action
+`preserved_context_engineering`).
 
 | Kind | Examples | Why it matters (research report) |
 |---|---|---|

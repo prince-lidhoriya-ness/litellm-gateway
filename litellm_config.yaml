@@ -31,11 +31,15 @@ model_list:
 litellm_settings:
   # otel + langfuse_otel share LiteLLM's OTel V2 TracerProvider (LITELLM_OTEL_V2=true): one trace per
   # request goes to the collector (Jaeger) and to Langfuse. prometheus serves /metrics.
+  # The context-engineering stage (context_engineering/README.md: budget, observation masking, optional JIT retrieval
+  # and compaction, cache-aware construction) must come BEFORE the compression hook: LiteLLM runs pre-call hooks in
+  # this order and the compression hook reads the stage's hints. Remove the entry (or CONTEXT_ENGINEERING_ENABLED=false)
+  # to run compression alone.
   # The last entry is prompt_compression's hook wrapped with spans/metrics/JSON logs
   # (observability/observed_callback.py). Swap it for
   # "prompt_compression.prompt_compression_callback.prompt_compression_instance" to drop the
   # observability layer (never both).
-  callbacks: ["otel", "langfuse_otel", "prometheus", "observability.observed_callback.observed_prompt_compression_instance"]
+  callbacks: ["otel", "langfuse_otel", "prometheus", "context_engineering.callback.context_engineering_instance", "observability.observed_callback.observed_prompt_compression_instance"]
   # Message text is scrubbed from every logging callback (Langfuse, OTel, custom loggers).
   turn_off_message_logging: true
   # /metrics is scraped inside the docker network. The proxy port is bound to 127.0.0.1 by default (LITELLM_BIND in

@@ -43,6 +43,8 @@ services:
       - ./litellm_config.yaml:/app/config.yaml
       # gate -> segment/classify -> route -> actions -> reassemble pipeline loaded by litellm_config.yaml (see prompt_compression/README.md).
       - ./prompt_compression:/app/prompt_compression
+      # Context engineering stage, runs before compression (context_engineering/README.md). Pure Python, no models.
+      - ./context_engineering:/app/context_engineering
       # Model weights are baked into the image (Dockerfile, HF_HOME=/opt/hf); no cache volume is needed.
       # Spans, prompt_pipeline_* metrics and JSON logs around the pipeline (see docs/monitoring-plan.md).
       - ./observability:/app/observability
@@ -78,6 +80,32 @@ services:
       SENSITIVITY_BACKEND: ${SENSITIVITY_BACKEND:-}
       SENSITIVITY_THRESHOLD: ${SENSITIVITY_THRESHOLD:-}
       REDACT_SENSITIVE: ${REDACT_SENSITIVE:-}
+      # context_engineering/ settings (context_engineering.env.example). Empty = the code default.
+      CONTEXT_ENGINEERING_ENABLED: ${CONTEXT_ENGINEERING_ENABLED:-}
+      CONTEXT_ENGINEERING_MODE: ${CONTEXT_ENGINEERING_MODE:-}
+      CONTEXT_ENGINEERING_FAIL_MODE: ${CONTEXT_ENGINEERING_FAIL_MODE:-}
+      CONTEXT_ENGINEERING_MIN_TOKENS: ${CONTEXT_ENGINEERING_MIN_TOKENS:-}
+      CONTEXT_BUDGET_ENABLED: ${CONTEXT_BUDGET_ENABLED:-}
+      CONTEXT_MAX_UTILIZATION: ${CONTEXT_MAX_UTILIZATION:-}
+      CONTEXT_RESERVED_OUTPUT_TOKENS: ${CONTEXT_RESERVED_OUTPUT_TOKENS:-}
+      CONTEXT_SAFETY_BUFFER: ${CONTEXT_SAFETY_BUFFER:-}
+      CONTEXT_DEFAULT_WINDOW_TOKENS: ${CONTEXT_DEFAULT_WINDOW_TOKENS:-}
+      CONTEXT_RECENT_TURNS: ${CONTEXT_RECENT_TURNS:-}
+      OBSERVATION_MASKING_ENABLED: ${OBSERVATION_MASKING_ENABLED:-}
+      OBSERVATION_MAX_TOKENS: ${OBSERVATION_MAX_TOKENS:-}
+      OBSERVATION_KEEP_RECENT: ${OBSERVATION_KEEP_RECENT:-}
+      JIT_RETRIEVAL_ENABLED: ${JIT_RETRIEVAL_ENABLED:-}
+      JIT_RETRIEVAL_MAX_TURNS: ${JIT_RETRIEVAL_MAX_TURNS:-}
+      CONTEXT_COMPACTION_ENABLED: ${CONTEXT_COMPACTION_ENABLED:-}
+      CONTEXT_COMPACTION_THRESHOLD: ${CONTEXT_COMPACTION_THRESHOLD:-}
+      CONTEXT_COMPACTION_MODE: ${CONTEXT_COMPACTION_MODE:-}
+      CONTEXT_COMPACTION_MODEL: ${CONTEXT_COMPACTION_MODEL:-}
+      PREFIX_CACHE_OPTIMIZATION_ENABLED: ${PREFIX_CACHE_OPTIMIZATION_ENABLED:-}
+      PREFIX_CACHE_PROVIDER_SUPPORT: ${PREFIX_CACHE_PROVIDER_SUPPORT:-}
+      PREFIX_CACHE_INJECT_BREAKPOINTS: ${PREFIX_CACHE_INJECT_BREAKPOINTS:-}
+      # memory (per worker) or redis (the stack's Redis below, shared, readable by context_engineering/recover.py)
+      CONTEXT_STORE: ${CONTEXT_STORE:-}
+      CONTEXT_STORE_TTL_S: ${CONTEXT_STORE_TTL_S:-}
       LITELLM_MASTER_KEY: ${LITELLM_MASTER_KEY:?set it in .env - see the header of this file}
       LITELLM_SALT_KEY: ${LITELLM_SALT_KEY:?set it in .env - see the header of this file}
       DATABASE_URL: postgresql://litellm:${POSTGRES_PASSWORD:?set it in .env - see the header of this file}@db:5432/litellm

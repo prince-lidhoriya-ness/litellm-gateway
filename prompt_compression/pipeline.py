@@ -14,6 +14,10 @@ in the returned list.
 
 Passage and record selection only act on the latest user message (settings.selection_scope) and not at all when the
 request needs the whole text (intent.py). Every model call is bounded by the request's deadline (deadline.py).
+
+Messages whose index is in `protected` (the context-engineering stage's compaction summary, passed by the hook from
+metadata["context_engineering"]["hints"]["protected_indexes"]) are left exactly as they are and never dropped by the
+history route: they were already optimised, and their lines are verbatim copies that must stay verbatim.
 """
 
 import copy
@@ -220,15 +224,17 @@ class PromptPipeline:
 
     # ---- the whole request ----------------------------------------------------------------------------------------
 
-    def process(self, messages: list, deadline: Optional[deadlines.Deadline] = None) -> tuple[list, PipelineReport]:
+    def process(self, messages: list, deadline: Optional[deadlines.Deadline] = None,
+                protected: frozenset = frozenset()) -> tuple[list, PipelineReport]:
         """`deadline`: stop model work when it passes (classification raises DeadlineExceeded; compression stops early
-        and sends the rest unchanged). None keeps whatever deadline is current (none outside the hook)."""
+        and sends the rest unchanged). None keeps whatever deadline is current (none outside the hook).
+        `protected`: message indexes to leave untouched (see the module docstring)."""
         if deadline is None:
-            return self._process(messages)
+            return self._process(messages, frozenset(protected))
         with deadlines.use(deadline):
-            return self._process(messages)
+            return self._process(messages, frozenset(protected))
 
-    def _process(self, messages: list) -> tuple[list, PipelineReport]:
+    def _process(self, messages: list, protected: frozenset = frozenset()) -> tuple[list, PipelineReport]:
         started = time.perf_counter()
         settings = self.settings
         new_messages = copy.deepcopy(messages)
@@ -261,6 +267,9 @@ class PromptPipeline:
             entries[index] = entry
             if role in PRESERVED_ROLES or message.get("tool_calls") or message.get("function_call"):
                 entry["action"] = "preserved_role"
+                continue
+            if index in protected:
+                entry["action"] = "preserved_context_engineering"
                 continue
             parts = text_parts(message)
             if not parts:
@@ -301,7 +310,7 @@ class PromptPipeline:
 
         # 2. Router
         with _span("prompt.route", {"prompt.route.routes": sorted(settings.routes)}) as span:
-            dropped = set(router.plan_history(new_messages, message_units, settings, message_tokens))
+            dropped = set(router.plan_history(new_messages, message_units, settings, message_tokens, protected))
             for index in sorted(dropped):
                 entries[index] = {"index": index, "role": new_messages[index].get("role"), "action": "dropped_history",
                                   "tokens_before": message_tokens(messages[index]), "tokens_after": 0}
