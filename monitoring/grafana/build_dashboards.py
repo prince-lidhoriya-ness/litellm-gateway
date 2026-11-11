@@ -119,9 +119,53 @@ PIPELINE = dashboard("gw-prompt-pipeline", "Gateway - prompt pipeline", [
 ], ["litellm", "prompt-pipeline"])
 
 
+def _q(q, metric, by="le"):
+    return f"histogram_quantile({q}, sum by ({by}) (rate({metric}_bucket[5m])))"
+
+
+# context_engineering/ (metrics.py) plus the attribution family recorded after each answered request. Every saving is
+# counted once: the stages run one after the other, so the gateway_optimization_tokens series add up without overlap.
+CONTEXT = dashboard("gw-context-engineering", "Gateway - context engineering and attribution", [
+    stat("Prompt tokens saved, all techniques (1h)", "sum(increase(gateway_optimization_tokens_total{technique!=\"provider_cache\"}[1h]))"),
+    stat("Provider cache hit rate (1h)", "sum(increase(context_engine_provider_cached_tokens_total[1h])) / clamp_min(sum(increase(context_engine_provider_prompt_tokens_total[1h])), 1)", "percentunit"),
+    stat("Estimated savings (24h, USD, ESTIMATE)", "sum(increase(gateway_optimization_saved_usd_total[24h]))", "currencyUSD"),
+    stat("Stages undone / fail-open (1h)", "sum(increase(context_engine_stage_undone_total[1h])) + sum(increase(context_engine_failures_total[1h])) or vector(0)"),
+    panel("Tokens saved by technique (tokens / s)", ["sum by (technique) (rate(gateway_optimization_tokens_total[5m]))"],
+          legend=["{{technique}}"]),
+    panel("Estimated savings by technique (USD / h, ESTIMATE)", ["sum by (technique) (rate(gateway_optimization_saved_usd_total[5m])) * 3600"],
+          unit="currencyUSD", legend=["{{technique}}"]),
+    panel("Context size before / after p50 (tokens)", [_q(0.5, "context_engine_context_tokens", "le, stage")], legend=["{{stage}}"]),
+    panel("Context utilization p50 / p95 (share of the effective target)", [
+        _q(0.5, "context_engine_utilization", "le, stage"), _q(0.95, "context_engine_utilization", "le, stage")],
+        unit="percentunit", legend=["p50 {{stage}}", "p95 {{stage}}"]),
+    panel("Context preparation latency p50 / p90 / p95", [_q(q, "context_engine_duration_seconds") for q in (0.5, 0.9, 0.95)],
+          unit="s", legend=["p50", "p90", "p95"]),
+    panel("End-to-end request latency p50 / p90 / p95", [_q(q, "litellm_request_total_latency_metric") for q in (0.5, 0.9, 0.95)],
+          unit="s", legend=["p50", "p90", "p95"]),
+    panel("Observations masked / folded / restored (per 5m)", [
+        "sum by (reason) (increase(context_engine_masked_total[5m]))", "sum by (kind) (increase(context_engine_restored_total[5m]))"],
+        legend=["masked: {{reason}}", "restored: {{kind}}"]),
+    panel("History decisions and compactions (per 5m)", [
+        "sum by (action) (increase(context_engine_history_turns_total[5m]))", "sum by (source) (increase(context_engine_compactions_total[5m]))"],
+        legend=["turns: {{action}}", "compactions: {{source}}"]),
+    panel("Retrieved-turn relevance p50", [_q(0.5, "context_engine_retrieval_score", "le, backend")], legend=["{{backend}}"]),
+    panel("Pressure mix (requests / s)", ["sum by (pressure) (rate(context_engine_requests_total[5m]))"], legend=["{{pressure}}"]),
+    panel("Provider cache reads / writes (tokens / s)", [
+        "sum by (provider) (rate(context_engine_provider_cached_tokens_total[5m]))",
+        "sum by (provider) (rate(context_engine_provider_cache_write_tokens_total[5m]))"], legend=["read {{provider}}", "write {{provider}}"]),
+    panel("Compression: validation rejects and early stops (per 5m)", [
+        "sum(increase(prompt_pipeline_validation_rejects_total[5m]))", "sum by (reason) (increase(prompt_pipeline_compress_stopped_total[5m]))",
+        "sum by (reason) (increase(prompt_pipeline_failures_total[5m]))"], legend=["ratio-cap rejects", "stopped: {{reason}}", "fallback: {{reason}}"]),
+    panel("Volatile system-prompt content (requests / 5m)", ["sum by (pattern) (increase(context_engine_volatile_prefix_total[5m]))"],
+          legend=["{{pattern}}"]),
+    panel("Context engineering log events", ['{service_name="litellm-gateway"} |= "context engineering"'],
+          kind="logs", width=12, height=8, ds=LOKI),
+], ["litellm", "context-engineering"])
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
-    for board in (REQUEST_HEALTH, COST_TOKENS, PIPELINE):
+    for board in (REQUEST_HEALTH, COST_TOKENS, PIPELINE, CONTEXT):
         (OUT / f"{board['uid']}.json").write_text(json.dumps(board, indent=2), encoding="utf-8")
         print(f"wrote {board['uid']}.json ({len(board['panels'])} panels)")
 

@@ -223,6 +223,11 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
             m.COMPRESSION_RATIO.labels(category).observe(ratio)
         else:
             m.SHADOW_TOKENS_SAVED.labels(model, category).inc(max(0, before - after))
+        rejects = int((summary.get("segments") or {}).get("ratio_cap_hits") or 0)
+        if rejects:
+            m.VALIDATION_REJECTS.labels(category).inc(rejects)
+        if summary.get("compress_stopped"):
+            m.COMPRESS_STOPPED.labels(str(summary["compress_stopped"])[:32]).inc()
 
         classify_seconds = compress_seconds = 0.0
         message_attributes: dict = {}

@@ -84,7 +84,7 @@ def test_mentioning_a_turn_ref_keeps_that_turn_verbatim():
     ref = next(r for r in first.records if r.action == "compacted").ref
     chat[-1]["content"] = f"Please look at {ref} again."
     outcome, _ = run(chat)
-    assert any(r.action == "protected" and r.ref == ref for r in outcome.records)
+    assert any(r.action == "restored" and r.ref == ref for r in outcome.records)
 
 
 def test_turns_with_sensitive_data_are_never_compacted():

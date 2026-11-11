@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combined LLM Gateway Architecture</title>
+<style>
+  :root { --bg:#ffffff; --fg:#1f2328; --muted:#57606a; --line:#8c959f; --gw:#eef4ff; --gw-line:#4f6fd8;
+          --sr:#e8f7ef; --sr-line:#2e9d62; --lg:#fff4e5; --lg-line:#d9822b; --ce:#e6f6f8; --ce-line:#1b8a9a;
+          --store:#f3f0ff; --store-line:#7a5bd6; --obs:#f6f8fa; --obs-line:#6e7781; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg:#0d1117; --fg:#e6edf3; --muted:#9da7b3; --line:#6e7681; --gw:#162036; --gw-line:#6b8cff;
+          --sr:#122a1f; --sr-line:#3fb97e; --lg:#33250f; --lg-line:#e09446; --ce:#0f2a2e; --ce-line:#3cb8c8;
+          --store:#24203a; --store-line:#9f86f0; --obs:#161b22; --obs-line:#8b949e; }
+  }
+  :root[data-theme="dark"] { --bg:#0d1117; --fg:#e6edf3; --muted:#9da7b3; --line:#6e7681; --gw:#162036; --gw-line:#6b8cff;
+          --sr:#122a1f; --sr-line:#3fb97e; --lg:#33250f; --lg-line:#e09446; --ce:#0f2a2e; --ce-line:#3cb8c8;
+          --store:#24203a; --store-line:#9f86f0; --obs:#161b22; --obs-line:#8b949e; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:14px/1.4 -apple-system,Segoe UI,Roboto,sans-serif; padding:16px; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  p.sub { margin:0 0 12px; color:var(--muted); max-width:1000px; }
+  svg { width:100%; max-width:1000px; height:auto; display:block; }
+  text { fill:var(--fg); }
+  .t { font-size:13px; font-weight:600; }
+  .s { font-size:11px; fill:var(--muted); }
+  .tag { font-size:10px; font-weight:600; }
+  .legend span { display:inline-block; margin-right:14px; font-size:12px; color:var(--muted); }
+  .sw { display:inline-block; width:12px; height:12px; border-radius:3px; vertical-align:-2px; margin-right:4px; border:1.5px solid; }
+  .notes { max-width:1000px; color:var(--muted); font-size:12px; }
+  .notes li { margin:2px 0; }
+  @media (max-width: 600px) { body { padding:12px; } }
+</style>
+</head>
+<body>
+<h1>Combined LLM gateway: context engineering + prompt compression + cache-aware execution</h1>
+<p class="sub">One LiteLLM proxy. Callbacks run in the fixed order of <code>litellm_config.yaml</code>: auth and
+limits, then <b>context engineering</b> (new, <code>context_engineering/</code>), then <b>prompt compression</b>
+(<code>prompt_compression/</code>), then model routing. Smart routing is the proposed stage from
+<b>smart-router</b>; it is not part of this repository yet.</p>
+
+<svg viewBox="0 0 1000 1215" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Combined architecture diagram">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--line)"/>
+    </marker>
+  </defs>
+
+  <!-- Clients -->
+  <rect x="290" y="10" width="420" height="52" rx="8" fill="var(--obs)" stroke="var(--obs-line)" stroke-width="1.5"/>
+  <text x="500" y="32" text-anchor="middle" class="t">Incoming request</text>
+  <text x="500" y="50" text-anchor="middle" class="s">LibreChat · agents · any OpenAI-compatible SDK (virtual key)</text>
+  <line x1="500" y1="62" x2="500" y2="92" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Gateway frame -->
+  <rect x="20" y="92" width="960" height="830" rx="12" fill="var(--gw)" stroke="var(--gw-line)" stroke-width="2"/>
+  <text x="40" y="116" class="t">LiteLLM proxy: single entry point</text>
+  <text x="40" y="132" class="s">pre-call hooks run in list order; each stage fails open on its own and leaves an inspectable report in request metadata</text>
+
+  <!-- Stage 1: auth -->
+  <rect x="40" y="146" width="920" height="44" rx="8" fill="var(--obs)" stroke="var(--obs-line)" stroke-width="1.5"/>
+  <text x="60" y="166" class="t">1 · Auth &amp; limits</text>
+  <text x="60" y="182" class="s">virtual keys, budgets, rate limits, team caps (LiteLLM built-in, Postgres + Redis)</text>
+  <line x1="500" y1="190" x2="500" y2="212" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Stage 2: context engineering -->
+  <rect x="40" y="212" width="920" height="300" rx="10" fill="var(--ce)" stroke="var(--ce-line)" stroke-width="2"/>
+  <text x="60" y="234" class="t">2 · Context engineering (context_engineering/callback.py → engine.py)</text>
+  <text x="60" y="250" class="s">pure Python, no model call on the request path; gate: chat only, opt-out flag, &lt; 1,000 tokens skipped; optional redaction first</text>
+
+  <rect x="60" y="262" width="200" height="62" rx="7" fill="var(--bg)" stroke="var(--ce-line)" stroke-width="1.2"/>
+  <text x="160" y="284" text-anchor="middle" class="t">Context analysis</text>
+  <text x="160" y="300" text-anchor="middle" class="s">categories, tokens, pinned msgs,</text>
+  <text x="160" y="314" text-anchor="middle" class="s">prefix fingerprint (analyzer.py)</text>
+  <line x1="260" y1="293" x2="290" y2="293" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="290" y="262" width="200" height="62" rx="7" fill="var(--bg)" stroke="var(--ce-line)" stroke-width="1.2"/>
+  <text x="390" y="284" text-anchor="middle" class="t">Context budget manager</text>
+  <text x="390" y="300" text-anchor="middle" class="s">window, reserve, buffer, pressure,</text>
+  <text x="390" y="314" text-anchor="middle" class="s">oversized parts (budget.py)</text>
+  <line x1="490" y1="293" x2="520" y2="293" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="520" y="262" width="200" height="62" rx="7" fill="var(--bg)" stroke="var(--ce-line)" stroke-width="1.2"/>
+  <text x="620" y="284" text-anchor="middle" class="t">Cache-aware construction</text>
+  <text x="620" y="300" text-anchor="middle" class="s">caching support, frozen history,</text>
+  <text x="620" y="314" text-anchor="middle" class="s">breakpoints, volatile prefix (cache.py)</text>
+  <line x1="720" y1="293" x2="750" y2="293" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="750" y="262" width="190" height="62" rx="7" fill="var(--bg)" stroke="var(--ce-line)" stroke-width="1.2"/>
+  <text x="845" y="284" text-anchor="middle" class="t">Observation masking</text>
+  <text x="845" y="300" text-anchor="middle" class="s">duplicate folding, batched stubs</text>
+  <text x="845" y="314" text-anchor="middle" class="s">of old tool outputs (masking.py)</text>
+  <line x1="845" y1="324" x2="845" y2="350" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="520" y="350" width="420" height="72" rx="7" fill="var(--bg)" stroke="var(--ce-line)" stroke-width="1.2" stroke-dasharray="5 3"/>
+  <text x="730" y="370" text-anchor="middle" class="t">History, only if the budget still asks after masking (history.py)</text>
+  <text x="730" y="388" text-anchor="middle" class="s">Just-in-time retrieval: relevant older turns kept verbatim (BM25 / hybrid)</text>
+  <text x="730" y="404" text-anchor="middle" class="s">Context compaction: one verbatim, anchored summary of the rest (opt-in)</text>
+  <line x1="520" y1="386" x2="490" y2="386" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="60" y="350" width="430" height="72" rx="7" fill="var(--bg)" stroke="var(--ce-line)" stroke-width="1.2"/>
+  <text x="275" y="370" text-anchor="middle" class="t">Invariant validator after every sub-stage (validate.py)</text>
+  <text x="275" y="388" text-anchor="middle" class="s">system, query, current step unchanged · tool calls paired · no growth</text>
+  <text x="275" y="404" text-anchor="middle" class="s">violation → stage undone, last valid messages kept · error/timeout → fail open</text>
+
+  <rect x="60" y="434" width="880" height="64" rx="7" fill="none" stroke="var(--ce-line)" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="80" y="454" class="t">Outputs</text>
+  <text x="80" y="472" class="s">optimised messages · metadata.context_engineering (tokens by category, decisions, refs, saved_by_technique) · hints.protected_indexes</text>
+  <text x="80" y="488" class="s">cache_control_injection_points for Anthropic-style providers · originals by ref in the store (obs_… / turn_…, recoverable)</text>
+  <line x1="500" y1="512" x2="500" y2="534" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Stage 3: compression -->
+  <rect x="40" y="534" width="920" height="150" rx="10" fill="var(--lg)" stroke="var(--lg-line)" stroke-width="2"/>
+  <text x="60" y="556" class="t">3 · Prompt compression (prompt_compression/, existing)</text>
+  <text x="60" y="572" class="s">skips the summary CE protects; never touches tool outputs, system messages or tool definitions</text>
+
+  <rect x="60" y="584" width="200" height="84" rx="7" fill="var(--bg)" stroke="var(--lg-line)" stroke-width="1.2"/>
+  <text x="160" y="606" text-anchor="middle" class="t">Redaction guardrail</text>
+  <text x="160" y="622" text-anchor="middle" class="s">REDACT_SENSITIVE: every role,</text>
+  <text x="160" y="636" text-anchor="middle" class="s">no opt-out, fails closed</text>
+  <line x1="260" y1="626" x2="285" y2="626" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="285" y="584" width="200" height="84" rx="7" fill="var(--bg)" stroke="var(--lg-line)" stroke-width="1.2"/>
+  <text x="385" y="606" text-anchor="middle" class="t">Prompt classification</text>
+  <text x="385" y="622" text-anchor="middle" class="s">code / structured / exact / prose,</text>
+  <text x="385" y="636" text-anchor="middle" class="s">sensitivity (rules, topics, MiniLM)</text>
+  <text x="385" y="650" text-anchor="middle" class="s">task intent</text>
+  <line x1="485" y1="626" x2="510" y2="626" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="510" y="584" width="200" height="84" rx="7" fill="var(--bg)" stroke="var(--lg-line)" stroke-width="1.2"/>
+  <text x="610" y="606" text-anchor="middle" class="t">Selection + LLMLingua-2</text>
+  <text x="610" y="622" text-anchor="middle" class="s">passages / records of the latest</text>
+  <text x="610" y="636" text-anchor="middle" class="s">user message; prose compressed</text>
+  <text x="610" y="650" text-anchor="middle" class="s">(cache of outputs: byte-stable)</text>
+  <line x1="710" y1="626" x2="735" y2="626" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="735" y="584" width="205" height="84" rx="7" fill="var(--bg)" stroke="var(--lg-line)" stroke-width="1.2"/>
+  <text x="837" y="606" text-anchor="middle" class="t">Compression validation</text>
+  <text x="837" y="622" text-anchor="middle" class="s">3x ratio cap + lighter retry,</text>
+  <text x="837" y="636" text-anchor="middle" class="s">not-shorter → original, JSON kept</text>
+  <text x="837" y="650" text-anchor="middle" class="s">valid; deadline → partial, fail open</text>
+  <line x1="500" y1="684" x2="500" y2="704" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Stage 4: smart routing (proposed) -->
+  <rect x="40" y="704" width="440" height="80" rx="10" fill="var(--sr)" stroke="var(--sr-line)" stroke-width="2" stroke-dasharray="6 4"/>
+  <text x="60" y="726" class="t">4 · Smart routing (proposed, smart-router)</text>
+  <text x="60" y="744" class="s">rule · classifier · decision · cascade → tier-cheap / mid / strong</text>
+  <text x="60" y="760" class="s">internal router calls must carry both opt-out flags and sit behind redaction</text>
+  <text x="60" y="776" class="tag" fill="var(--sr-line)">not in this repository</text>
+
+  <!-- Stage 5: LiteLLM routing -->
+  <rect x="500" y="704" width="460" height="80" rx="10" fill="var(--obs)" stroke="var(--obs-line)" stroke-width="1.5"/>
+  <text x="520" y="726" class="t">5 · LiteLLM routing and execution</text>
+  <text x="520" y="744" class="s">deployment choice, timeouts, retries, cooldowns, fallbacks, opt-in response cache</text>
+  <text x="520" y="760" class="s">anthropic_cache_control_hook places the breakpoints CE asked for</text>
+  <line x1="480" y1="744" x2="500" y2="744" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Internal calls note -->
+  <rect x="40" y="800" width="920" height="104" rx="8" fill="none" stroke="var(--line)" stroke-dasharray="6 4" stroke-width="1.5"/>
+  <text x="56" y="822" class="t">Success hook (after the provider answers)</text>
+  <text x="56" y="840" class="s">provider usage: prompt tokens, cache reads (cached_tokens) and writes → calibration of the token estimate</text>
+  <text x="56" y="856" class="s">attribution, recorded once per request: deduplication · masking · compaction / jit_retrieval · prompt_compression · provider_cache</text>
+  <text x="56" y="872" class="s">(stages run one after the other on each other's output, so the parts add up without double counting)</text>
+  <text x="56" y="888" class="s">optional background compaction summary (llm mode): validated, stored by span hash, used on later requests only</text>
+
+  <line x1="730" y1="784" x2="730" y2="954" stroke="var(--line)" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- Providers -->
+  <text x="20" y="946" class="s">LLM providers</text>
+  <g>
+    <rect x="20" y="956" width="150" height="58" rx="8" fill="var(--obs)" stroke="var(--obs-line)" stroke-width="1.5"/>
+    <text x="95" y="980" text-anchor="middle" class="t">OpenAI · Gemini</text>
+    <text x="95" y="998" text-anchor="middle" class="s">automatic prefix cache</text>
+    <rect x="182" y="956" width="150" height="58" rx="8" fill="var(--obs)" stroke="var(--obs-line)" stroke-width="1.5"/>
+    <text x="257" y="980" text-anchor="middle" class="t">Anthropic · Bedrock</text>
+    <text x="257" y="998" text-anchor="middle" class="s">cache_control breakpoints</text>
+    <rect x="344" y="956" width="150" height="58" rx="8" fill="var(--obs)" stroke="var(--obs-line)" stroke-width="1.5"/>
+    <text x="419" y="980" text-anchor="middle" class="t">OpenRouter · Groq</text>
+    <text x="419" y="998" text-anchor="middle" class="s">judge, free profile</text>
+    <rect x="506" y="956" width="150" height="58" rx="8" fill="var(--obs)" stroke="var(--obs-line)" stroke-width="1.5"/>
+    <text x="581" y="980" text-anchor="middle" class="t">Ollama</text>
+    <text x="581" y="998" text-anchor="middle" class="s">local KV-prefix reuse</text>
+    <rect x="668" y="956" width="150" height="58" rx="8" fill="var(--obs)" stroke="var(--obs-line)" stroke-width="1.5"/>
+    <text x="743" y="980" text-anchor="middle" class="t">Echo mock</text>
+    <text x="743" y="998" text-anchor="middle" class="s">tests, benchmark</text>
+  </g>
+
+  <!-- State -->
+  <rect x="20" y="1034" width="380" height="88" rx="8" fill="var(--store)" stroke="var(--store-line)" stroke-width="1.5"/>
+  <text x="210" y="1056" text-anchor="middle" class="t">State</text>
+  <text x="210" y="1074" text-anchor="middle" class="s">Postgres: keys, budgets, spend logs (with stage summaries)</text>
+  <text x="210" y="1090" text-anchor="middle" class="s">Redis: limits, cooldowns, response cache,</text>
+  <text x="210" y="1106" text-anchor="middle" class="s">CE store "ce:" (optional; default: per-worker memory)</text>
+  <line x1="30" y1="466" x2="30" y2="1032" stroke="var(--store-line)" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <line x1="30" y1="466" x2="60" y2="466" stroke="var(--store-line)" stroke-width="1.2" stroke-dasharray="4 3"/>
+
+  <!-- Observability and evaluation -->
+  <rect x="420" y="1034" width="560" height="170" rx="8" fill="var(--obs)" stroke="var(--obs-line)" stroke-width="1.5"/>
+  <text x="700" y="1056" text-anchor="middle" class="t">Observability and evaluation</text>
+  <text x="700" y="1076" text-anchor="middle" class="s">Prometheus: litellm_* · prompt_pipeline_* · context_engine_* · gateway_optimization_*</text>
+  <text x="700" y="1092" text-anchor="middle" class="s">Grafana: request health · cost &amp; tokens · prompt pipeline · context engineering &amp; attribution</text>
+  <text x="700" y="1108" text-anchor="middle" class="s">OTel → Jaeger · Loki · Langfuse (text scrubbed; metadata has counts and refs only)</text>
+  <line x1="440" y1="1122" x2="960" y2="1122" stroke="var(--obs-line)" stroke-width="1" stroke-dasharray="3 3"/>
+  <text x="700" y="1142" text-anchor="middle" class="s">Tests: context_engineering · prompt_compression · observability (CI)</text>
+  <text x="700" y="1158" text-anchor="middle" class="s">Benchmark: reports/context-engineering (4 configurations × 46 items:</text>
+  <text x="700" y="1174" text-anchor="middle" class="s">tokens, attribution, overhead, latency, throughput, cache reuse, quality)</text>
+  <text x="700" y="1190" text-anchor="middle" class="s">Gate 4 live cases and scorecard: evals/</text>
+  <line x1="900" y1="1014" x2="900" y2="1032" stroke="var(--obs-line)" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arr)"/>
+</svg>
+
+<div class="legend" style="margin-top:12px">
+  <span><i class="sw" style="background:var(--ce);border-color:var(--ce-line)"></i>context engineering (new)</span>
+  <span><i class="sw" style="background:var(--lg);border-color:var(--lg-line)"></i>prompt compression (existing)</span>
+  <span><i class="sw" style="background:var(--sr);border-color:var(--sr-line)"></i>smart-router (proposed)</span>
+  <span><i class="sw" style="background:var(--obs);border-color:var(--obs-line)"></i>LiteLLM / infrastructure</span>
+  <span><i class="sw" style="background:var(--store);border-color:var(--store-line)"></i>state</span>
+</div>
+<ul class="notes">
+  <li>Defaults: budget, duplicate folding, masking and cache-aware construction on; JIT retrieval and compaction off (opt-in flags).</li>
+  <li>JIT retrieval is skipped on providers that cache prompts unless explicitly allowed: query-dependent selection would change the cached prefix.</li>
+  <li>Measured results: reports/context-engineering/REPORT.md. Design: docs/context-engineering-blueprint.md, context_engineering/README.md.</li>
+</ul>
+</body>
+</html>

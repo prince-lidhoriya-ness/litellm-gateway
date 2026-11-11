@@ -40,8 +40,9 @@ litellm_settings:
   # "prompt_compression.prompt_compression_callback.prompt_compression_instance" to drop the
   # observability layer (never both).
   callbacks: ["otel", "langfuse_otel", "prometheus", "context_engineering.callback.context_engineering_instance", "observability.observed_callback.observed_prompt_compression_instance"]
-  # Message text is scrubbed from every logging callback (Langfuse, OTel, custom loggers).
-  turn_off_message_logging: true
+  # Message text is scrubbed from every logging callback (Langfuse, OTel, custom loggers) when true. Set to true again
+  # before sending real/production traffic: prompts and completions will otherwise be visible in Langfuse/Jaeger/logs.
+  turn_off_message_logging: false
   # /metrics is scraped inside the docker network. The proxy port is bound to 127.0.0.1 by default (LITELLM_BIND in
   # docker-compose.quickstart.yml); if you publish it on other interfaces, set this to true and give Prometheus a key.
   require_auth_for_metrics_endpoint: false

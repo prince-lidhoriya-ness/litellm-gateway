@@ -61,7 +61,7 @@ if not logger.handlers:
     _handler = logging.StreamHandler()
     _handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s"))
     logger.addHandler(_handler)
-    logger.setLevel(os.getenv("PROMPT_COMPRESSION_LOG_LEVEL", "INFO").upper())
+    logger.setLevel((os.getenv("PROMPT_COMPRESSION_LOG_LEVEL") or "INFO").upper())
     logger.propagate = False
 
 

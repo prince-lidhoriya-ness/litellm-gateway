@@ -53,3 +53,19 @@ PROVIDER_CACHE_WRITE_TOKENS = _counter("context_engine_provider_cache_write_toke
                                        "Prompt tokens the provider wrote to its prompt cache (usage).", ["provider"])
 PROVIDER_PROMPT_TOKENS = _counter("context_engine_provider_prompt_tokens",
                                   "Prompt tokens reported by the provider for requests the stage saw.", ["provider"])
+CONTEXT_TOKENS = _histogram("context_engine_context_tokens", "Estimated context size per request.", ["stage"],
+                            (500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000, 256000))
+RESTORED = _counter("context_engine_restored", "Originals kept in full because their ref was mentioned.", ["kind"])
+COMPACTIONS = _counter("context_engine_compactions", "History compaction operations, by summary source.", ["source"])
+RETRIEVAL_SCORE = _histogram("context_engine_retrieval_score", "Relevance score of retrieved older turns.", ["backend"],
+                             (0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0))
+
+# Attribution: one family for every optimisation, recorded once per successful request after the provider answered, so
+# the techniques never overlap. The context-engineering techniques are measured stage by stage (report
+# saved_by_technique), prompt_compression is what the compression stage removed from the context-engineering output, and
+# provider_cache is the prompt tokens the provider served from its cache (discounted, not removed).
+ATTRIBUTED_TOKENS = _counter("gateway_optimization_tokens",
+                             "Prompt tokens saved (or, for provider_cache, served from cache) by technique.", ["technique"])
+ATTRIBUTED_USD = _counter("gateway_optimization_saved_usd",
+                          "ESTIMATE: attributed tokens x the model's input price (cache: price minus cache-read price).",
+                          ["technique"])

@@ -124,9 +124,11 @@ class ContextEngine:
                 return masked
             if not stage("mask", run_mask):
                 report.masked.clear()
+            report.restored["observations"] = masking.restored_count(current, analyzer.analyze(current, tools))
         lap("mask")
 
         # 7. history: re-measure after masking; mask first, compact only if still needed (cheapest loss first)
+        before_history = tk.messages_tokens(current)
         if "history" in plan.techniques:
             after_mask = analyzer.analyze(current, tools, settings.hash_salt, settings.observation_error_guard)
             replan = budget.plan(after_mask, info, settings, max_tokens, factor)
@@ -145,6 +147,20 @@ class ContextEngine:
             else:
                 report.decisions.append(f"history: not needed after masking (utilization {replan.utilization:.2f})")
         lap("history")
+
+        # Savings by technique, measured stage by stage, so they add up to the stage total and never overlap.
+        # Duplicate folding and masking are per stub; history work is the token difference across its stage and is
+        # credited to compaction, or to JIT retrieval when only JIT ran (its index-level summary replaced the turns).
+        saved = {
+            "deduplication": sum(r.tokens_before - r.tokens_after for r in report.masked if r.reason == "duplicate"),
+            "masking": sum(r.tokens_before - r.tokens_after for r in report.masked if r.reason == "age"),
+        }
+        history_saved = max(0, before_history - tk.messages_tokens(current))
+        if history_saved:
+            saved["compaction" if settings.compaction_enabled else "jit_retrieval"] = history_saved
+        report.saved_by_technique = {name: tokens for name, tokens in saved.items() if tokens}
+        report.restored["turns"] = sum(1 for r in report.history if r.action == "restored")
+        report.retrieved_turns = sum(1 for r in report.history if r.action == "retrieved")
 
         # 8. final accounting and hints for the compression stage
         final = analyzer.analyze(current, result_tools, settings.hash_salt) if current is not original else profile

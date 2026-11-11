@@ -49,9 +49,10 @@ class EmbeddingEncoder:
             import torch
             from transformers import AutoModel, AutoTokenizer
 
-            self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-            model = AutoModel.from_pretrained(self.model_name, dtype=torch.float32) if _accepts_dtype() else \
-                AutoModel.from_pretrained(self.model_name, torch_dtype=torch.float32)
+            self._tokenizer = AutoTokenizer.from_pretrained(self.model_name, revision=self.revision)
+            model = AutoModel.from_pretrained(self.model_name, revision=self.revision, dtype=torch.float32) \
+                if _accepts_dtype() else \
+                AutoModel.from_pretrained(self.model_name, revision=self.revision, torch_dtype=torch.float32)
             model.eval()
             self._model = model
 

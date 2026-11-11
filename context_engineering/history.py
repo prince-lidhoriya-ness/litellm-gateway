@@ -79,8 +79,10 @@ def apply(messages: list, profile: ContextProfile, cache_plan: CachePlan, settin
         turn_messages = [messages[i] for i in indexes]
         ref = compaction.turn_ref(turn_messages)
         texts = [tk.message_text(m) for m in turn_messages] + [tk.tool_calls_text(m) for m in turn_messages]
-        protected = ref in wanted or _sensitive(texts) or any(t.startswith(SUMMARY_MARKER) for t in texts)
+        requested = ref in wanted
+        protected = requested or _sensitive(texts) or any(t.startswith(SUMMARY_MARKER) for t in texts)
         entries.append({"ref": ref, "indexes": tuple(indexes), "messages": turn_messages, "protected": protected,
+                        "requested": requested,
                         "text": "\n".join(t for t in texts if t), "tokens": tk.messages_tokens(turn_messages)})
 
     retrieved: dict = {}
@@ -100,7 +102,8 @@ def apply(messages: list, profile: ContextProfile, cache_plan: CachePlan, settin
     compacted = [e for e in entries if not e["protected"] and e["ref"] not in retrieved]
     for entry in entries:
         if entry["protected"]:
-            outcome.records.append(HistoryRecord("protected", entry["ref"], entry["indexes"], entry["tokens"]))
+            action = "restored" if entry["requested"] else "protected"
+            outcome.records.append(HistoryRecord(action, entry["ref"], entry["indexes"], entry["tokens"]))
         elif entry["ref"] in retrieved:
             outcome.records.append(HistoryRecord("retrieved", entry["ref"], entry["indexes"], entry["tokens"],
                                                  round(retrieved[entry["ref"]], 4)))

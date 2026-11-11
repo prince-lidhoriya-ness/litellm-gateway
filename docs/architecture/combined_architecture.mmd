@@ -1,0 +1,46 @@
+%% Combined gateway: context engineering + prompt compression + cache-aware execution (as implemented).
+%% Rendered copy: combined_architecture.html. Dashed = optional / opt-in / proposed.
+flowchart TD
+    REQ["Incoming request<br/>messages + tools + metadata"] --> AUTH["LiteLLM auth, keys, budgets, rate limits"]
+
+    subgraph CE["Context engineering (context_engineering/, runs first)"]
+        direction TB
+        GATE["Gate<br/>chat call · opt-out · ≥ 1,000 tokens · optional redaction"] --> AN["Context analysis<br/>categories · tokens · pinned messages · prefix fingerprint"]
+        AN --> BUD["Context budget manager<br/>window · output reserve · safety buffer · pressure · oversized parts"]
+        BUD --> CACHE["Cache-aware construction<br/>caching support · frozen history · breakpoints · volatile prefix"]
+        CACHE --> MASK["Observation masking<br/>duplicate folding · batched verbatim stubs · error guard · ref restore"]
+        MASK --> RE["Re-measure after masking"]
+        RE -->|still over budget| HIST
+        subgraph HIST["History (opt-in)"]
+            JIT["Just-in-time retrieval<br/>relevant older turns kept verbatim"] --> COMP["Context compaction<br/>one verbatim anchored summary"]
+        end
+        RE -->|within budget| OUT
+        HIST --> OUT["Report + hints<br/>saved_by_technique · refs · protected_indexes"]
+        VAL{{"Invariant validator after each sub-stage<br/>violation → undo · error/timeout → fail open"}}
+        MASK -.-> VAL
+        HIST -.-> VAL
+    end
+
+    AUTH --> GATE
+    STORE[("Store: memory per worker, or Redis ce:*<br/>originals by obs_ / turn_ ref")]
+    MASK -. originals .-> STORE
+    COMP -. originals .-> STORE
+
+    subgraph PC["Prompt compression (prompt_compression/, existing)"]
+        direction TB
+        RED["Redaction guardrail<br/>all roles · fails closed"] --> CLS["Prompt classification<br/>code / structured / exact / prose · sensitivity · intent"]
+        CLS --> SEL["Selection + LLMLingua-2<br/>latest user message · prose only · protected summary skipped"]
+        SEL --> CV["Compression validation<br/>ratio cap + retry · not-shorter · JSON valid · deadline"]
+    end
+
+    OUT --> RED
+    CV --> SR["Smart routing (proposed, smart-router)"]:::proposed
+    SR --> LR["LiteLLM routing + cache_control injection<br/>timeouts · retries · fallbacks"]
+    CV -. "today" .-> LR
+    LR --> PROV["LLM provider<br/>OpenAI · Anthropic · Bedrock · Gemini · Ollama · echo mock"]
+    PROV --> HOOK["Success hook<br/>usage · cache reads/writes · calibration · attribution"]
+    HOOK --> OBS["Observability and evaluation<br/>Prometheus · Grafana (4 dashboards) · Langfuse · OTel · benchmark"]
+    HOOK -. "llm mode" .-> SUM["Background compaction summary<br/>validated, stored by span hash"]
+    SUM -.-> STORE
+
+    classDef proposed stroke-dasharray: 5 5;

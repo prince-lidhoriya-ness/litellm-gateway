@@ -97,7 +97,7 @@ class MaskRecord:
 
 @dataclass(frozen=True)
 class HistoryRecord:
-    action: str                    # compacted | retrieved | protected
+    action: str                    # compacted | retrieved | protected | restored (its ref was mentioned)
     ref: str
     original_indexes: tuple
     tokens: int
@@ -124,6 +124,9 @@ class ContextReport:
     decisions: list = field(default_factory=list)
     masked: list = field(default_factory=list)
     history: list = field(default_factory=list)
+    saved_by_technique: dict = field(default_factory=dict)   # deduplication / masking / compaction / jit_retrieval
+    restored: dict = field(default_factory=dict)             # originals kept because their ref was mentioned
+    retrieved_turns: int = 0
     summary_index: Optional[int] = None
     summary_source: str = ""
     volatile_prefix: list = field(default_factory=list)

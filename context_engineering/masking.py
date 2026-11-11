@@ -171,3 +171,12 @@ def _sensitive(text: str) -> bool:
 
 def recover_observation(store, ref: str) -> Optional[dict]:
     return store.get(ref)
+
+
+def restored_count(messages: list, profile: ContextProfile) -> int:
+    """Tool outputs left in full on this request because the latest user or assistant message mentioned their ref."""
+    wanted = requested_refs(messages, profile)
+    if not wanted:
+        return 0
+    return sum(1 for item in profile.items
+               if item.category == TOOL_OUTPUT and not item.gateway_made and observation_ref(item.content_sha) in wanted)

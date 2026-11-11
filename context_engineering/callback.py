@@ -205,13 +205,11 @@ class ContextEngineeringCallback(CustomLogger):
             m.VOLATILE_PREFIX.labels(pattern).inc()
         for failed in report.stages_failed:
             m.STAGE_UNDONE.labels(failed.split(":")[0]).inc()
-        saved_mask = sum(r.tokens_before - r.tokens_after for r in report.masked)
-        saved_history = max(0, report.tokens_saved - saved_mask)
         counter = m.SHADOW_TOKENS_SAVED if shadow else m.TOKENS_SAVED
-        if saved_mask:
-            counter.labels("masking").inc(saved_mask)
-        if saved_history:
-            counter.labels("history").inc(saved_history)
+        for technique, tokens in report.saved_by_technique.items():
+            counter.labels(technique).inc(tokens)
+        m.CONTEXT_TOKENS.labels("before").observe(report.tokens_before)
+        m.CONTEXT_TOKENS.labels("after").observe(report.tokens_after)
         if not shadow:
             for category, tokens in report.by_category_before.items():
                 m.TOKENS_BEFORE.labels(category).inc(tokens)
@@ -221,6 +219,13 @@ class ContextEngineeringCallback(CustomLogger):
             m.MASKED.labels(record.reason).inc()
         for record in report.history:
             m.HISTORY_TURNS.labels(record.action).inc()
+            if record.action == "retrieved" and record.score is not None:
+                m.RETRIEVAL_SCORE.labels(self.settings.jit_backend).observe(record.score)
+        for kind, count in report.restored.items():
+            if count:
+                m.RESTORED.labels(kind).inc(count)
+        if report.summary_index is not None:
+            m.COMPACTIONS.labels(report.summary_source or "unknown").inc()
 
     # ----- provider result: prompt-cache reads/writes and tokenizer calibration -----------------------------------
 
@@ -234,18 +239,20 @@ class ContextEngineeringCallback(CustomLogger):
         payload = kwargs.get("standard_logging_object") or {}
         metadata = (payload.get("metadata") or {}).get("spend_logs_metadata") or {}
         summary = metadata.get(METADATA_KEY) or {}
-        if not summary or summary.get("status") not in ("ok", "shadow"):
-            return
+        compression = metadata.get("prompt_compression") or {}
         usage = getattr(response_obj, "usage", None)
         if usage is None and isinstance(response_obj, dict):
             usage = response_obj.get("usage")
-        if usage is None:
-            return
+        cached = written = prompt_tokens = 0
         provider = str(payload.get("custom_llm_provider") or "unknown")[:40]
-        prompt_tokens = _get(usage, "prompt_tokens") or 0
-        details = _get(usage, "prompt_tokens_details")
-        cached = _get(details, "cached_tokens") or _get(usage, "cache_read_input_tokens") or 0
-        written = _get(usage, "cache_creation_input_tokens") or 0
+        if usage is not None:
+            prompt_tokens = _get(usage, "prompt_tokens") or 0
+            details = _get(usage, "prompt_tokens_details")
+            cached = _get(details, "cached_tokens") or _get(usage, "cache_read_input_tokens") or 0
+            written = _get(usage, "cache_creation_input_tokens") or 0
+        self._attribute(summary, compression, cached, payload)
+        if not summary or summary.get("status") not in ("ok", "shadow") or usage is None:
+            return
         if prompt_tokens:
             m.PROVIDER_PROMPT_TOKENS.labels(provider).inc(prompt_tokens)
         if cached:
@@ -254,13 +261,52 @@ class ContextEngineeringCallback(CustomLogger):
             m.PROVIDER_CACHE_WRITE_TOKENS.labels(provider).inc(written)
         # Calibrate against what was actually sent: this stage's estimate minus what compression then removed.
         estimate = int(summary.get("tokens_after") or 0)
-        compression = metadata.get("prompt_compression") or {}
         if compression.get("status") == "ok":
             estimate -= max(0, int(compression.get("tokens_before") or 0) - int(compression.get("tokens_after") or 0))
         if summary.get("status") == "ok" and estimate > 0 and prompt_tokens:
             tk.CALIBRATION.record(summary.get("model") or "", estimate, int(prompt_tokens))
         logger.info("context engineering usage: provider=%s prompt_tokens=%s cached_tokens=%s cache_write_tokens=%s",
                     provider, prompt_tokens, cached, written)
+
+    @staticmethod
+    def _attribute(summary: dict, compression: dict, cached: int, payload: dict) -> dict:
+        """One record per answered request of what each optimisation contributed (gateway_optimization_* metrics).
+
+        The stages run one after the other on each other's output, so the per-stage figures add up without overlap:
+        context engineering's own saved_by_technique, then what compression removed from that output, then the prompt
+        tokens the provider served from its cache. Shadow-mode figures are not attributed (nothing was saved)."""
+        contributions: dict = {}
+        if summary.get("status") == "ok":
+            contributions.update({k: int(v) for k, v in (summary.get("saved_by_technique") or {}).items() if v})
+        if compression.get("status") == "ok":
+            removed = int(compression.get("tokens_before") or 0) - int(compression.get("tokens_after") or 0)
+            if removed > 0:
+                contributions["prompt_compression"] = removed
+        if cached:
+            contributions["provider_cache"] = int(cached)
+        if not contributions:
+            return contributions
+        price, cache_price = _prices(payload)
+        for technique, tokens in contributions.items():
+            m.ATTRIBUTED_TOKENS.labels(technique).inc(tokens)
+            unit = (price - cache_price) if technique == "provider_cache" else price
+            if unit > 0:
+                m.ATTRIBUTED_USD.labels(technique).inc(tokens * unit)
+        return contributions
+
+
+def _prices(payload: dict) -> tuple[float, float]:
+    """(input price, cache-read price) per token for the model that answered, from LiteLLM's model map; 0 if unknown."""
+    model = payload.get("model") or ""
+    try:
+        import litellm
+
+        info = litellm.get_model_info(model, custom_llm_provider=payload.get("custom_llm_provider"))
+    except Exception:
+        return 0.0, 0.0
+    price = float(info.get("input_cost_per_token") or 0.0)
+    cache_price = float(info.get("cache_read_input_token_cost") or price)
+    return price, min(cache_price, price)
 
 
 def _get(obj, name):

@@ -1,0 +1,55 @@
+{
+ "python": "3.12.10",
+ "platform": "Windows-11-10.0.26200-SP0",
+ "processor": "Intel64 Family 6 Model 142 Stepping 12, GenuineIntel",
+ "cpus": 8,
+ "model_for_budget": "ollama_chat/llama3.2:3b",
+ "profiles": {
+  "default": {},
+  "full": {
+   "compaction_enabled": true,
+   "jit_enabled": true,
+   "jit_on_caching_providers": true,
+   "window_tokens": 6000
+  }
+ },
+ "compression": {
+  "enabled": true,
+  "fail_mode": "open",
+  "timeout_s": 10.0,
+  "min_tokens": 50,
+  "max_input_tokens": 32000,
+  "max_concurrency": 4,
+  "mode": "enforce",
+  "redact_sensitive": false,
+  "preserve_last_user": false,
+  "protect_edges": true,
+  "exact_density": 0.15,
+  "compression_model": "microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank",
+  "compression_model_revision": null,
+  "rate": 0.4,
+  "max_ratio": 3.0,
+  "min_chars": 200,
+  "max_compress_calls": 6,
+  "max_compress_calls_per_request": 12,
+  "compress_cache_size": 512,
+  "eager_load": true,
+  "spend_log_messages": 8,
+  "routes": [
+   "narrative",
+   "passages",
+   "records"
+  ],
+  "selection_scope": "latest_user",
+  "intent_gate": true,
+  "min_passages": 6,
+  "min_passage_tokens": 100,
+  "passage_keep_ratio": 0.5,
+  "record_min_lines": 10,
+  "record_context_lines": 1,
+  "history_max_tokens": 0,
+  "history_keep_messages": 6
+ },
+ "classifier": "sentence-transformers/all-MiniLM-L6-v2+sensitivity-head-v2",
+ "compressor": "microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank"
+}
