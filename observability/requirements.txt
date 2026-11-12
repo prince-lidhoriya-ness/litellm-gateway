@@ -1,10 +1,10 @@
 # Local test versions. In the proxy image (LiteLLM v1.106.0, Dockerfile) the OTel packages are the ones LiteLLM ships.
 # Local tests: install on top of prompt_compression/requirements.txt.
 #   pip install -r observability/requirements.txt
-# pip reports fastapi 0.162.0 wanting opentelemetry-api>=1.44; the tests pass with 1.33.1, which is what the image ships.
-opentelemetry-api==1.33.1
-opentelemetry-sdk==1.33.1
-opentelemetry-exporter-otlp-proto-http==1.33.1
-opentelemetry-semantic-conventions==0.54b1
+# fastapi 0.162.0 requires opentelemetry-api>=1.44.0, so the OTel packages are pinned to 1.44.0 (and the matching semantic-conventions release) to satisfy both.
+opentelemetry-api==1.44.0
+opentelemetry-sdk==1.44.0
+opentelemetry-exporter-otlp-proto-http==1.44.0
+opentelemetry-semantic-conventions==0.65b0
 prometheus_client==0.20.0
 pytest==9.2.0
