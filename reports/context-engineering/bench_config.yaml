@@ -2,7 +2,7 @@
 # chain as litellm_config.yaml (prometheus, context engineering, then compression with its observability wrapper),
 # without the OTel/Langfuse exporters and without a database, so it runs on a laptop with no services.
 #
-#   PYTHONUTF8=1 LITELLM_MASTER_KEY=sk-bench-local MOCK_LLM_API_BASE=http://127.0.0.1:4010/v1 \
+#   PYTHONUTF8=1 LITELLM_MASTER_KEY=sk-bench-local MOCK_LLM_API_BASE=http://127.0.0.1:4011/v1 \
 #     CONTEXT_COMPACTION_ENABLED=true JIT_RETRIEVAL_ENABLED=true JIT_RETRIEVAL_ON_CACHING_PROVIDERS=true \
 #     CONTEXT_WINDOW_TOKENS=6000 .venv-compression/Scripts/litellm --config reports/context-engineering/bench_config.yaml --port 4100
 #

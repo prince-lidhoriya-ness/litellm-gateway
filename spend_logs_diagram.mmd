@@ -1,0 +1,54 @@
+graph TB
+    Start([Spend Logs Metadata]) --> PC[Prompt Compression Pipeline]
+    Start --> CE[Context Engineering Pipeline]
+    
+    PC --> PC_Config["⚙️ Config<br/>Mode: enforce<br/>Intent: lookup<br/>Status: ok"]
+    PC_Config --> PC_Routes["📍 Routes<br/>- narrative<br/>- passages<br/>- records"]
+    
+    PC_Routes --> PC_Kept["✅ Kept Segments<br/>Exact: 4<br/>Sensitive: 6"]
+    
+    PC_Kept --> Messages["📨 Message Processing<br/>7 Messages Total"]
+    
+    Messages --> Msg_19["Index 19: below_min_chars<br/>Score: 0.2863<br/>Prose: 1 block<br/>Cache Hit: ✓"]
+    Messages --> Msg_20["Index 20: preserved_role"]
+    Messages --> Msg_21["Index 21: preserved_role<br/>Tool Result"]
+    Messages --> Msg_22["Index 22: below_min_chars<br/>Score: 0.218<br/>Cache Hit: ✓"]
+    Messages --> Msg_25["Index 25: below_min_chars<br/>Score: 0.2584<br/>Cache Hit: ✓"]
+    Messages --> Msg_26["Index 26: SENSITIVE 🔐<br/>Score: 0.3728<br/>Edge Protected: ✓"]
+    
+    Messages --> PC_Summary["📊 Summary Stats<br/>Tokens Before: 3835<br/>Tokens After: 3587<br/>Compression Ratio: 1.069x<br/>Elapsed: 58.9ms"]
+    
+    PC_Summary --> PC_Segments["📈 Segment Breakdown<br/>Exact: 4 | Sensitive: 6<br/>Prose: 21 | Blocks: 25<br/>Compressed Blocks: 1<br/>Cache Hits: 1"]
+    
+    PC_Segments --> PC_Model["🤖 Classifier<br/>sentence-transformers/<br/>all-MiniLM-L6-v2"]
+    PC_Model --> PC_Compressor["🔧 Compressor<br/>microsoft/llmlingua-2-<br/>bert-base-multilingual"]
+    
+    CE --> CE_Config["⚙️ Config<br/>Mode: enforce<br/>Model: ollama_chat/<br/>llama3.2:3b"]
+    
+    CE_Config --> CE_Window["🪟 Window Settings<br/>Total: 32768<br/>Utilization: 29.31% → 19.65%<br/>Target: 20643"]
+    
+    CE_Window --> CE_Masked["🔒 Masked Observations<br/>4 Observations Masked<br/>Reason: age<br/>All Stored: ✓"]
+    
+    CE_Masked --> Obs1["obs_691b2eaf17fd<br/>read_logs<br/>Before: 686 → After: 197<br/>Saved: 489 tokens"]
+    CE_Masked --> Obs2["obs_e43e28dd8df7<br/>read_logs<br/>Before: 697 → After: 199<br/>Saved: 498 tokens"]
+    CE_Masked --> Obs3["obs_3516f7aef992<br/>read_logs<br/>Before: 675 → After: 195<br/>Saved: 480 tokens"]
+    CE_Masked --> Obs4["obs_f1140995c4ca<br/>read_logs<br/>Before: 730 → After: 203<br/>Saved: 527 tokens"]
+    
+    CE_Masked --> CE_Summary["📊 Summary Stats<br/>Tokens Before: 6051<br/>Tokens After: 4057<br/>Tokens Saved: 1994<br/>Elapsed: 52.8ms"]
+    
+    CE_Summary --> CE_Techniques["🛠️ Techniques<br/>✓ Dedupe<br/>✓ Masking"]
+    
+    CE_Techniques --> CE_Breakdown["📋 By Category<br/>System: 22<br/>History: 1040<br/>Tool Output: 2929 (was 4923)<br/>Current Query: 66"]
+    
+    CE_Breakdown --> CE_Pressure["📈 Pressure Analysis<br/>Status: LOW<br/>Utilization: 19.65%<br/>Reserve: 120 tokens"]
+    
+    CE_Pressure --> Final["✅ Final State<br/>Status: OK<br/>No Invariant Violations<br/>Caching: unknown"]
+    
+    PC_Compressor --> Final
+    
+    style PC fill:#e1f5ff
+    style CE fill:#f3e5f5
+    style Final fill:#c8e6c9
+    style PC_Summary fill:#fff9c4
+    style CE_Summary fill:#fff9c4
+    style Msg_26 fill:#ffcdd2

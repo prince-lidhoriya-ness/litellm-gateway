@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Reproduces every live part of the benchmark (reports/context-engineering/REPORT.md). Run from litellm-gateway/:
 #   bash reports/context-engineering/scripts/run_all.sh [proxy|quality|cache|validate|all]
-# Needs: .venv-compression, Ollama on 127.0.0.1:11434 with llama3.2:3b (quality and cache phases), free ports 4010/4100.
+# Needs: .venv-compression, Ollama on 127.0.0.1:11434 with llama3.2:3b (quality and cache phases), free ports 4011 (MOCK_PORT) and 4100.
 # The in-process part is separate: python reports/context-engineering/scripts/offline_bench.py
 set -u
 PY=.venv-compression/Scripts/python
@@ -11,13 +11,13 @@ RAW=reports/context-engineering/raw
 PHASE=${1:-all}
 mkdir -p "$RAW"
 export PYTHONUTF8=1 LITELLM_LOCAL_MODEL_COST_MAP=True LITELLM_MASTER_KEY=sk-bench-local \
-       MOCK_LLM_API_BASE=http://127.0.0.1:4010/v1 MOCK_LLM_API_KEY=mock-not-a-secret
+       MOCK_LLM_API_BASE=http://127.0.0.1:${MOCK_PORT:-4011}/v1 MOCK_LLM_API_KEY=mock-not-a-secret
 
 # Benchmark profile "full" (bench_lib.PROFILE_ENV).
 FULL="CONTEXT_COMPACTION_ENABLED=true JIT_RETRIEVAL_ENABLED=true JIT_RETRIEVAL_ON_CACHING_PROVIDERS=true CONTEXT_WINDOW_TOKENS=6000"
 
 start_mock() {
-  "$PY" prompt_compression/dev/mock_openai_server.py --port 4010 > "$RAW/mock.log" 2>&1 &
+  "$PY" prompt_compression/dev/mock_openai_server.py --port ${MOCK_PORT:-4011} > "$RAW/mock.log" 2>&1 &
   MOCK=$!
 }
 
