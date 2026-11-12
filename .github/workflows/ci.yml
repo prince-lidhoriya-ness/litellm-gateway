@@ -1,0 +1,109 @@
+# CI for the gateway (PROJECT_AUDIT_REPORT.md, F-10 / P0): lint, both unit-test suites, Compose validation, the image
+# build and a secret scan on every push and pull request.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff==0.15.0
+      - run: ruff check .
+
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      PROMPT_COMPRESSION_EAGER_LOAD: "false"
+      TOKENIZERS_PARALLELISM: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            prompt_compression/requirements.txt
+            observability/requirements.txt
+      - name: Install (CPU torch first, then the pinned requirements)
+        run: |
+          pip install "torch==2.15.0" --index-url https://download.pytorch.org/whl/cpu
+          pip install -r prompt_compression/requirements.txt -r observability/requirements.txt
+      - name: prompt_compression tests
+        working-directory: prompt_compression
+        run: python -m pytest -q
+      - name: observability tests
+        working-directory: observability
+        run: python -m pytest -q
+      - name: context_engineering tests
+        working-directory: context_engineering
+        env:
+          LITELLM_LOCAL_MODEL_COST_MAP: "True"
+        run: python -m pytest -q
+
+  compose:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate the Compose files with placeholder secrets
+        env:
+          LITELLM_MASTER_KEY: sk-ci-placeholder
+          LITELLM_SALT_KEY: sk-ci-placeholder
+          POSTGRES_PASSWORD: ci-placeholder
+          REDIS_PASSWORD: ci-placeholder
+          LANGFUSE_PUBLIC_KEY: pk-lf-ci
+          LANGFUSE_SECRET_KEY: sk-lf-ci
+          GRAFANA_ADMIN_PASSWORD: ci-placeholder
+        run: |
+          docker compose -f docker-compose.quickstart.yml config --quiet
+          docker compose -f docker-compose.quickstart.yml -f monitoring/docker-compose.monitoring.yml config --quiet
+
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build the gateway image (not pushed)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          tags: litellm-gateway:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: The baked models load offline at their pinned revisions
+        run: |
+          docker run --rm --entrypoint /app/.venv/bin/python3 -v "$PWD:/src:ro" -w /src litellm-gateway:ci -c "
+          from prompt_compression.compressor_adapter import LLMLinguaCompressor
+          from prompt_compression.embedding_classifier import EmbeddingSensitivityClassifier
+          c = LLMLinguaCompressor('microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank'); c.load()
+          print(c.compress('The quarterly review covered hiring plans, supplier delays and the new office move in detail.', 0.5))
+          e = EmbeddingSensitivityClassifier(); e.load(); print(e.score('my diagnosis came back today'))
+          "
+
+  secrets:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: gitleaks (working tree; synthetic test fixtures are allow-listed in .gitleaks.toml)
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:v8.18.4 \
+            detect --no-git --source /repo --config /repo/.gitleaks.toml --redact --verbose

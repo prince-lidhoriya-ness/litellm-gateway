@@ -1,0 +1,38 @@
+[
+ {
+  "pass": "first_reversed",
+  "config": "combined",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 34.99,
+  "rps": 1.31
+ },
+ {
+  "pass": "first_reversed",
+  "config": "context_engineering",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.7,
+  "rps": 27.08
+ },
+ {
+  "pass": "first_reversed",
+  "config": "compression",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 13.23,
+  "rps": 3.48
+ },
+ {
+  "pass": "first_reversed",
+  "config": "baseline",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.28,
+  "rps": 36.01
+ }
+]

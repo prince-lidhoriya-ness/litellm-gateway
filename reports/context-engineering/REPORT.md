@@ -1,0 +1,349 @@
+# Context engineering + prompt compression: benchmark report
+
+Run on 2026-11-11, at litellm-gateway branch `feature/context-engineering` (commit `6cd9d67`, plus the
+observability and attribution changes described in §6). Every number here was measured by the scripts in
+`scripts/` on the data in `data/`; raw rows are in `raw/`, and `raw/results.md` is the generated table set. Nothing is
+extrapolated unless a line says **estimate**.
+
+## 0. Executive summary
+
+**What was compared.** Four gateway configurations, on the same 46 requests:
+
+1. baseline (no optimisation);
+2. the existing prompt compression only;
+3. context engineering (CE) only;
+4. CE + compression.
+
+All four were selected per request with the two stages' opt-out flags, so the same process, models and settings
+served every configuration.
+
+**Measured.** Sections §3–§5 hold the full tables; profile `full` is CE with compaction and JIT on, a 6,000-token
+effective window.
+
+| Measure | Compression only | CE only | Combined |
+|---|---|---|---|
+| Prompt tokens saved, whole dataset (82,713 tokens) | 11.3% | 22.2% (`full`), 15.8% (`default`) | **31.7%** (`full`), **26.2%** (`default`, the shipped settings) |
+| Same figure, confirmed on the provider side of the live proxy | 11.3% | 22.2% | 31.7% (identical token counts) |
+| Mean preparation time per request (in-process, cold) | 1,338 ms | 12 ms | 1,034 ms |
+
+- **Where the savings come from** (`full`, sequential attribution, no double counting): masking of old tool outputs
+  15.8% of all input tokens, prompt compression 9.5%, compaction 6.4%.
+- **No harm where nothing should happen.** On the 52 requests where CE should not act (short chats, single-turn
+  QA/logs/code, a structured chat below the size gate), CE changed nothing. It produced 0 invariant violations and
+  kept 100% of code, log, JSON and debug key strings.
+- **Preparation is cheaper when combined.** Compaction removes old prose before LLMLingua-2 sees it. On long chats,
+  LLMLingua-2 calls fell from 33 to 23, and compression time from 5.6 s to 3.7 s per request. CE's own cost is 4 ms at
+  p50 and 35–44 ms at p90/p95 (`full`).
+- **API cost per 1,000 requests of this mix** (LiteLLM model-map prices, measured tokens): gpt-4o-mini −28.6% and
+  claude-sonnet-4-5 −27.9% for combined, against −10.2% and −10.0% for compression alone. Local compute for the
+  optimisation is about $0.03 per 1,000 requests at $0.10/CPU-hour. These are estimates built from measured token
+  counts and list prices, not provider invoices.
+- **Quality and prefix reuse:** §5.1 and §5.2 (real model: local llama3.2:3b).
+
+**Known costs and losses** (§7):
+- **Masking can lose a detail nobody referenced.** When a question needs a detail from an old tool output that no
+  later message referred to, masking removed the answer from the context in 2 of 3 cases.
+- **CE concurrency cost.** At 8 concurrent clients against an instant mock, CE's pure-Python work cut throughput from
+  46.5 to 26.7 req/s. With real providers, answering in hundreds of milliseconds or more, the absolute cost is a few
+  milliseconds per request.
+- **A pre-existing compression flaw** surfaced: LLMLingua-2 split `NIMBUS-5044` into `NIMBUS - 5044` in one long
+  assistant paragraph, which removed the exact answer string in 1 of 8 long chats.
+
+**Next:** §8.
+
+## 1. Experimental setup
+
+| | |
+|---|---|
+| Machine | Windows 11, Intel i7 (family 6 model 142), 8 logical CPUs, no GPU |
+| Gateway | LiteLLM 1.106.0 proxy, 1 worker, `reports/context-engineering/bench_config.yaml`: callbacks `prometheus` → context engineering → compression (with its observability wrapper), as in `litellm_config.yaml` |
+| Compression | shipped defaults: routes narrative, passages, records; selection scope latest_user; intent gate; rate 0.4; 3x ratio cap; MiniLM sensitivity head v2 (threshold 0.36); LLMLingua-2 mBERT at the pinned revision (`raw/offline_env.json`) |
+| CE profile `default` | shipped defaults: budget, duplicate folding, masking, cache-aware construction; JIT and compaction off; window from LiteLLM's model map (llama3.2:3b: 131,072) |
+| CE profile `full` | everything on: compaction (extractive), JIT (BM25), JIT allowed although the target reuses prefixes locally, and `CONTEXT_WINDOW_TOKENS=6000`. At these conversation sizes the history techniques only have work under a constrained window |
+| Providers | echo mock (`prompt_compression/dev/mock_openai_server.py`), which returns what it received (latency, throughput, token accounting); Ollama 0.40.16 with llama3.2:3b Q4_K_M, `num_ctx` 8192, temperature 0 (quality, prefix reuse) |
+| Output | `max_tokens` 48 for every request |
+| Token counting | `context_engineering.tokens.messages_tokens`: tiktoken cl100k_base of all text, plus tool-call arguments, plus 4 per message. It is applied to the original request and to what reached the provider (measured on the echo) |
+
+### 1.1 Dataset (`data/bench.jsonl`, generated by `scripts/dataset.py`)
+
+The dataset is deterministic: seed 20261111, sha256 printed by the runner. It has 46 items and 82,713 original tokens.
+
+| Family | Items | Mean tokens | What it tests | Should CE act? |
+|---|---|---|---|---|
+| short_chat | 6 | 64 | 3-turn chats | no (below the size gate) |
+| doc_qa | 6 | 332 | single-turn document QA, from `reports/compression-fit` | no |
+| log_lookup | 6 | 534 | single-turn log/JSON lookups, from `reports/compression-fit` | no |
+| code | 4 | 524 | single-turn code questions, from `reports/compression-fit` | no |
+| long_chat | 8 | 3,044 | 10-turn chats. A codename and owner are stated in an early turn (`old`, inside the compactable span) or in the second-last turn (`recent`); the last question asks for both | yes (history) |
+| agent_tools | 9 | 3,628 | one task, then 7 tool calls with 11-line log outputs (about 440 tokens each). The question needs a value from an old output the next assistant reply referred to (`old_ref`), an old output nobody referred to (`old_unref`, the risky case), or a recent output (`recent`) | yes (masking) |
+| agent_debug | 3 | 4,018 | like agent_tools, but the newest tool output is a failing test run and the question asks for the failing test id | yes (error guard) |
+| structured_chat | 4 | 1,489 | 4 chat turns, then a message carrying JSON orders and a Python helper; the question asks for one order total | no (nothing old to remove) |
+
+Every multi-turn item's first user message says "Start every answer with 'Answer:'". That message is pinned by CE, and
+the quality run scores the instruction.
+
+**A first dataset version had short assistant turns** (about 107 tokens per turn; raw rows in
+`raw/offline_v1_short_turns.jsonl`). There, JIT found the fact turn, but compaction was **skipped by its own safety
+ratio** on every long chat: a 346-token summary for a 428-token span saves too little. That is the designed behaviour,
+and it is why the final dataset uses realistic answer lengths (about 290 tokens per turn).
+
+### 1.2 Configurations (`scripts/bench_lib.py`)
+
+| Configuration | Request metadata |
+|---|---|
+| Baseline | `{"context_engineering": false, "prompt_compression": false}` |
+| Existing (compression only) | `{"context_engineering": false}` |
+| Context engineering only | `{"prompt_compression": false}` |
+| Combined | none |
+
+### 1.3 Procedure
+
+| Run | Script | What it measures |
+|---|---|---|
+| In-process | `offline_bench.py` | The two real hooks chained as LiteLLM chains them, with the real models, for every item × configuration × profile. **cold** = compression's output and sensitivity caches emptied before every request. **warm** = the same request again, immediately |
+| Proxy | `proxy_bench.py` via `run_all.sh proxy` | A fresh proxy with the echo provider; two warm-up requests discarded; passes `first` (c=1), `repeat` (c=1, warm), `c8` (8 concurrent clients, warm). A second fresh proxy ran `first_reversed`, with the configuration order reversed |
+| Quality | `quality_bench.py` | 16 items × 4 configurations through the proxy to llama3.2:3b. Each request gets a fresh run tag in its system message, so Ollama cannot reuse another configuration's KV prefix; the configuration order rotates per item |
+| Prefix reuse | `cache_bench.py` | Turn N and turn N+1 of 3 conversations per configuration, captured through the proxy and replayed to Ollama in order |
+| Validation | `validate_live.py` via `run_all.sh validate` | Functional checks on live proxies with different flags (§9) |
+
+## 2. Metric definitions
+
+| Metric | Definition |
+|---|---|
+| Token reduction % | (original − final input tokens) / original × 100 |
+| Cost savings % | (baseline cost − optimised cost) / baseline cost × 100 |
+| Latency improvement % | (baseline − optimised) / baseline × 100 |
+| Attribution | Each stage measured on the previous stage's output, so the parts add up to the total: deduplication and masking per stub (tokens before − after); compaction or JIT as the token difference across the history stage; prompt compression as what it removed from the CE output |
+| Answer still in context | An expected answer string occurs, case- and whitespace-normalised, in what reaches the provider. This is a deterministic information-retention check, independent of the model |
+| Key strings kept | For code/log/structured/debug items, the share of the item's exact strings (identifiers, values, function signatures) present verbatim in what reaches the provider |
+| Correct / completeness / instruction following | The model's reply contains an expected answer / the share of required strings it contains / it starts with "Answer:" |
+| Retrieval relevance | For long chats with JIT: retrieved turns that hold the asked-for fact, and old-fact questions whose fact turn was retrieved |
+
+## 3. Tokens and attribution (in-process, cold; identical on the proxy)
+
+### 3.1 Input tokens by family, profile `full`
+
+| Family | Items | Original | Compression only | CE only | Combined |
+|---|---|---|---|---|---|
+| short_chat | 6 | 388 | 388 (0.0%) | 388 (0.0%) | 388 (0.0%) |
+| doc_qa | 6 | 1,993 | 1,157 (41.9%) | 1,993 (0.0%) | 1,157 (41.9%) |
+| log_lookup | 6 | 3,206 | 1,125 (64.9%) | 3,206 (0.0%) | 1,125 (64.9%) |
+| code | 4 | 2,097 | 2,097 (0.0%) | 2,097 (0.0%) | 2,097 (0.0%) |
+| long_chat | 8 | 24,357 | 19,561 (19.7%) | 19,085 (21.6%) | 15,781 (35.2%) |
+| agent_tools | 9 | 32,659 | 32,659 (0.0%) | 22,858 (30.0%) | 22,858 (30.0%) |
+| agent_debug | 3 | 12,056 | 12,056 (0.0%) | 8,798 (27.0%) | 8,798 (27.0%) |
+| structured_chat | 4 | 5,957 | 4,309 (27.7%) | 5,957 (0.0%) | 4,309 (27.7%) |
+| **All** | **46** | **82,713** | **73,352 (11.3%)** | **64,382 (22.2%)** | **56,513 (31.7%)** |
+
+**Profile `default`** (shipped settings, masking only) differs only on long chats: CE alone 0.0%, combined 16.6%. The
+whole dataset is then compression 11.3%, CE 15.8%, **combined 26.2%** (61,035 tokens).
+
+**The proxy confirms these counts.** On the `repeat` pass, the tokens that reached the echo provider were 73,352,
+64,382 and 56,513 of 82,713, identical to the in-process counts.
+
+### 3.2 Which technique saved what (combined configuration)
+
+| Technique | Profile `full` tokens | Share of all input | Profile `default` tokens | Share |
+|---|---|---|---|---|
+| Observation masking | 13,059 | 15.8% | 13,059 | 15.8% |
+| Prompt compression (on the CE output) | 7,869 | 9.5% | 8,619 | 10.4% |
+| Context compaction (JIT kept the relevant turns) | 5,272 | 6.4% | — | — |
+| Duplicate folding | 0 | 0% | 0 | 0% |
+| **Total** | **26,200** | **31.7%** | **21,678** | **26.2%** |
+
+**Why the techniques complement each other.**
+- They act on different parts of the context. Compression never touches tool outputs, where masking does all the
+  work, and CE never touches single-turn prompts, where compression does all the work.
+- Compression saves less on the combined long chats (7,869 against 8,619 tokens) because compaction already removed
+  some of the prose it would have compressed.
+- Duplicate folding saved nothing because no item repeats a tool output byte for byte. It is covered by unit tests.
+
+**Provider-side cache savings** are not part of these figures: they discount tokens rather than remove them (§5.2).
+
+## 4. Latency, overhead and throughput
+
+### 4.1 Optimisation overhead per request (in-process, ms: p50 / p90 / p95)
+
+| Profile | Pass | Configuration | CE hook | Compression hook | Total |
+|---|---|---|---|---|---|
+| full | cold | Compression only | – | 122 / 4,465 / 6,225 | 122 / 4,465 / 6,225 |
+| full | cold | CE only | 4.1 / 37.7 / 44.0 | – | 4.2 / 37.9 / 44.2 |
+| full | cold | Combined | 4.1 / 35.5 / 38.2 | 122 / 3,694 / 4,240 | 130 / 3,718 / 4,276 |
+| full | warm | Compression only | – | 19 / 78 / 97 | 19 / 78 / 97 |
+| full | warm | CE only | 4.2 / 42.6 / 51.2 | – | 4.3 / 42.7 / 51.4 |
+| full | warm | Combined | 5.4 / 35.0 / 46.1 | 19 / 56 / 61 | 25 / 93 / 106 |
+| default | cold | Compression only | – | 141 / 4,002 / 5,022 | 141 / 4,002 / 5,022 |
+| default | cold | CE only | 2.9 / 19.2 / 24.1 | – | 3.0 / 19.4 / 24.4 |
+| default | cold | Combined | 2.7 / 13.0 / 18.3 | 130 / 4,297 / 5,389 | 143 / 4,301 / 5,394 |
+| default | warm | Combined | 3.2 / 16.0 / 19.0 | 12 / 63 / 66 | 23 / 68 / 71 |
+
+**Means per request, cold.**
+- **Profile `full`:** compression only 1,338 ms, CE only 12 ms, combined 1,034 ms. Combined preparation is **23%
+  cheaper** than compression alone.
+- **Long chats:** compression time fell from 5,608 to 3,695 ms per request (LLMLingua-2 calls 33 → 23).
+- **Profile `default`:** compression only 1,107 ms, combined 1,252 ms. CE removes nothing that LLMLingua-2 would
+  process, so no saving is expected there.
+- **One-time warm-up.** The `default` CE means include the first request of the run, which loaded LiteLLM's model map
+  (about 2 s, once per process; already loaded inside a running proxy). The medians above are not affected.
+
+**Stage latency inside the CE hook** (`full`, cold, requests where the stage acted):
+- masking: 6.7 / 8.4 / 11.7 ms;
+- JIT retrieval + compaction: 32.2 / 35.2 / 36.2 ms.
+
+**No extra LLM calls.** No technique made a model call. Compaction ran in extractive mode, and the optional
+`llm`-mode summary was not used in this benchmark.
+
+### 4.2 End-to-end through the proxy (echo provider, profile `full`; ms)
+
+| Pass | Concurrency | Configuration | Mean | p50 | p90 | p95 | Req/s | Errors |
+|---|---|---|---|---|---|---|---|---|
+| first | 1 | Baseline | 31 | 30 | 40 | 43 | 29.2 | 0 |
+| first | 1 | Compression only | 1,367 | 74 | 4,428 | 6,213 | 0.73 | 0 |
+| first | 1 | CE only | 31 | 29 | 42 | 52 | 31.1 | 0 |
+| first | 1 | Combined | 73 | 41 | 79 | 88 | 13.6 | 0 |
+| first_reversed | 1 | Combined | 757 | 92 | 2,788 | 2,907 | 1.31 | 0 |
+| first_reversed | 1 | CE only | 36 | 35 | 49 | 53 | 27.1 | 0 |
+| first_reversed | 1 | Compression only | 286 | 36 | 1,173 | 1,900 | 3.48 | 0 |
+| first_reversed | 1 | Baseline | 27 | 24 | 39 | 43 | 36.0 | 0 |
+| repeat | 1 | Baseline | 22 | 21 | 29 | 30 | 43.5 | 0 |
+| repeat | 1 | Compression only | 40 | 36 | 68 | 72 | 24.7 | 0 |
+| repeat | 1 | CE only | 27 | 24 | 39 | 41 | 35.9 | 0 |
+| repeat | 1 | Combined | 40 | 39 | 69 | 76 | 24.4 | 0 |
+| c8 | 8 | Baseline | 159 | 155 | 196 | 197 | 46.5 | 0 |
+| c8 | 8 | Compression only | 255 | 239 | 377 | 488 | 29.6 | 0 |
+| c8 | 8 | CE only | 285 | 229 | 439 | 464 | 26.7 | 0 |
+| c8 | 8 | Combined | 286 | 269 | 475 | 516 | 26.8 | 0 |
+
+**How to read it.** In a single pass the configurations share the proxy's caches, so a configuration that runs after
+another profits from its cached work. Cold comparisons therefore use each configuration's first appearance on a fresh
+proxy:
+- compression only: `first`, 0.73 req/s;
+- combined: `first_reversed`, 1.31 req/s, about 80% more throughput;
+- the p95 fell from 6,213 to 2,907 ms (**53% latency improvement**), because compaction leaves LLMLingua-2 less prose.
+
+**CE's own end-to-end cost at concurrency 1** is within noise of the baseline: p50 29 against 30 ms on `first`, 24
+against 21 ms on `repeat`.
+
+**At concurrency 8 with an instant provider,** CE costs throughput: 26.7 against 46.5 req/s. CE's per-request CPU
+(about 15 ms mean, pure Python in a worker thread) is serialized with LiteLLM's event loop by Python's GIL.
+- Total CE CPU for the 46 requests (≈0.7 s) matches the added wall time (≈0.7 s).
+- With real providers, where a request takes hundreds of milliseconds to minutes (§5.1), this is a small share of the
+  latency. Even so, it caps the throughput of one proxy worker, as LLMLingua-2 already does (§8, item 3).
+
+**Errors:** 0 of 736 proxy requests.
+
+### 4.3 Cost (estimate from measured tokens and list prices)
+
+| Price list (LiteLLM 1.106.0 model map) | Baseline | Compression only | CE only | Combined |
+|---|---|---|---|---|
+| gpt-4o-mini ($0.15 / $0.60 per M in/out) | $0.2985 | $0.2680 (−10.2%) | $0.2387 (−20.0%) | **$0.2131 (−28.6%)** |
+| claude-sonnet-4-5 ($3 / $15 per M) | $6.1143 | $5.5038 (−10.0%) | $4.9188 (−19.6%) | **$4.4056 (−27.9%)** |
+| bench-llama test prices ($1 / $2 per M) | $1.8941 | $1.6906 (−10.7%) | $1.4956 (−21.0%) | **$1.3245 (−30.1%)** |
+
+The table shows cost per 1,000 requests of this mix, using profile `full` cold input tokens and the quality run's mean
+output tokens.
+
+**Optimisation overhead in money:** the combined preparation mean of 1,034 ms on one CPU, at the observability
+module's default $0.10/CPU-hour, is about **$0.029 per 1,000 requests**. That is 0.7% of the gpt-4o-mini saving and
+0.01% of the claude-sonnet-4-5 saving.
+
+## 5. Quality and prefix reuse with a real model
+
+### 5.1 Answer quality (llama3.2:3b, CPU)
+
+QUALITY_SECTION
+
+### 5.2 Prefix reuse between turns (cache-aware execution)
+
+CACHE_SECTION
+
+## 6. Observability added in this phase
+
+**Metrics.**
+
+| Area | Metrics |
+|---|---|
+| Attribution, recorded once per answered request in the success hook | `gateway_optimization_tokens{technique}` and `gateway_optimization_saved_usd{technique}` (estimate, model-map prices). `technique` is one of deduplication, masking, compaction, jit_retrieval, prompt_compression, provider_cache |
+| Context engineering | `context_engine_context_tokens{stage}` (context size before / after), `context_engine_utilization{stage}`, `context_engine_restored{kind}` (recovered observations and turns), `context_engine_compactions{source}`, `context_engine_retrieval_score{backend}` (retrieval relevance), plus the existing request, masking, history, duration, failure and provider-cache series |
+| Compression | `prompt_pipeline_validation_rejects{label}` (ratio-cap validation failures), `prompt_pipeline_compress_stopped{reason}` (deadline / call cap fallbacks), next to the existing `prompt_pipeline_failures` and `_tokens_*` series |
+
+**Dashboard.** `monitoring/grafana/dashboards/gw-context-engineering.json` ("Gateway - context engineering and
+attribution", 18 panels), built by `monitoring/grafana/build_dashboards.py` with the other three dashboards. Gateway
+latency p50/p90/p95, input/output tokens, spend, cache hit rate, requests per second and error and fallback rates come
+from LiteLLM's own `litellm_*` series, already on the other dashboards.
+
+**Exposure verified.** The live validation (§9) confirmed that these series are served at `/metrics`. The counters'
+behaviour is covered by `context_engineering/tests/test_attribution.py`.
+
+## 7. Trade-offs, quality impact and limitations
+
+1. **Masking can remove an unreferenced detail.**
+   - **The losses:** in `agent_tools/old_unref`, a value from an old tool output that no later message mentioned was
+     no longer in the context in 2 of 3 cases (it survived once, as a head or tail line of the stub).
+   - **What was kept:** old outputs that the next assistant reply referred to (`old_ref`, 3/3), recent outputs (3/3)
+     and recent error outputs (`agent_debug`, 3/3).
+   - **Recovery:** the original is recoverable (mention its ref, or re-run the tool), but the model has to know it
+     needs it.
+   - **Re-fetch rate in production:** the same tool and arguments called again after masking. It is the signal to
+     watch; it is not measured here.
+2. **Compaction only pays off on long turns.** With about 107-token turns, its safety ratio skipped it every time
+   (§1.1). It is off by default, and so is JIT.
+3. **JIT is query-dependent.** In profile `full` it was allowed on a target that reuses prefixes. The retained turns
+   then depend on each question, which costs prefix reuse (§5.2). The default keeps JIT off on caching or
+   unknown-caching providers.
+4. **CE under concurrency:** −43% throughput at c=8 with an instant mock (§4.2).
+5. **Pre-existing compression flaw.**
+   - LLMLingua-2 split `NIMBUS-5044` into `NIMBUS - 5044` inside a long assistant paragraph of `long_chat-005`: the
+     paragraph was not dense enough in identifiers for the exact-text guard. This removed the exact string in 1 of 8
+     long chats, for compression alone and for combined alike.
+   - The research report documents the same failure class (identifiers split apart). The fix (§8) belongs to the
+     compression stage.
+6. **Scope of the evidence.**
+   - **Dataset and model:** one synthetic dataset; a 3B local model on CPU with short extractive answers; English only.
+   - **Provider cache:** cache-read figures for hosted providers are estimates from byte-identical prefixes. Only
+     Ollama's local KV reuse was measured, and no hosted key was available.
+   - **Sample size:** 16 quality items cannot show a quality difference smaller than a few answers either way.
+   - **Single run:** timing figures come from one run on one laptop and vary between runs; the token figures are
+     deterministic.
+7. **The constrained window.** `CONTEXT_WINDOW_TOKENS=6000` stands in for a real context limit. With a 128k window
+   and these conversation sizes, the history techniques would not trigger. That no-op is the `default` profile's
+   result.
+
+## 8. Recommended improvements
+
+1. **Identifier-safe compression.** A runtime key-string survival check after LLMLingua-2 (audit item 8.6), or
+   `force_tokens` for identifier-shaped tokens. It would have prevented the one compression loss here.
+2. **Masking safety for unreferenced details.**
+   - Track the re-fetch rate.
+   - Add an optional `retrieve_observation(ref)` tool for clients that can route tool calls.
+   - Before masking, look for words of the latest question in the old output; a match keeps the output whole.
+3. **Make CE cheaper under concurrency.**
+   - Cache per-message analysis by content hash across the 3–4 analyse passes.
+   - Drop the final deep copy.
+   - Move validation to the changed messages only.
+   - Run CE with more proxy workers, as already recommended for compression.
+4. **Measure provider prompt caching on real endpoints** (Anthropic, OpenAI) with the existing
+   `context_engine_provider_cached_tokens` metric and the breakpoint injection. Then decide the JIT default per
+   provider from measured cache-read rates.
+5. **Evaluate llm-mode compaction** with probe-based questions (recall, artifact, continuation, decision) and a judge
+   from another model family, as the reference repository recommends, before enabling it.
+6. **Larger and real-traffic evaluation.** Run in shadow mode (`CONTEXT_ENGINEERING_MODE=shadow`) on real
+   conversations. Score the logged reports with these scripts, and add multi-turn and agentic Gate 4 cases with
+   recorded baselines.
+
+## 9. Validation and tests
+
+VALIDATION_SECTION
+
+## 10. Reproduce
+
+```bash
+cd litellm-gateway
+.venv-compression/Scripts/python reports/context-engineering/scripts/dataset.py
+.venv-compression/Scripts/python reports/context-engineering/scripts/offline_bench.py
+bash reports/context-engineering/scripts/run_all.sh proxy      # echo provider, two fresh proxies
+bash reports/context-engineering/scripts/run_all.sh quality    # needs Ollama + llama3.2:3b, about 90 min on this CPU
+bash reports/context-engineering/scripts/run_all.sh cache      # needs Ollama
+bash reports/context-engineering/scripts/run_all.sh validate   # restarts the proxy once per flag set
+.venv-compression/Scripts/python reports/context-engineering/scripts/analyze.py   # raw/results.md, raw/results.json
+```

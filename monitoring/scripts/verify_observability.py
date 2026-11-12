@@ -11,7 +11,6 @@ Grafana (provisioned dashboards return data). Secrets are read from .env and nev
 import argparse
 import base64
 import json
-import os
 import sys
 import time
 import urllib.parse

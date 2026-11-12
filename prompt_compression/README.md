@@ -7,7 +7,10 @@ one architecture, stage by stage:
 Client request  (messages + metadata)
       |
       v
- Gate ------------------ opt-out, size, timeout -- on a timeout or an error: Fail open (send the original)
+ Redact (optional) ----- REDACT_SENSITIVE: every message and role, before everything else; an error rejects (503)
+      |
+      v
+ Gate ------------------ opt-out, size, admission, deadline -- on a timeout or an error: Fail open (send the original)
       |
       v
  Segment and classify -- content type (code, structured data, identifier-dense text, prose) and sensitivity
@@ -16,7 +19,7 @@ Client request  (messages + metadata)
  Router ---------------- the task type picks the action
       |
       +--> Keep verbatim   code, data, PII, the instruction and the question
-      +--> Select or drop  whole old turns, passages, log lines
+      +--> Select or drop  whole old turns; passages and log lines of the latest user message, lookups only
       +--> Compress text   running prose through LLMLingua-2, 3x cap
       |
       v
@@ -40,8 +43,11 @@ what kind of text a block is, and whether it is sensitive.
 
 | Stage | File | Purpose |
 |---|---|---|
-| Gate | `gate.py` | Disabled, not a chat call, per-request opt-out, too few tokens |
-| Gate, Fail open | `prompt_compression_callback.py` | LiteLLM `CustomLogger.async_pre_call_hook`: timeout, fail open / closed, shadow mode, metadata, logging |
+| Redact | `redaction.py` | Redaction guardrail over every message and role (`REDACT_SENSITIVE=true`) |
+| Gate | `gate.py` | Disabled, not a chat call, per-request opt-out; too few / too many tokens (`size_check`, in the worker) |
+| Gate, Fail open | `prompt_compression_callback.py` | LiteLLM `CustomLogger.async_pre_call_hook`: redaction, admission, bounded worker pool, deadline and timeout, fail open / closed, shadow mode, metadata, logging |
+| | `deadline.py` | The request deadline every model call checks; lock waits bounded by it |
+| Router | `intent.py` | Lookup or transform (summarise, translate, review ...): selection only runs for lookups |
 | Segment and classify | `segmenter.py` | Splits a message into blocks and says what each is; never changes a character |
 | | `rules.py` | Regex + checksum rules (e-mail, phone, IDs, Luhn cards, IBAN, keys, tokens, private keys, passwords); `redact()` |
 | | `sensitivity.py` | Sensitive or not: rules, then topics, then the model's probability against a threshold |
@@ -51,7 +57,7 @@ what kind of text a block is, and whether it is sensitive.
 | Router | `router.py` | Decides keep / select / compress for every unit, and which old turns to drop |
 | Actions | `actions.py` | Carries the plan out: redaction, record and passage selection, LLMLingua-2 with a ratio cap |
 | | `selectors.py` | BM25 passage ranking, record (line) selection, chat-history trimming |
-| | `compressor_adapter.py` | Thin wrapper over `llmlingua.PromptCompressor` (LLMLingua-2, CPU) |
+| | `compressor_adapter.py` | Thin wrapper over `llmlingua.PromptCompressor` (LLMLingua-2, CPU): pinned revision, deadline-bounded lock, output cache |
 | Reassemble | `pipeline.py` | Runs the stages over `messages`, joins the blocks back in order, builds the report |
 | shared | `units.py`, `texts.py`, `settings.py` | The unit passed between stages, message/token helpers, all environment variables |
 | | `eval/` | Datasets, benchmarks, saved results |
@@ -94,7 +100,9 @@ All optional; `../prompt_compression.env.example` lists every variable with its 
 |---|---|---|---|
 | Gate | `PROMPT_COMPRESSION_ENABLED` | `true` | Global switch |
 | | `PROMPT_COMPRESSION_MIN_TOKENS` | `50` | Requests with fewer text tokens skip the pipeline |
-| | `PROMPT_COMPRESSION_TIMEOUT_S` | `10` | Budget for the whole pipeline per request |
+| | `PROMPT_COMPRESSION_MAX_INPUT_TOKENS` | `32000` | Requests with more text tokens skip the pipeline (`too_large`); 0 = no limit |
+| | `PROMPT_COMPRESSION_MAX_CONCURRENCY` | `4` | Pipelines at once per worker; above it a request is sent unchanged (`busy`) |
+| | `PROMPT_COMPRESSION_TIMEOUT_S` | `10` | Budget for the whole pipeline per request; model work stops at 90% of it |
 | | `PROMPT_COMPRESSION_FAIL_MODE` | `open` | `open`: send the original prompt + warning; `closed`: reject with HTTP 503 |
 | | `PROMPT_COMPRESSION_MODE` | `enforce` | `shadow`: run and report everything but send the original prompt |
 | Classify | `SENSITIVITY_BACKEND` | `embedding` | `embedding` (trained head) or `nli` (legacy zero-shot model) |
@@ -103,13 +111,17 @@ All optional; `../prompt_compression.env.example` lists every variable with its 
 | | `CLASSIFIER_CACHE_SIZE` / `_MAX_CHUNK_TOKENS` | `2048` / `400` | LRU entries; tokens per chunk for long texts |
 | | `PROMPT_COMPRESSION_EXACT_DENSITY` | `0.15` | Share of identifier-like words that makes a paragraph "exact text" |
 | Router | `PROMPT_COMPRESSION_ROUTES` | `narrative,passages,records` | Active actions: `narrative`, `passages`, `records`, `history` |
-| Keep | `REDACT_SENSITIVE` | `false` | Replace PII spans in sensitive blocks with `[EMAIL]`, `[PHONE]`, ... |
+| | `PROMPT_COMPRESSION_SELECTION_SCOPE` | `latest_user` | Messages passages/records may thin out: `latest_user` or `all` |
+| | `PROMPT_COMPRESSION_INTENT_GATE` | `true` | No selection for requests that need the whole text (`intent.py`) |
+| Redact | `REDACT_SENSITIVE` | `false` | Guardrail: replace rule matches with `[EMAIL]`, `[API_KEY]`, ... in every message, role and mode |
 | | `PROMPT_COMPRESSION_PRESERVE_LAST_USER` | `false` | Never touch the latest user message |
 | | `PROMPT_COMPRESSION_PROTECT_EDGES` | `true` | Never compress the first and last paragraph of the latest user message |
 | Compress | `PROMPT_COMPRESSION_RATE` | `0.4` | LLMLingua-2 rate, the fraction of tokens kept (about 2x on prose); digits are always kept |
 | | `PROMPT_COMPRESSION_MAX_RATIO` | `3.0` | Largest ratio accepted per block; above it: one lighter retry, then the block is left as it was |
 | | `PROMPT_COMPRESSION_MIN_CHARS` / `_MAX_CALLS` | `200` / `6` | Shortest prose run worth compressing; LLMLingua-2 calls per message |
-| | `PROMPT_COMPRESSION_MODEL` / `_EAGER_LOAD` | LLMLingua-2 mBERT / `true` | Checkpoint; load models at proxy start |
+| | `PROMPT_COMPRESSION_MAX_CALLS_PER_REQUEST` | `12` | LLMLingua-2 calls per request, longest runs first (cache hits are free) |
+| | `PROMPT_COMPRESSION_CACHE_SIZE` | `512` | Compressed outputs remembered per worker; replays earlier turns byte for byte |
+| | `PROMPT_COMPRESSION_MODEL` / `_MODEL_REVISION` / `_EAGER_LOAD` | LLMLingua-2 mBERT / pinned commit / `true` | Checkpoint and revision; load models at proxy start |
 | Select | `PROMPT_COMPRESSION_MIN_PASSAGES` / `_MIN_PASSAGE_TOKENS` / `_PASSAGE_KEEP_RATIO` | `6` / `100` / `0.5` | `passages` route guards and target |
 | | `PROMPT_COMPRESSION_RECORD_MIN_LINES` / `_RECORD_CONTEXT_LINES` | `10` / `1` | `records` route guard and neighbour lines |
 | | `PROMPT_COMPRESSION_HISTORY_MAX_TOKENS` / `_HISTORY_KEEP_MESSAGES` | `0` / `6` | `history` route budget (0 = off) and the tail that is always kept |
@@ -121,17 +133,30 @@ the request body. With the OpenAI SDK: `extra_body={"metadata": {"prompt_compres
 
 ### Gate
 
-Cheap checks before anything else (`gate.py`): compression switched off, not a chat call, a per-request opt-out, or fewer
-than `MIN_TOKENS` tokens in the whole request (the earlier local pipeline run found that classifying a tiny prompt costs
-more than compression can save). The hook wraps the whole pipeline in a timeout. A timeout or any error sends the
-original prompt (**Fail open**) or rejects the request with HTTP 503 (`FAIL_MODE=closed`).
+With `REDACT_SENSITIVE=true` the redaction guardrail (`redaction.py`) runs first, on every message and role, whatever
+the opt-out, the size or the mode; if it fails the request is rejected with HTTP 503 even in fail-open mode.
+
+Then cheap checks on the event loop (`gate.py`): compression switched off, not a chat call, a per-request opt-out. At
+most `MAX_CONCURRENCY` pipelines run per worker; a request that finds them all busy is sent unchanged (`busy`). The
+token checks run in the worker thread (a full tiktoken pass costs about 200 ms on 2 MB, too long for the event loop):
+fewer than `MIN_TOKENS` (classifying a tiny prompt costs more than compression can save) or more than
+`MAX_INPUT_TOKENS` tokens skip the pipeline.
+
+The pipeline runs under a deadline of 90% of `TIMEOUT_S` (`deadline.py`): every model call checks it, and model locks
+are waited for only until it passes. Compression that runs out of time stops and sends what it has; classification
+that runs out of time is a timeout. A timeout or any error sends the original prompt (**Fail open**) or rejects the
+request with HTTP 503 (`FAIL_MODE=closed`). A worker thread cannot be killed, but with the deadline a timed-out request
+stops at its next model call instead of running on and holding the locks for the requests behind it.
 
 ### Segment and classify
 
 Every message the pipeline may touch is split into blocks (`segmenter.py`), each with a kind, and each block gets a
 sensitivity verdict. Never touched at all: `system` and `developer` messages, `tool` and `function` results, assistant
 messages carrying `tool_calls` / `function_call`, non-text content parts, tool definitions (`tools`, which live outside
-`messages`), message roles and order.
+`messages`), message roles and order. Also left verbatim, and never dropped by the `history` route: messages the
+context-engineering stage (`../context_engineering/`, which runs before this hook) lists in
+`metadata.context_engineering.hints.protected_indexes`, i.e. its compaction summary (report action
+`preserved_context_engineering`).
 
 | Kind | Examples | Why it matters (research report) |
 |---|---|---|
@@ -151,6 +176,16 @@ hit protects only its own block; a sensitive run is protected whole. A failed in
 model cannot be loaded, the hook's fail mode applies.
 
 ### Router
+
+Two limits apply to "select or drop" (passages and records):
+
+- **Scope** (`SELECTION_SCOPE=latest_user`): only the latest user message is selected from. Earlier turns are history:
+  they can be compressed (deterministically, and replayed from the compression cache), and dropped whole only by the
+  `history` route. Selecting them against each new question silently lost context in multi-turn chats and changed the
+  conversation prefix on every request, which defeats provider prompt caching.
+- **Intent** (`INTENT_GATE=true`, `intent.py`): a request whose instruction or question asks for a task over the whole
+  text (summarise, translate, rewrite, review, key points, every/each/whole ...) selects nothing. A "summarize the whole
+  report" request used to lose about half of its sections.
 
 The task type picks the action for every block (`router.py`); it only decides:
 

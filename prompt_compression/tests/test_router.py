@@ -13,6 +13,9 @@ def units_of(text, message=0):
 
 
 def route(text, query=None, last_user=None, **overrides):
+    # These tests exercise the routing rules themselves, on units with no latest user message, so selection is allowed
+    # on every message; the default scope ("latest_user") has its own tests below.
+    overrides.setdefault("selection_scope", "all")
     units = units_of(text)
     plan = router.route(units, settings(**overrides), query, last_user, count_tokens)
     return units, plan
@@ -94,7 +97,8 @@ def test_passages_route_needs_enough_passages_and_enough_tokens_and_a_question()
 def test_sensitive_passages_are_never_candidates():
     units = units_of(join(*passages(8)))
     units[3].sensitive = True
-    plan = router.route(units, settings(routes=frozenset({"passages"}), min_passages=6, min_passage_tokens=50),
+    plan = router.route(units, settings(routes=frozenset({"passages"}), min_passages=6, min_passage_tokens=50,
+                                        selection_scope="all"),
                         "suppliers", None, count_tokens)
     assert units[3] not in plan.passages and len(plan.passages) == 7
 

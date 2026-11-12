@@ -1,0 +1,110 @@
+[
+ {
+  "pass": "first",
+  "config": "baseline",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.58,
+  "rps": 29.21
+ },
+ {
+  "pass": "first",
+  "config": "compression",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 62.95,
+  "rps": 0.73
+ },
+ {
+  "pass": "first",
+  "config": "context_engineering",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.48,
+  "rps": 31.11
+ },
+ {
+  "pass": "first",
+  "config": "combined",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 3.39,
+  "rps": 13.58
+ },
+ {
+  "pass": "repeat",
+  "config": "baseline",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.06,
+  "rps": 43.48
+ },
+ {
+  "pass": "repeat",
+  "config": "compression",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.86,
+  "rps": 24.69
+ },
+ {
+  "pass": "repeat",
+  "config": "context_engineering",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.28,
+  "rps": 35.87
+ },
+ {
+  "pass": "repeat",
+  "config": "combined",
+  "concurrency": 1,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.88,
+  "rps": 24.42
+ },
+ {
+  "pass": "c8",
+  "config": "baseline",
+  "concurrency": 8,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 0.99,
+  "rps": 46.5
+ },
+ {
+  "pass": "c8",
+  "config": "compression",
+  "concurrency": 8,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.55,
+  "rps": 29.61
+ },
+ {
+  "pass": "c8",
+  "config": "context_engineering",
+  "concurrency": 8,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.72,
+  "rps": 26.73
+ },
+ {
+  "pass": "c8",
+  "config": "combined",
+  "concurrency": 8,
+  "requests": 46,
+  "errors": 0,
+  "wall_s": 1.72,
+  "rps": 26.76
+ }
+]

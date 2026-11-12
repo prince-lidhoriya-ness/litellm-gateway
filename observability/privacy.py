@@ -6,6 +6,7 @@ data (error messages, reasons) go through the classifier's own rule layer.
 """
 
 import hashlib
+import hmac
 from typing import Optional
 
 from prompt_compression import rules
@@ -13,16 +14,27 @@ from prompt_compression import rules
 MAX_TEXT_CHARS = 500
 
 
+def _keyed(value: str, salt: str) -> str:
+    # HMAC-SHA256 rather than sha256(salt + value): a keyed hash cannot be recomputed without the key, and the key
+    # cannot be confused with a prefix of the value (PROJECT_AUDIT_REPORT.md, F-18S).
+    return hmac.new(salt.encode("utf-8"), value.encode("utf-8"), hashlib.sha256).hexdigest()[:16]
+
+
 def hash_id(value: Optional[object], salt: str) -> Optional[str]:
-    """Salted sha256, 16 hex chars. Used for user, team and end-user ids."""
+    """Keyed hash (HMAC-SHA256), 16 hex chars. Used for user, team and end-user ids."""
     if value is None or value == "":
         return None
-    return hashlib.sha256(f"{salt}{value}".encode("utf-8")).hexdigest()[:16]
+    return _keyed(str(value), salt)
 
 
 def fingerprint(text: str, salt: str) -> str:
-    """Salted sha256 of a message, so identical prompts can be correlated without storing them."""
-    return hashlib.sha256(f"{salt}{text}".encode("utf-8")).hexdigest()[:16]
+    """Keyed hash of a message, so identical prompts can be correlated without storing them."""
+    return _keyed(text, salt)
+
+
+def derive_salt(secret: str) -> str:
+    """A hashing key derived from another secret (LITELLM_SALT_KEY), for when OBS_HASH_SALT is not set."""
+    return hmac.new(secret.encode("utf-8"), b"litellm-gateway/observability/hash-salt", hashlib.sha256).hexdigest()
 
 
 def scrub(value: object) -> object:

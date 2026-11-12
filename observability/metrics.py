@@ -60,6 +60,15 @@ REDACTIONS = Counter("prompt_pipeline_redactions", "PII spans replaced by placeh
 FAILURES = Counter(
     "prompt_pipeline_failures", "Pipeline failures by fail mode (open/closed) and reason.", ["mode", "reason"],
 )
+VALIDATION_REJECTS = Counter(
+    "prompt_pipeline_validation_rejects",
+    "Compressed blocks rejected by validation (ratio cap exceeded after the lighter retry) and left as they were.",
+    ["label"],
+)
+COMPRESS_STOPPED = Counter(
+    "prompt_pipeline_compress_stopped", "Requests whose compression stopped early and sent the rest unchanged.",
+    ["reason"],
+)
 MODEL_LOAD_SECONDS = Gauge("prompt_pipeline_model_load_seconds", "Model load time at startup.", ["component"])
 MODEL_LOADED = Gauge("prompt_pipeline_model_loaded", "1 if the model loaded, 0 if loading failed.", ["component"])
 COMPUTE_SECONDS = Counter(

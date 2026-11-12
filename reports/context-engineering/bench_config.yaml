@@ -1,0 +1,37 @@
+# LiteLLM proxy config for the context-engineering benchmark (reports/context-engineering/REPORT.md). Same callback
+# chain as litellm_config.yaml (prometheus, context engineering, then compression with its observability wrapper),
+# without the OTel/Langfuse exporters and without a database, so it runs on a laptop with no services.
+#
+#   PYTHONUTF8=1 LITELLM_MASTER_KEY=sk-bench-local MOCK_LLM_API_BASE=http://127.0.0.1:4011/v1 \
+#     CONTEXT_COMPACTION_ENABLED=true JIT_RETRIEVAL_ENABLED=true JIT_RETRIEVAL_ON_CACHING_PROVIDERS=true \
+#     CONTEXT_WINDOW_TOKENS=6000 .venv-compression/Scripts/litellm --config reports/context-engineering/bench_config.yaml --port 4100
+#
+# The four configurations are selected per request (metadata opt-out flags), so one process serves all of them.
+model_list:
+  # Echo provider (prompt_compression/dev/mock_openai_server.py): answers with the messages it received, so the
+  # benchmark sees exactly what reached the provider; used for latency, throughput and token accounting.
+  - model_name: bench-echo
+    litellm_params:
+      model: openai/mock-echo
+      api_base: os.environ/MOCK_LLM_API_BASE
+      api_key: os.environ/MOCK_LLM_API_KEY
+  # Local Ollama llama3.2:3b for the quality run. TEST prices, the same as obs-priced-llama in litellm_config.yaml.
+  # num_ctx 8192 > the largest benchmark prompt (about 4,100 tokens), so Ollama never truncates the baseline.
+  - model_name: bench-llama
+    litellm_params:
+      model: ollama_chat/llama3.2:3b
+      api_base: http://127.0.0.1:11434
+      num_ctx: 8192
+      temperature: 0
+      input_cost_per_token: 0.000001
+      output_cost_per_token: 0.000002
+      timeout: 900
+
+litellm_settings:
+  callbacks: ["prometheus", "context_engineering.callback.context_engineering_instance", "observability.observed_callback.observed_prompt_compression_instance"]
+  turn_off_message_logging: true
+  require_auth_for_metrics_endpoint: false
+  request_timeout: 900
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY

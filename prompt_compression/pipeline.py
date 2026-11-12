@@ -11,6 +11,13 @@ tool_calls/function_call, non-text content parts (images, audio), and anything o
 definitions. Roles and order are kept; only the text of eligible messages changes, and the oldest whole turns can be
 dropped when the "history" route is on. The report keeps original message indexes and adds "new_index" for the position
 in the returned list.
+
+Passage and record selection only act on the latest user message (settings.selection_scope) and not at all when the
+request needs the whole text (intent.py). Every model call is bounded by the request's deadline (deadline.py).
+
+Messages whose index is in `protected` (the context-engineering stage's compaction summary, passed by the hook from
+metadata["context_engineering"]["hints"]["protected_indexes"]) are left exactly as they are and never dropped by the
+history route: they were already optimised, and their lines are verbatim copies that must stay verbatim.
 """
 
 import copy
@@ -28,7 +35,8 @@ try:
 except ImportError:  # OTel is optional for the pipeline itself
     _tracer = None
 
-from prompt_compression import actions, router
+from prompt_compression import actions, intent, router
+from prompt_compression import deadline as deadlines
 from prompt_compression.compressor_adapter import LLMLinguaCompressor
 from prompt_compression.segmenter import EXACT, PROSE, split_segments
 from prompt_compression.sensitivity import GENERAL_CATEGORY, SENSITIVE_CATEGORY, SensitivityDetector, get_detector
@@ -74,6 +82,12 @@ class PipelineReport:
     segments: dict = field(default_factory=dict)
     # Why blocks were kept verbatim: reason -> number of blocks ("code", "sensitive", "edge", ...).
     kept: dict = field(default_factory=dict)
+    # "lookup" or "transform" (intent.py); selection only runs for "lookup".
+    intent: str = intent.LOOKUP
+    selection_scope: str = "latest_user"
+    # Model calls made for compression in this request, and why compression stopped early (None: it did not).
+    compress_calls: int = 0
+    compress_stopped: Optional[str] = None
 
     @property
     def ratio(self) -> float:
@@ -93,6 +107,10 @@ class PipelineReport:
             "history_dropped": self.history_dropped,
             "segments": dict(self.segments),
             "kept": dict(self.kept),
+            "intent": self.intent,
+            "selection_scope": self.selection_scope,
+            "compress_calls": self.compress_calls,
+            "compress_stopped": self.compress_stopped,
             "messages": self.messages,
         }
 
@@ -106,6 +124,13 @@ def _tail_paragraph(text: str, max_chars: int = 600) -> Optional[str]:
     return tail if len(tail) <= max_chars else None
 
 
+def _instruction_text(text: str, max_chars: int = 600) -> str:
+    """The first and the last paragraph (instruction and question), each cut to `max_chars`: what intent.py reads."""
+    blocks = [segment.text.strip() for segment in split_segments(text) if segment.text.strip()]
+    edges = blocks[:1] + blocks[-1:] if len(blocks) > 1 else blocks
+    return "\n".join(block[:max_chars] for block in edges)
+
+
 class PromptPipeline:
     def __init__(
         self,
@@ -115,7 +140,9 @@ class PromptPipeline:
     ):
         self.settings = settings or PipelineSettings.from_env()
         self.detector = detector or get_detector()
-        self.compressor = compressor or LLMLinguaCompressor(self.settings.compression_model)
+        self.compressor = compressor or LLMLinguaCompressor(
+            self.settings.compression_model, self.settings.compression_model_revision, self.settings.compress_cache_size
+        )
 
     def load(self) -> None:
         self.detector.load()
@@ -143,7 +170,8 @@ class PromptPipeline:
         check_many = getattr(self.detector, "check_many", None)
         return check_many(texts) if check_many else [self.detector.check(text) for text in texts]
 
-    def _classify(self, units: list, use_model: bool, model_exempt: frozenset = frozenset()) -> dict:
+    def _classify(self, units: list, use_model: bool, model_exempt: frozenset = frozenset(),
+                  selecting: Optional[bool] = None) -> dict:
         """Fill in Unit.sensitive and return the message-level summary of the checks.
 
         `model_exempt` holds id()s of units the router keeps verbatim whatever they contain (the instruction and the
@@ -160,7 +188,8 @@ class PromptPipeline:
         if use_model:
             # Exact-text blocks are only checked when a route could drop them whole (a passage, an old turn): kept
             # verbatim they are protected anyway, and the model's opinion would change nothing.
-            selecting = bool(self.settings.routes & {"history", "passages"})
+            if selecting is None:
+                selecting = bool(self.settings.routes & {"history", "passages"})
             kinds = (PROSE, EXACT) if selecting else (PROSE,)
             # When a route can drop whole passages or turns, each passage is judged on its own (short ones together
             # with their neighbour), so a borderline score protects that passage and not the whole document: scoring
@@ -170,6 +199,8 @@ class PromptPipeline:
             groups = [g for run in _model_runs(units, kinds, model_exempt)
                       for g in (_passage_groups(run) if selecting else [run])]
             groups = [g for g in groups if len(_joined(g).strip()) >= _MIN_MODEL_CHARS]
+            if groups:
+                deadlines.current().check("classifier")
             results = self._check_many([_joined(g) for g in groups])
             for group, result in zip(groups, results):
                 checks.append(result)
@@ -193,7 +224,17 @@ class PromptPipeline:
 
     # ---- the whole request ----------------------------------------------------------------------------------------
 
-    def process(self, messages: list) -> tuple[list, PipelineReport]:
+    def process(self, messages: list, deadline: Optional[deadlines.Deadline] = None,
+                protected: frozenset = frozenset()) -> tuple[list, PipelineReport]:
+        """`deadline`: stop model work when it passes (classification raises DeadlineExceeded; compression stops early
+        and sends the rest unchanged). None keeps whatever deadline is current (none outside the hook).
+        `protected`: message indexes to leave untouched (see the module docstring)."""
+        if deadline is None:
+            return self._process(messages, frozenset(protected))
+        with deadlines.use(deadline):
+            return self._process(messages, frozenset(protected))
+
+    def _process(self, messages: list, protected: frozenset = frozenset()) -> tuple[list, PipelineReport]:
         started = time.perf_counter()
         settings = self.settings
         new_messages = copy.deepcopy(messages)
@@ -202,13 +243,20 @@ class PromptPipeline:
             compression_model=self.compressor.model_name,
             mode=settings.mode,
             routes=sorted(settings.routes),
+            selection_scope=settings.selection_scope,
         )
         report.tokens_before = all_text_tokens(messages)
 
         last_user_index = max((i for i, m in enumerate(messages) if m.get("role") == "user"), default=None)
         query = None
         if last_user_index is not None:
-            query = _tail_paragraph("\n".join(text for _, text in text_parts(messages[last_user_index])))
+            last_user_text = "\n".join(text for _, text in text_parts(messages[last_user_index]))
+            query = _tail_paragraph(last_user_text)
+            if settings.intent_gate:
+                report.intent = intent.detect(_instruction_text(last_user_text))
+        selection_routes = bool(settings.routes & {"passages", "records"}) and not (
+            settings.intent_gate and report.intent == intent.TRANSFORM
+        )
 
         # 1. Segment and classify
         entries: dict = {}
@@ -219,6 +267,9 @@ class PromptPipeline:
             entries[index] = entry
             if role in PRESERVED_ROLES or message.get("tool_calls") or message.get("function_call"):
                 entry["action"] = "preserved_role"
+                continue
+            if index in protected:
+                entry["action"] = "preserved_context_engineering"
                 continue
             parts = text_parts(message)
             if not parts:
@@ -235,7 +286,12 @@ class PromptPipeline:
                 if len(filled) >= 3:
                     exempt = frozenset(id(u) for u in filled[:1] + filled[-1:])
             with _span("prompt.classify", {"prompt.message.index": index, "prompt.message.role": role or ""}) as span:
-                info = self._classify(units, use_model=not skip_model, model_exempt=exempt)
+                # Exact blocks and per-passage judging only matter where a route can drop whole units: the latest user
+                # message (or every message with selection_scope "all"), or any message when "history" is on.
+                selecting = "history" in settings.routes or (
+                    selection_routes and (settings.selection_scope == "all" or index == last_user_index)
+                )
+                info = self._classify(units, use_model=not skip_model, model_exempt=exempt, selecting=selecting)
                 _set_attributes(span, {
                     "prompt.classifier.label": info["category"],
                     "prompt.classifier.score": info["score"],
@@ -254,16 +310,17 @@ class PromptPipeline:
 
         # 2. Router
         with _span("prompt.route", {"prompt.route.routes": sorted(settings.routes)}) as span:
-            dropped = set(router.plan_history(new_messages, message_units, settings, message_tokens))
+            dropped = set(router.plan_history(new_messages, message_units, settings, message_tokens, protected))
             for index in sorted(dropped):
                 entries[index] = {"index": index, "role": new_messages[index].get("role"), "action": "dropped_history",
                                   "tokens_before": message_tokens(messages[index]), "tokens_after": 0}
                 message_units.pop(index, None)
             report.history_dropped = len(dropped)
             units = [unit for index in sorted(message_units) for unit in message_units[index]]
-            plan = router.route(units, settings, query, last_user_index, count_tokens)
+            plan = router.route(units, settings, query, last_user_index, count_tokens, intent=report.intent)
             _set_attributes(span, {
                 "prompt.route.units": len(units), "prompt.route.history_dropped": len(dropped),
+                "prompt.route.intent": report.intent,
                 **{f"prompt.route.kept.{reason}": number for reason, number in plan.reasons.items()},
             })
         report.kept = dict(plan.reasons)
@@ -273,7 +330,11 @@ class PromptPipeline:
             before = sum(count_tokens(unit.full) for unit in units)
             outcome = actions.execute(plan, settings, self.compressor, count_tokens)
             after = sum(count_tokens(unit.full) for unit in units if not unit.dropped)
-            _set_attributes(span, {"prompt.tokens.before": before, "prompt.tokens.after": after})
+            _set_attributes(span, {"prompt.tokens.before": before, "prompt.tokens.after": after,
+                                   "prompt.compress.calls": outcome.compress_calls,
+                                   "prompt.compress.stopped": outcome.compress_stopped or ""})
+        report.compress_calls = outcome.compress_calls
+        report.compress_stopped = outcome.compress_stopped
 
         # 4. Reassemble
         new_index = {}

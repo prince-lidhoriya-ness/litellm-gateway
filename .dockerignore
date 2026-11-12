@@ -1,0 +1,18 @@
+# The image only needs docker/requirements-image.txt; the code is mounted by docker-compose.
+# Keeping the rest out makes builds fast and keeps secrets (.env) out of the build context.
+.env
+.env.*
+!.env.example
+.git
+.github
+.venv
+.venv-compression
+venv
+.vscode
+**/__pycache__
+**/.pytest_cache
+reports
+evals
+monitoring
+prompt_compression/eval
+*.log
