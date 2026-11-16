@@ -20,7 +20,7 @@ from typing import Callable, Optional
 
 from prompt_compression.intent import LOOKUP, TRANSFORM
 from prompt_compression.segmenter import CODE, EXACT, PROSE, STRUCTURED
-from prompt_compression.selectors import trim_history
+from prompt_compression.unit_selectors import trim_history
 from prompt_compression.settings import PipelineSettings
 from prompt_compression.units import COMPRESS, KEEP, SELECT, Unit
 

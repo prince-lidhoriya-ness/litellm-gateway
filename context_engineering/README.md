@@ -115,7 +115,7 @@ estimate minus what compression removed. It is applied per model, as a moving av
 A turn is a user message and everything up to the next one, so tool calls never lose their results.
 
 **How turns are scored.** Each older turn is scored against the latest user message:
-- **BM25:** `prompt_compression.selectors.rank_units`, the ranking the passages route already uses.
+- **BM25:** `prompt_compression.unit_selectors.rank_units`, the ranking the passages route already uses.
 - **`hybrid`:** BM25 plus MiniLM cosine similarity, reusing the encoder the sensitivity check has already loaded. With
   no encoder it falls back to BM25.
 

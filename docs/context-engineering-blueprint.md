@@ -145,7 +145,7 @@ There is no runtime check that identifiers or numbers survived compression. That
 | L2 | LLMLingua-2 is the whole latency tail (0.2–1 s per call) | `evals/REPORT.md` §4.4 | Removing text earlier shortens the tail |
 | L3 | **Tool results are never reduced** | `PRESERVED_ROLES` | In agentic traffic this is the largest unmanaged category; observation masking targets it |
 | L4 | **Query-dependent rewriting of older messages.** `passages` and `records` selection run on every eligible message, ranked against the *latest* question (`router.route` collects candidates from all units; `test_records_are_selected_using_the_question_of_the_latest_message` selects inside message 0) | `router.py:40-73` | In a multi-turn conversation, message 0 is rewritten differently on every turn, so the provider's cached prefix breaks at message 0 on every request |
-| L5 | `history` trimming is a sliding window: once over budget, the drop point moves every turn. It also stops at the first tool-related turn | `selectors.trim_history` | Each request changes the prefix start, so caches miss. In agent loops (tools in every turn) it rarely trims anything |
+| L5 | `history` trimming is a sliding window: once over budget, the drop point moves every turn. It also stops at the first tool-related turn | `unit_selectors.trim_history` | Each request changes the prefix start, so caches miss. In agent loops (tools in every turn) it rarely trims anything |
 | L6 | No awareness of the model's context window, the `tools` token cost, or `max_tokens` reserve | `gate.py`, `settings.py` | A budget manager is missing |
 | L7 | No provider prompt-caching configuration or measurement | `litellm_config.yaml`; no `cached_tokens` in `observability/` | Caching has no configuration and no measurement |
 | L8 | Evaluations are single-turn, with no tools and no streaming | `evals/REPORT.md` §5, `reports/playground-ab/REPORT.md` §6 | Multi-turn and agentic evaluation must be built before any context technique is enforced |
@@ -160,7 +160,7 @@ There is no runtime check that identifiers or numbers survived compression. That
 | `prompt_compression/router.py:route` (candidate collection) and `PromptPipeline.process` | Small additive change: restrict query-dependent selection to the "live" suffix when history is frozen (fixes L4) |
 | `litellm_params.cache_control_injection_points` per model (LiteLLM built-in `anthropic_cache_control_hook.py`, supports `location: message` with `role` or `index`) | Provider-specific cache breakpoints, applied after the pre-call hooks on the final messages |
 | `docker-compose.quickstart.yml` | Mount `./context_engineering`, pass `CE_*` variables; Redis already present |
-| `prompt_compression/selectors.py` `rank_units`, `trim_history`; `embedding_classifier.EmbeddingEncoder` (loaded once per worker through `get_detector()`) | Reusable for later phases (turn ranking, block-wise trimming) without new dependencies |
+| `prompt_compression/unit_selectors.py` `rank_units`, `trim_history`; `embedding_classifier.EmbeddingEncoder` (loaded once per worker through `get_detector()`) | Reusable for later phases (turn ranking, block-wise trimming) without new dependencies |
 
 ---
 
@@ -667,10 +667,10 @@ verified).
 
 Only when `CachePlan.caching == "unsupported"` and pressure is at least `high`:
 
-- rank turns older than the keep window against the current query with `selectors.rank_units` (BM25), optionally
+- rank turns older than the keep window against the current query with `unit_selectors.rank_units` (BM25), optionally
   blended with MiniLM cosine through the sensitivity detector's already-loaded encoder (needs a public accessor);
 - drop whole turns without tool calls and without rules hits, keeping pinned turns;
-- the "no lexical signal means drop nothing" guard from the existing selectors applies.
+- the "no lexical signal means drop nothing" guard from the existing unit selectors applies.
 
 ---
 

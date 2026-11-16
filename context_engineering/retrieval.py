@@ -1,7 +1,7 @@
 """Just-in-time retrieval of older turns: which older turns does the current question need verbatim?
 
 Scores whole turns (a user message with the assistant and tool messages that answer it) against the current query:
-  bm25    prompt_compression.selectors.rank_units, the ranking the passages route already uses (no new dependency)
+  bm25    prompt_compression.unit_selectors.rank_units, the ranking the passages route already uses (no new dependency)
   hybrid  BM25 blended with the cosine similarity of all-MiniLM-L6-v2 embeddings, using the encoder the sensitivity
           check has already loaded in this worker; falls back to BM25 when the encoder is not available
 A turn is retrieved only when it scores above JIT_RETRIEVAL_MIN_SCORE; at most JIT_RETRIEVAL_MAX_TURNS are kept.
@@ -11,7 +11,7 @@ No lexical signal (all scores zero) retrieves nothing, the same rule the passage
 import logging
 import math
 
-from prompt_compression.selectors import rank_units
+from prompt_compression.unit_selectors import rank_units
 
 logger = logging.getLogger("context_engineering.retrieval")
 

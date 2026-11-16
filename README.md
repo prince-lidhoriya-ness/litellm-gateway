@@ -25,6 +25,7 @@ request can opt out of either stage.
 | Rendered diagram | [docs/architecture/combined_architecture.html](docs/architecture/combined_architecture.html) |
 | Mermaid source | [docs/architecture/combined_architecture.mmd](docs/architecture/combined_architecture.mmd) |
 | Design and reasoning | [docs/context-engineering-blueprint.md](docs/context-engineering-blueprint.md) |
+| AWS EKS deployment guide | [docs/aws-eks-deployment.md](docs/aws-eks-deployment.md) |
 
 ```mermaid
 flowchart TD
