@@ -3,6 +3,11 @@
 .env.local
 .env.*.local
 
+# Kubernetes secret manifest once filled with real values
+# (keep it as a template at k8s/secret.yaml; copy locally and fill in before
+# `kubectl apply`, then don't commit the filled copy)
+k8s/secret.local.yaml
+
 # Virtual environments
 .venv/
 .venv-compression/

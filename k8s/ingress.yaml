@@ -1,0 +1,30 @@
+# Requires the AWS Load Balancer Controller installed in the cluster
+# (Helm chart `aws-load-balancer-controller`, with an IRSA role bound to the
+# published IAM policy) before this Ingress will get an address assigned.
+#
+# `litellm_config.yaml` leaves /metrics unauthenticated behind TLS only; keep
+# TLS termination here and do not expose the Service directly as
+# type: LoadBalancer, which would skip this ALB/TLS layer.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: litellm-gateway
+  namespace: litellm-gateway
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing   # use "internal" to keep it off the public internet
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: <acm-cert-arn>
+spec:
+  rules:
+    - host: litellm.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: litellm-gateway
+                port:
+                  number: 4000
