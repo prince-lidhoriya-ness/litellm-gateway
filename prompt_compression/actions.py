@@ -16,7 +16,7 @@ from prompt_compression import deadline as deadlines
 from prompt_compression import rules
 from prompt_compression.router import Plan
 from prompt_compression.segmenter import label_split
-from prompt_compression.selectors import drop_trailing_comma, select_passages, select_records
+from prompt_compression.unit_selectors import drop_trailing_comma, select_passages, select_records
 from prompt_compression.settings import PipelineSettings
 
 COUNTERS = ("passages_dropped", "record_lines_dropped", "compress_calls", "compressed_blocks", "ratio_cap_hits", "redactions",

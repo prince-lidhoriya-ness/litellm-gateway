@@ -56,7 +56,7 @@ what kind of text a block is, and whether it is sensitive.
 | | `labels.py` | Candidate labels of the legacy zero-shot backend (`SENSITIVITY_BACKEND=nli`) |
 | Router | `router.py` | Decides keep / select / compress for every unit, and which old turns to drop |
 | Actions | `actions.py` | Carries the plan out: redaction, record and passage selection, LLMLingua-2 with a ratio cap |
-| | `selectors.py` | BM25 passage ranking, record (line) selection, chat-history trimming |
+| | `unit_selectors.py` | BM25 passage ranking, record (line) selection, chat-history trimming |
 | | `compressor_adapter.py` | Thin wrapper over `llmlingua.PromptCompressor` (LLMLingua-2, CPU): pinned revision, deadline-bounded lock, output cache |
 | Reassemble | `pipeline.py` | Runs the stages over `messages`, joins the blocks back in order, builds the report |
 | shared | `units.py`, `texts.py`, `settings.py` | The unit passed between stages, message/token helpers, all environment variables |
@@ -334,7 +334,7 @@ about 15 points. Keep the per-request opt-out.
 
 **Not implemented, on purpose.** Few-shot demonstration trimming (research: GSM8K held to 14x, BBH only to 3x) needs a
 task-type signal the gateway does not have. A question-aware model such as CPC or LongLLMLingua needs a GPU-hosted 7B
-model; `selectors.rank_units` is the seam where one would replace the BM25 ranking.
+model; `unit_selectors.rank_units` is the seam where one would replace the BM25 ranking.
 
 ## Logging
 

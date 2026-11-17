@@ -1,6 +1,6 @@
 import json
 
-from prompt_compression.selectors import (
+from prompt_compression.unit_selectors import (
     drop_trailing_comma, rank_units, select_passages, select_records, tokenize, trim_history,
 )
 
