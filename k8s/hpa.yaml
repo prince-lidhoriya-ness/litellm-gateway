@@ -1,0 +1,22 @@
+# Requires Redis-backed shared state (REDIS_HOST/REDIS_PASSWORD in the
+# ConfigMap/Secret) to be enabled before scaling beyond 1 replica, so rate
+# limits, budgets, router state, and cache stay consistent across replicas.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: litellm-gateway
+  namespace: litellm-gateway
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: litellm-gateway
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

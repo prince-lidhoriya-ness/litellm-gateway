@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-gateway-config
+  namespace: litellm-gateway
+data:
+  NUM_WORKERS: "2"
+  OMP_NUM_THREADS: "4"
+  HF_HUB_OFFLINE: "1"
+  TRANSFORMERS_OFFLINE: "1"
+  STORE_MODEL_IN_DB: "True"
+  REDIS_HOST: "<elasticache-endpoint>"
+  REDIS_PORT: "6379"
+  LITELLM_OTEL_V2: "true"
+  OTEL_EXPORTER: "otlp_http"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.monitoring.svc.cluster.local:4318"
+  OTEL_SERVICE_NAME: "litellm-gateway"
+  OTEL_ENVIRONMENT_NAME: "production"
+  OBS_ENABLED: "true"
+  OBS_CAPTURE_TEXT: "false"

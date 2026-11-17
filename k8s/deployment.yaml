@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm-gateway
+  namespace: litellm-gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: litellm-gateway
+  template:
+    metadata:
+      labels:
+        app: litellm-gateway
+    spec:
+      containers:
+        - name: litellm-gateway
+          image: <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/litellm-gateway:v1.106.0
+          args: ["--config", "/app/config.yaml"]
+          ports:
+            - containerPort: 4000
+          envFrom:
+            - configMapRef:
+                name: litellm-gateway-config
+            - secretRef:
+                name: litellm-gateway-secrets
+          resources:
+            requests:
+              cpu: "4"
+              memory: "3Gi"
+            limits:
+              cpu: "8"
+              memory: "6Gi"
+          readinessProbe:
+            httpGet:
+              path: /health/readiness
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health/liveliness
+              port: 4000
+            initialDelaySeconds: 120   # model load, matches start_period in docker-compose.quickstart.yml
+            periodSeconds: 15
+            failureThreshold: 5
+          volumeMounts:
+            - name: litellm-config
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: litellm-config
+          configMap:
+            name: litellm-gateway-proxy-config
