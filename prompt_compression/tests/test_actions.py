@@ -108,12 +108,24 @@ def passage_text():
 
 
 def test_passages_the_question_does_not_need_are_dropped_and_never_reach_the_compressor():
+    # Selection mechanics with the intent gate off (with the gate, the question must name an identifier: below).
     text, relevant = passage_text()
     out, outcome, _, compressor = run(text, last_user=0, query="What does the Zorvex programme deliver?",
-                                      routes=frozenset({"passages"}), protect_edges=True)
+                                      routes=frozenset({"passages"}), protect_edges=True, intent_gate=False)
     assert relevant in out and out.startswith("Use the passages") and out.endswith("What does the Zorvex programme deliver?")
     assert 0 < outcome.stats[0]["passages_dropped"] < 9 and compressor.calls == []
     assert outcome.acted[0] == ["selected_passages"] and count_tokens(out) < count_tokens(text)
+    # every run of dropped passages left one marker naming what was taken out (STRATEGY.md, C1.3)
+    markers = [line for line in out.split("\n\n") if line.startswith("[gateway: ")]
+    assert markers and all("omitted here" in marker for marker in markers)
+    assert outcome.stats[0]["omission_markers"] == len(markers)
+
+
+def test_with_the_intent_gate_a_question_without_an_identifier_drops_no_passage():
+    text, _ = passage_text()
+    out, outcome, _, _ = run(text, last_user=0, query="What does the Zorvex programme deliver?",
+                             routes=frozenset({"passages"}), protect_edges=True, intent_gate=True)
+    assert out == text and outcome.stats.get(0, {}).get("passages_dropped", 0) == 0
 
 
 def test_passages_without_a_lexical_signal_drop_nothing():
@@ -125,8 +137,9 @@ def test_passages_without_a_lexical_signal_drop_nothing():
 def test_dropped_passages_do_not_block_compression_of_the_ones_that_stay():
     text, relevant = passage_text()
     out, outcome, _, compressor = run(text, last_user=0, query="What does the Zorvex programme deliver?",
-                                      routes=frozenset({"passages", "narrative"}), protect_edges=True)
+                                      routes=frozenset({"passages", "narrative"}), protect_edges=True, intent_gate=False)
     assert outcome.acted[0] == ["selected_passages", "compressed"]
+    assert all("[gateway: " not in call[0] for call in compressor.calls)      # a marker is never compressed
     assert all("Filler paragraph number 0 " not in call[0] for call in compressor.calls)
 
 
@@ -137,15 +150,19 @@ def test_records_keep_the_named_record_and_its_neighbours():
     out, outcome, _, compressor = run(join("Answer from the log.", log_block(), question), last_user=0, query=question,
                                       routes=frozenset({"records"}), protect_edges=True)
     kept = [line for line in out.splitlines() if line.startswith("2026-")]
-    assert any("req-00001a" in line for line in kept) and 1 <= len(kept) <= 3
+    # the match and record_context_lines (3) on each side; the lines are a minute apart, outside the 10 s window
+    assert any("req-00001a" in line for line in kept) and 1 <= len(kept) <= 7
     assert outcome.stats[0]["record_lines_dropped"] == 40 - len(kept) and compressor.calls == []
+    markers = [line for line in out.splitlines() if line.startswith("[gateway: ")]
+    assert markers and "omitted" in markers[0] and "req-00001a" in markers[0]
+    assert outcome.stats[0]["omission_markers"] == len(markers)
 
 
 def test_a_label_line_above_the_data_stays():
     question = "What was the latency_ms value of request req-00001a?"
     out, outcome, _, _ = run(join("Answer from the log.", "Here is the log:\n" + log_block(), question), last_user=0,
                              query=question, routes=frozenset({"records"}), protect_edges=True)
-    assert "Here is the log:\n2026-" in out and outcome.stats[0]["record_lines_dropped"] > 30
+    assert "Here is the log:\n[gateway: lines 1-" in out and outcome.stats[0]["record_lines_dropped"] > 30
 
 
 def test_short_blocks_and_unnamed_questions_are_left_alone():
@@ -161,7 +178,9 @@ def test_a_json_array_stays_valid_when_the_last_record_is_the_match():
     question = "What is the total of order ORD-0039?"
     out, _, _, _ = run(join("Use the data.", f"[\n{records}\n]", question), last_user=0, query=question,
                        routes=frozenset({"records"}), protect_edges=True)
-    parsed = json.loads(out.split("\n\n")[1])
+    marker, data = out.split("\n\n")[1].split("\n", 1)
+    parsed = json.loads(data)          # the marker sits above the array, so the data stays parseable
+    assert marker.startswith("[gateway: ") and "of 42 lines omitted" in marker
     assert any(item["order_id"] == "ORD-0039" for item in parsed) and len(parsed) < 40
 
 

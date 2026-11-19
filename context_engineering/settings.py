@@ -112,7 +112,10 @@ class ContextSettings:
     observation_error_guard: int = 3           # error outputs among the newest N tool results are never masked
     observation_stub_max_tokens: int = 150
     observation_head_tail_lines: int = 3
-    mask_trigger: str = "always"               # pressure: mask only when the budget says tool outputs are too big
+    # "pressure" (default): mask only when the budget says tool outputs are over their share or pressure is high/over.
+    # "always" masked at 14% utilization in the audit and the model then invented the value it no longer saw
+    # (reports/production-readiness-audit/STRATEGY.md, H1). Duplicate folding is lossless and runs either way.
+    mask_trigger: str = "pressure"
 
     # --- store for masked / compacted originals ---
     store_backend: str = "memory"
@@ -178,7 +181,7 @@ class ContextSettings:
             observation_error_guard=_int("OBSERVATION_ERROR_GUARD", 3),
             observation_stub_max_tokens=_int("OBSERVATION_STUB_MAX_TOKENS", 150),
             observation_head_tail_lines=_int("OBSERVATION_HEAD_TAIL_LINES", 3),
-            mask_trigger=_choice("OBSERVATION_MASK_TRIGGER", "always", MASK_TRIGGERS),
+            mask_trigger=_choice("OBSERVATION_MASK_TRIGGER", "pressure", MASK_TRIGGERS),
             store_backend=_choice("CONTEXT_STORE", "memory", STORE_BACKENDS),
             store_ttl_s=_int("CONTEXT_STORE_TTL_S", 3600),
             store_max_items=_int("CONTEXT_STORE_MAX_ITEMS", 2048),

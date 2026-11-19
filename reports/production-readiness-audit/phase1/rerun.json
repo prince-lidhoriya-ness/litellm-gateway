@@ -1,0 +1,973 @@
+{
+ "settings": "code defaults (enforce, routes narrative+logfold, mask trigger pressure)",
+ "cases": [
+  {
+   "case": "A_short",
+   "domain": "any",
+   "tok_before": 14,
+   "tok_after": 14,
+   "saved_pct": 0.0,
+   "ce_status": "skipped",
+   "ce_saved": null,
+   "pc_status": "skipped",
+   "pc_intent": null,
+   "pc_actions": [],
+   "ce_ms": 1,
+   "pc_ms": 1,
+   "needles_kept": 0,
+   "needles_total": 0,
+   "lost": [],
+   "omission_marker_present": false,
+   "markers": 0,
+   "fidelity": null
+  },
+  {
+   "case": "B_frontend_code",
+   "domain": "frontend",
+   "tok_before": 657,
+   "tok_after": 657,
+   "saved_pct": 0.0,
+   "ce_status": "skipped",
+   "ce_saved": null,
+   "pc_status": "ok",
+   "pc_intent": "diagnose",
+   "pc_actions": [
+    "preserved_role",
+    "guarded"
+   ],
+   "ce_ms": 1,
+   "pc_ms": 9,
+   "needles_kept": 2,
+   "needles_total": 2,
+   "lost": [],
+   "omission_marker_present": false,
+   "markers": 0,
+   "fidelity": {}
+  },
+  {
+   "case": "C_backend_log_identifier",
+   "domain": "backend",
+   "tok_before": 5613,
+   "tok_after": 634,
+   "saved_pct": 88.7,
+   "ce_status": "ok",
+   "ce_saved": {},
+   "pc_status": "ok",
+   "pc_intent": "diagnose",
+   "pc_actions": [
+    "folded_logs"
+   ],
+   "ce_ms": 27,
+   "pc_ms": 61,
+   "needles_kept": 5,
+   "needles_total": 5,
+   "lost": [],
+   "omission_marker_present": false,
+   "markers": 3,
+   "fidelity": {
+    "logfold": {
+     "checked": 3,
+     "retried": 0,
+     "reverted": 0,
+     "reasons": {}
+    }
+   }
+  },
+  {
+   "case": "D_devops_ci_noid",
+   "domain": "devops",
+   "tok_before": 4654,
+   "tok_after": 201,
+   "saved_pct": 95.7,
+   "ce_status": "ok",
+   "ce_saved": {},
+   "pc_status": "ok",
+   "pc_intent": "diagnose",
+   "pc_actions": [
+    "folded_logs"
+   ],
+   "ce_ms": 5,
+   "pc_ms": 45,
+   "needles_kept": 3,
+   "needles_total": 3,
+   "lost": [],
+   "omission_marker_present": false,
+   "markers": 2,
+   "fidelity": {
+    "logfold": {
+     "checked": 2,
+     "retried": 0,
+     "reverted": 0,
+     "reasons": {}
+    }
+   }
+  },
+  {
+   "case": "E_ticket_lookup",
+   "domain": "ticket",
+   "tok_before": 1416,
+   "tok_after": 994,
+   "saved_pct": 29.8,
+   "ce_status": "ok",
+   "ce_saved": {},
+   "pc_status": "ok",
+   "pc_intent": "transform",
+   "pc_actions": [
+    "compressed"
+   ],
+   "ce_ms": 4,
+   "pc_ms": 4814,
+   "needles_kept": 4,
+   "needles_total": 4,
+   "lost": [],
+   "omission_marker_present": false,
+   "markers": 0,
+   "fidelity": {
+    "compress": {
+     "checked": 9,
+     "retried": 0,
+     "reverted": 0,
+     "reasons": {}
+    }
+   }
+  },
+  {
+   "case": "F_ticket_summarize",
+   "domain": "ticket",
+   "tok_before": 1419,
+   "tok_after": 787,
+   "saved_pct": 44.5,
+   "ce_status": "ok",
+   "ce_saved": {},
+   "pc_status": "ok",
+   "pc_intent": "transform",
+   "pc_actions": [
+    "compressed"
+   ],
+   "ce_ms": 7,
+   "pc_ms": 86,
+   "needles_kept": 4,
+   "needles_total": 4,
+   "lost": [],
+   "omission_marker_present": false,
+   "markers": 0,
+   "fidelity": {
+    "compress": {
+     "checked": 9,
+     "retried": 0,
+     "reverted": 0,
+     "reasons": {}
+    }
+   }
+  },
+  {
+   "case": "G_prose_doc",
+   "domain": "any",
+   "tok_before": 1402,
+   "tok_after": 512,
+   "saved_pct": 63.5,
+   "ce_status": "ok",
+   "ce_saved": {},
+   "pc_status": "ok",
+   "pc_intent": "diagnose",
+   "pc_actions": [
+    "compressed"
+   ],
+   "ce_ms": 4,
+   "pc_ms": 3530,
+   "needles_kept": 2,
+   "needles_total": 2,
+   "lost": [],
+   "omission_marker_present": false,
+   "markers": 0,
+   "fidelity": {
+    "compress": {
+     "checked": 1,
+     "retried": 0,
+     "reverted": 0,
+     "reasons": {}
+    }
+   }
+  },
+  {
+   "case": "J_ident_in_prose",
+   "domain": "ticket",
+   "tok_before": 622,
+   "tok_after": 277,
+   "saved_pct": 55.5,
+   "ce_status": "skipped",
+   "ce_saved": null,
+   "pc_status": "ok",
+   "pc_intent": "transform",
+   "pc_actions": [
+    "compressed",
+    "compressed",
+    "guarded"
+   ],
+   "ce_ms": 1,
+   "pc_ms": 3538,
+   "needles_kept": 5,
+   "needles_total": 5,
+   "lost": [],
+   "omission_marker_present": false,
+   "markers": 0,
+   "fidelity": {
+    "compress": {
+     "checked": 2,
+     "retried": 0,
+     "reverted": 0,
+     "reasons": {}
+    }
+   }
+  },
+  {
+   "case": "H_agent_old_unref",
+   "domain": "backend-debug",
+   "tok_before": 10954,
+   "tok_after": 10954,
+   "saved_pct": 0.0,
+   "ce_status": "ok",
+   "ce_saved": {},
+   "pc_status": "ok",
+   "pc_intent": "lookup",
+   "pc_actions": [
+    "preserved_role",
+    "below_min_chars",
+    "preserved_role",
+    "preserved_role",
+    "sensitive",
+    "preserved_role",
+    "preserved_role",
+    "below_min_chars",
+    "preserved_role",
+    "preserved_role",
+    "below_min_chars",
+    "preserved_role",
+    "preserved_role",
+    "below_min_chars",
+    "preserved_role",
+    "preserved_role",
+    "below_min_chars",
+    "preserved_role",
+    "preserved_role",
+    "below_min_chars",
+    "preserved_role",
+    "preserved_role",
+    "below_min_chars",
+    "preserved_role",
+    "preserved_role",
+    "below_min_chars",
+    "guarded"
+   ],
+   "ce_ms": 46,
+   "pc_ms": 227,
+   "needles_kept": 2,
+   "needles_total": 2,
+   "lost": [],
+   "omission_marker_present": false,
+   "markers": 0,
+   "fidelity": {}
+  },
+  {
+   "case": "I_long_chat",
+   "domain": "devops",
+   "tok_before": 2395,
+   "tok_after": 1078,
+   "saved_pct": 55.0,
+   "ce_status": "ok",
+   "ce_saved": {},
+   "pc_status": "ok",
+   "pc_intent": "transform",
+   "pc_actions": [
+    "preserved_role",
+    "below_min_chars",
+    "compressed",
+    "unchanged",
+    "compressed",
+    "unchanged",
+    "compressed",
+    "unchanged",
+    "compressed",
+    "unchanged",
+    "compressed",
+    "unchanged",
+    "compressed",
+    "unchanged",
+    "compressed",
+    "guarded"
+   ],
+   "ce_ms": 9,
+   "pc_ms": 9389,
+   "needles_kept": 3,
+   "needles_total": 3,
+   "lost": [],
+   "omission_marker_present": false,
+   "markers": 0,
+   "fidelity": {
+    "compress": {
+     "checked": 13,
+     "retried": 0,
+     "reverted": 0,
+     "reasons": {}
+    }
+   }
+  }
+ ],
+ "exp2": [
+  {
+   "probe": "distance_+1",
+   "tok_before": 5608,
+   "tok_after": 352,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "distance_+2",
+   "tok_before": 5608,
+   "tok_after": 387,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "distance_+3",
+   "tok_before": 5608,
+   "tok_after": 422,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "distance_+5",
+   "tok_before": 5608,
+   "tok_after": 489,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "distance_+10",
+   "tok_before": 5608,
+   "tok_after": 489,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "distance_+30",
+   "tok_before": 5608,
+   "tok_after": 489,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "distance_-1",
+   "tok_before": 5608,
+   "tok_after": 352,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "distance_-2",
+   "tok_before": 5608,
+   "tok_after": 387,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "distance_-5",
+   "tok_before": 5608,
+   "tok_after": 489,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "distance_-30",
+   "tok_before": 5608,
+   "tok_after": 489,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "question=Why did order ord-7731 fail?",
+   "tok_before": 5608,
+   "tok_after": 422,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "question=Why did the checkout fail?",
+   "tok_before": 5605,
+   "tok_after": 419,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "question=What went wrong with the 503 errors?",
+   "tok_before": 5608,
+   "tok_after": 422,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "question=Why did req-00080 fail? (the order is ord-7731)",
+   "tok_before": 5616,
+   "tok_after": 430,
+   "root_cause_kept": true,
+   "intent": "diagnose"
+  },
+  {
+   "probe": "question=Review these logs and tell me why ord-7731 failed.",
+   "tok_before": 5612,
+   "tok_after": 426,
+   "root_cause_kept": true,
+   "intent": "transform"
+  },
+  {
+   "probe": "question=What is the status of order ord-7731?",
+   "tok_before": 5610,
+   "tok_after": 424,
+   "root_cause_kept": true,
+   "intent": "lookup"
+  }
+ ],
+ "exp7_exp8": [
+  {
+   "probe": "exp7: Extract the action items and their owners.",
+   "intent": "transform",
+   "tok_before": 1138,
+   "tok_after": 1138,
+   "dates_exact": 10,
+   "owners_exact": 10,
+   "actions": [
+    "sensitive"
+   ]
+  },
+  {
+   "probe": "exp7: What are the deadlines?",
+   "intent": "transform",
+   "tok_before": 1135,
+   "tok_after": 1135,
+   "dates_exact": 10,
+   "owners_exact": 10,
+   "actions": [
+    "sensitive"
+   ]
+  },
+  {
+   "probe": "exp7: List the owners and dates for billing, login and search.",
+   "intent": "transform",
+   "tok_before": 1142,
+   "tok_after": 1142,
+   "dates_exact": 10,
+   "owners_exact": 10,
+   "actions": [
+    "sensitive"
+   ]
+  },
+  {
+   "probe": "exp7: Extract all action items and owners.",
+   "intent": "transform",
+   "tok_before": 1137,
+   "tok_after": 1137,
+   "dates_exact": 10,
+   "owners_exact": 10,
+   "actions": [
+    "sensitive"
+   ]
+  },
+  {
+   "probe": "exp8: What are the deadlines?",
+   "intent": "transform",
+   "tok_before": 772,
+   "tok_after": 772,
+   "dates_exact": 10,
+   "owners_exact": 10,
+   "actions": [
+    "sensitive"
+   ]
+  }
+ ],
+ "selection_on": {
+  "cases": [
+   {
+    "case": "A_short",
+    "domain": "any",
+    "tok_before": 14,
+    "tok_after": 14,
+    "saved_pct": 0.0,
+    "ce_status": "skipped",
+    "ce_saved": null,
+    "pc_status": "skipped",
+    "pc_intent": null,
+    "pc_actions": [],
+    "ce_ms": 0,
+    "pc_ms": 4,
+    "needles_kept": 0,
+    "needles_total": 0,
+    "lost": [],
+    "omission_marker_present": false,
+    "markers": 0,
+    "fidelity": null
+   },
+   {
+    "case": "B_frontend_code",
+    "domain": "frontend",
+    "tok_before": 657,
+    "tok_after": 657,
+    "saved_pct": 0.0,
+    "ce_status": "skipped",
+    "ce_saved": null,
+    "pc_status": "ok",
+    "pc_intent": "diagnose",
+    "pc_actions": [
+     "preserved_role",
+     "guarded"
+    ],
+    "ce_ms": 0,
+    "pc_ms": 8,
+    "needles_kept": 2,
+    "needles_total": 2,
+    "lost": [],
+    "omission_marker_present": false,
+    "markers": 0,
+    "fidelity": {}
+   },
+   {
+    "case": "C_backend_log_identifier",
+    "domain": "backend",
+    "tok_before": 5613,
+    "tok_after": 634,
+    "saved_pct": 88.7,
+    "ce_status": "ok",
+    "ce_saved": {},
+    "pc_status": "ok",
+    "pc_intent": "diagnose",
+    "pc_actions": [
+     "folded_logs"
+    ],
+    "ce_ms": 3,
+    "pc_ms": 58,
+    "needles_kept": 5,
+    "needles_total": 5,
+    "lost": [],
+    "omission_marker_present": false,
+    "markers": 3,
+    "fidelity": {
+     "logfold": {
+      "checked": 3,
+      "retried": 0,
+      "reverted": 0,
+      "reasons": {}
+     }
+    }
+   },
+   {
+    "case": "D_devops_ci_noid",
+    "domain": "devops",
+    "tok_before": 4654,
+    "tok_after": 201,
+    "saved_pct": 95.7,
+    "ce_status": "ok",
+    "ce_saved": {},
+    "pc_status": "ok",
+    "pc_intent": "diagnose",
+    "pc_actions": [
+     "folded_logs"
+    ],
+    "ce_ms": 4,
+    "pc_ms": 52,
+    "needles_kept": 3,
+    "needles_total": 3,
+    "lost": [],
+    "omission_marker_present": false,
+    "markers": 2,
+    "fidelity": {
+     "logfold": {
+      "checked": 2,
+      "retried": 0,
+      "reverted": 0,
+      "reasons": {}
+     }
+    }
+   },
+   {
+    "case": "E_ticket_lookup",
+    "domain": "ticket",
+    "tok_before": 1416,
+    "tok_after": 994,
+    "saved_pct": 29.8,
+    "ce_status": "ok",
+    "ce_saved": {},
+    "pc_status": "ok",
+    "pc_intent": "transform",
+    "pc_actions": [
+     "compressed"
+    ],
+    "ce_ms": 3,
+    "pc_ms": 6976,
+    "needles_kept": 4,
+    "needles_total": 4,
+    "lost": [],
+    "omission_marker_present": false,
+    "markers": 0,
+    "fidelity": {
+     "compress": {
+      "checked": 9,
+      "retried": 0,
+      "reverted": 0,
+      "reasons": {}
+     }
+    }
+   },
+   {
+    "case": "F_ticket_summarize",
+    "domain": "ticket",
+    "tok_before": 1419,
+    "tok_after": 787,
+    "saved_pct": 44.5,
+    "ce_status": "ok",
+    "ce_saved": {},
+    "pc_status": "ok",
+    "pc_intent": "transform",
+    "pc_actions": [
+     "compressed"
+    ],
+    "ce_ms": 3,
+    "pc_ms": 53,
+    "needles_kept": 4,
+    "needles_total": 4,
+    "lost": [],
+    "omission_marker_present": false,
+    "markers": 0,
+    "fidelity": {
+     "compress": {
+      "checked": 9,
+      "retried": 0,
+      "reverted": 0,
+      "reasons": {}
+     }
+    }
+   },
+   {
+    "case": "G_prose_doc",
+    "domain": "any",
+    "tok_before": 1402,
+    "tok_after": 512,
+    "saved_pct": 63.5,
+    "ce_status": "ok",
+    "ce_saved": {},
+    "pc_status": "ok",
+    "pc_intent": "diagnose",
+    "pc_actions": [
+     "compressed"
+    ],
+    "ce_ms": 3,
+    "pc_ms": 2639,
+    "needles_kept": 2,
+    "needles_total": 2,
+    "lost": [],
+    "omission_marker_present": false,
+    "markers": 0,
+    "fidelity": {
+     "compress": {
+      "checked": 1,
+      "retried": 0,
+      "reverted": 0,
+      "reasons": {}
+     }
+    }
+   },
+   {
+    "case": "J_ident_in_prose",
+    "domain": "ticket",
+    "tok_before": 622,
+    "tok_after": 277,
+    "saved_pct": 55.5,
+    "ce_status": "skipped",
+    "ce_saved": null,
+    "pc_status": "ok",
+    "pc_intent": "transform",
+    "pc_actions": [
+     "compressed",
+     "compressed",
+     "guarded"
+    ],
+    "ce_ms": 0,
+    "pc_ms": 2623,
+    "needles_kept": 5,
+    "needles_total": 5,
+    "lost": [],
+    "omission_marker_present": false,
+    "markers": 0,
+    "fidelity": {
+     "compress": {
+      "checked": 2,
+      "retried": 0,
+      "reverted": 0,
+      "reasons": {}
+     }
+    }
+   },
+   {
+    "case": "H_agent_old_unref",
+    "domain": "backend-debug",
+    "tok_before": 10954,
+    "tok_after": 10954,
+    "saved_pct": 0.0,
+    "ce_status": "ok",
+    "ce_saved": {},
+    "pc_status": "ok",
+    "pc_intent": "lookup",
+    "pc_actions": [
+     "preserved_role",
+     "below_min_chars",
+     "preserved_role",
+     "preserved_role",
+     "sensitive",
+     "preserved_role",
+     "preserved_role",
+     "below_min_chars",
+     "preserved_role",
+     "preserved_role",
+     "below_min_chars",
+     "preserved_role",
+     "preserved_role",
+     "below_min_chars",
+     "preserved_role",
+     "preserved_role",
+     "below_min_chars",
+     "preserved_role",
+     "preserved_role",
+     "below_min_chars",
+     "preserved_role",
+     "preserved_role",
+     "below_min_chars",
+     "preserved_role",
+     "preserved_role",
+     "below_min_chars",
+     "guarded"
+    ],
+    "ce_ms": 30,
+    "pc_ms": 50,
+    "needles_kept": 2,
+    "needles_total": 2,
+    "lost": [],
+    "omission_marker_present": false,
+    "markers": 0,
+    "fidelity": {}
+   },
+   {
+    "case": "I_long_chat",
+    "domain": "devops",
+    "tok_before": 2395,
+    "tok_after": 948,
+    "saved_pct": 60.4,
+    "ce_status": "ok",
+    "ce_saved": {},
+    "pc_status": "ok",
+    "pc_intent": "transform",
+    "pc_actions": [
+     "preserved_role",
+     "below_min_chars",
+     "compressed",
+     "compressed",
+     "compressed",
+     "compressed",
+     "compressed",
+     "compressed",
+     "compressed",
+     "unchanged",
+     "compressed",
+     "compressed",
+     "compressed",
+     "compressed",
+     "compressed",
+     "guarded"
+    ],
+    "ce_ms": 6,
+    "pc_ms": 8937,
+    "needles_kept": 3,
+    "needles_total": 3,
+    "lost": [],
+    "omission_marker_present": false,
+    "markers": 0,
+    "fidelity": {
+     "compress": {
+      "checked": 13,
+      "retried": 0,
+      "reverted": 0,
+      "reasons": {}
+     }
+    }
+   }
+  ],
+  "exp2": [
+   {
+    "probe": "distance_+1",
+    "tok_before": 5608,
+    "tok_after": 352,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "distance_+2",
+    "tok_before": 5608,
+    "tok_after": 387,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "distance_+3",
+    "tok_before": 5608,
+    "tok_after": 422,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "distance_+5",
+    "tok_before": 5608,
+    "tok_after": 489,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "distance_+10",
+    "tok_before": 5608,
+    "tok_after": 489,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "distance_+30",
+    "tok_before": 5608,
+    "tok_after": 489,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "distance_-1",
+    "tok_before": 5608,
+    "tok_after": 352,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "distance_-2",
+    "tok_before": 5608,
+    "tok_after": 387,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "distance_-5",
+    "tok_before": 5608,
+    "tok_after": 489,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "distance_-30",
+    "tok_before": 5608,
+    "tok_after": 489,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "question=Why did order ord-7731 fail?",
+    "tok_before": 5608,
+    "tok_after": 422,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "question=Why did the checkout fail?",
+    "tok_before": 5605,
+    "tok_after": 419,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "question=What went wrong with the 503 errors?",
+    "tok_before": 5608,
+    "tok_after": 422,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "question=Why did req-00080 fail? (the order is ord-7731)",
+    "tok_before": 5616,
+    "tok_after": 430,
+    "root_cause_kept": true,
+    "intent": "diagnose"
+   },
+   {
+    "probe": "question=Review these logs and tell me why ord-7731 failed.",
+    "tok_before": 5612,
+    "tok_after": 426,
+    "root_cause_kept": true,
+    "intent": "transform"
+   },
+   {
+    "probe": "question=What is the status of order ord-7731?",
+    "tok_before": 5610,
+    "tok_after": 424,
+    "root_cause_kept": true,
+    "intent": "lookup"
+   }
+  ],
+  "exp7_exp8": [
+   {
+    "probe": "exp7: Extract the action items and their owners.",
+    "intent": "transform",
+    "tok_before": 1138,
+    "tok_after": 1138,
+    "dates_exact": 10,
+    "owners_exact": 10,
+    "actions": [
+     "sensitive"
+    ]
+   },
+   {
+    "probe": "exp7: What are the deadlines?",
+    "intent": "transform",
+    "tok_before": 1135,
+    "tok_after": 1135,
+    "dates_exact": 10,
+    "owners_exact": 10,
+    "actions": [
+     "sensitive"
+    ]
+   },
+   {
+    "probe": "exp7: List the owners and dates for billing, login and search.",
+    "intent": "transform",
+    "tok_before": 1142,
+    "tok_after": 1142,
+    "dates_exact": 10,
+    "owners_exact": 10,
+    "actions": [
+     "sensitive"
+    ]
+   },
+   {
+    "probe": "exp7: Extract all action items and owners.",
+    "intent": "transform",
+    "tok_before": 1137,
+    "tok_after": 1137,
+    "dates_exact": 10,
+    "owners_exact": 10,
+    "actions": [
+     "sensitive"
+    ]
+   },
+   {
+    "probe": "exp8: What are the deadlines?",
+    "intent": "transform",
+    "tok_before": 772,
+    "tok_after": 772,
+    "dates_exact": 10,
+    "owners_exact": 10,
+    "actions": [
+     "sensitive"
+    ]
+   }
+  ]
+ }
+}

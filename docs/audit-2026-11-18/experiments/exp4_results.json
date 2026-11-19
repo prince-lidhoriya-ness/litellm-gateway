@@ -1,0 +1,261 @@
+{
+ "baseline_single": {
+  "tag": "single",
+  "status": "ok",
+  "reason": null,
+  "stop": null,
+  "calls": 1,
+  "elapsed_ms_reported": 8708.0,
+  "wall_ms": 8738.1
+ },
+ "wave1": {
+  "results": [
+   {
+    "tag": "w1-0",
+    "status": "ok",
+    "reason": null,
+    "stop": null,
+    "calls": 1,
+    "elapsed_ms_reported": 8745.6,
+    "wall_ms": 8748.6
+   },
+   {
+    "tag": "w1-1",
+    "status": "error",
+    "reason": "timeout after 10.0s: TimeoutError",
+    "stop": null,
+    "calls": 0,
+    "elapsed_ms_reported": null,
+    "wall_ms": 10019.9
+   },
+   {
+    "tag": "w1-2",
+    "status": "ok",
+    "reason": null,
+    "stop": "deadline",
+    "calls": 0,
+    "elapsed_ms_reported": 8982.2,
+    "wall_ms": 9017.7
+   },
+   {
+    "tag": "w1-3",
+    "status": "ok",
+    "reason": null,
+    "stop": "deadline",
+    "calls": 0,
+    "elapsed_ms_reported": 8919.7,
+    "wall_ms": 9015.1
+   },
+   {
+    "tag": "w1-4",
+    "status": "skipped",
+    "reason": "busy",
+    "stop": null,
+    "calls": 0,
+    "elapsed_ms_reported": null,
+    "wall_ms": 0.0
+   },
+   {
+    "tag": "w1-5",
+    "status": "skipped",
+    "reason": "busy",
+    "stop": null,
+    "calls": 0,
+    "elapsed_ms_reported": null,
+    "wall_ms": 0.0
+   },
+   {
+    "tag": "w1-6",
+    "status": "skipped",
+    "reason": "busy",
+    "stop": null,
+    "calls": 0,
+    "elapsed_ms_reported": null,
+    "wall_ms": 0.0
+   },
+   {
+    "tag": "w1-7",
+    "status": "skipped",
+    "reason": "busy",
+    "stop": null,
+    "calls": 0,
+    "elapsed_ms_reported": null,
+    "wall_ms": 0.0
+   }
+  ],
+  "batch_s": 10.02,
+  "in_flight_at_return": 1,
+  "drain_s": 3.28
+ },
+ "wave2": {
+  "results": [
+   {
+    "tag": "w2-0",
+    "status": "error",
+    "reason": "timeout after 10.0s: TimeoutError",
+    "stop": null,
+    "calls": 0,
+    "elapsed_ms_reported": null,
+    "wall_ms": 9997.9
+   },
+   {
+    "tag": "w2-1",
+    "status": "ok",
+    "reason": null,
+    "stop": null,
+    "calls": 1,
+    "elapsed_ms_reported": 7516.3,
+    "wall_ms": 7530.3
+   },
+   {
+    "tag": "w2-2",
+    "status": "ok",
+    "reason": null,
+    "stop": "deadline",
+    "calls": 0,
+    "elapsed_ms_reported": 9020.7,
+    "wall_ms": 9023.6
+   },
+   {
+    "tag": "w2-3",
+    "status": "ok",
+    "reason": null,
+    "stop": "deadline",
+    "calls": 0,
+    "elapsed_ms_reported": 8995.0,
+    "wall_ms": 9008.4
+   }
+  ],
+  "batch_s": 10.0,
+  "in_flight_at_return": 1,
+  "drain_s": 4.39
+ },
+ "ce_timing": [
+  {
+   "target": 5000,
+   "tokens_before": 5316,
+   "status": "ok",
+   "error": null,
+   "reason": null,
+   "elapsed_ms_reported": 64.1,
+   "wall_ms": 79.3,
+   "tokens_after": 5630,
+   "masked": 0
+  },
+  {
+   "target": 20000,
+   "tokens_before": 20311,
+   "status": "ok",
+   "error": null,
+   "reason": null,
+   "elapsed_ms_reported": 69.2,
+   "wall_ms": 103.9,
+   "tokens_after": 10477,
+   "masked": 24
+  },
+  {
+   "target": 60000,
+   "tokens_before": 60576,
+   "status": "ok",
+   "error": null,
+   "reason": null,
+   "elapsed_ms_reported": 195.3,
+   "wall_ms": 287.1,
+   "tokens_after": 25140,
+   "masked": 84
+  },
+  {
+   "target": 120000,
+   "tokens_before": 120400,
+   "status": "ok",
+   "error": null,
+   "reason": null,
+   "elapsed_ms_reported": 287.0,
+   "wall_ms": 452.5,
+   "tokens_after": 46543,
+   "masked": 176
+  }
+ ],
+ "ce_concurrent": {
+  "n": 12,
+  "target": 20000,
+  "batch_s": 0.94,
+  "outcomes": {
+   "ok/-": 12
+  },
+  "rows": [
+   {
+    "i": 0,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 760.5
+   },
+   {
+    "i": 1,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 726.9
+   },
+   {
+    "i": 2,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 665.8
+   },
+   {
+    "i": 3,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 621.2
+   },
+   {
+    "i": 4,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 565.5
+   },
+   {
+    "i": 5,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 509.2
+   },
+   {
+    "i": 6,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 450.6
+   },
+   {
+    "i": 7,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 392.0
+   },
+   {
+    "i": 8,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 333.3
+   },
+   {
+    "i": 9,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 293.2
+   },
+   {
+    "i": 10,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 360.4
+   },
+   {
+    "i": 11,
+    "status": "ok",
+    "error": null,
+    "wall_ms": 179.9
+   }
+  ]
+ }
+}

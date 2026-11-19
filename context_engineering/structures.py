@@ -126,6 +126,8 @@ class ContextReport:
     history: list = field(default_factory=list)
     saved_by_technique: dict = field(default_factory=dict)   # deduplication / masking / compaction / jit_retrieval
     restored: dict = field(default_factory=dict)             # originals kept because their ref was mentioned
+    # Tool calls in the latest assistant message repeating a masked observation's call (masking.refetch_count).
+    refetches: int = 0
     retrieved_turns: int = 0
     summary_index: Optional[int] = None
     summary_source: str = ""

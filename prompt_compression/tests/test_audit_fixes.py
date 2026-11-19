@@ -72,14 +72,15 @@ def test_f06_earlier_turns_are_not_selected_against_the_latest_question():
 
 def test_f06_scope_all_restores_the_old_behaviour():
     messages = chat_history(TOPICS) + [{"role": "user", "content": "Regarding the database, what should we change?"}]
-    _, report = pipeline(selection_scope="all").process(messages)
+    # The question names no identifier, so the scope is tested with the intent gate off (STRATEGY.md, M3).
+    _, report = pipeline(selection_scope="all", intent_gate=False).process(messages)
     assert any("selected_passages" in e.get("action", "") for e in report.messages if e["role"] == "assistant")
 
 
 def test_f06_a_document_in_the_latest_user_message_is_still_selected():
     document = "\n\n".join(prose(t) for t in TOPICS)
     messages = [{"role": "user", "content": f"Read this.\n\n{document}\n\nWhat does it say about backups?"}]
-    new, report = pipeline().process(messages)
+    new, report = pipeline(intent_gate=False).process(messages)
     assert report.messages[0]["segments"]["passages_dropped"] > 0 and "backups" in new[0]["content"]
 
 
@@ -93,9 +94,26 @@ def test_f07_transform_requests_are_detected(text):
     assert intent.detect(text) == intent.TRANSFORM
 
 
-@pytest.mark.parametrize("text", ["What was the status of request req-17?", "Which supplier is cheapest?", ""])
+@pytest.mark.parametrize("text", ["What was the status of request req-17?", "What is the total of order ORD-0039?",
+                                  "Which host serves api.internal.example?"])
 def test_f07_lookups_are_detected(text):
+    # A lookup names a record (an identifier-like word) and asks neither why nor for the whole text (STRATEGY.md, M3).
     assert intent.detect(text) == intent.LOOKUP
+
+
+@pytest.mark.parametrize("text", ["Which supplier is cheapest?", "", "Extract the action items and their owners.",
+                                  "What are the deadlines?", "List the owners and dates for billing, login and search."])
+def test_m3_everything_that_names_no_record_is_transform_the_safe_default(text):
+    # Before the three-way gate these were "lookup" and passage selection could drop sections (audit, exp7).
+    assert intent.detect(text) == intent.TRANSFORM
+
+
+@pytest.mark.parametrize("text", ["Why did order ord-7731 fail?", "What went wrong with the 503 errors?",
+                                  "What was the error code of request req-17?", "Debug the timeout on pay-118.",
+                                  "Find the root cause of the ord-7731 outage."])
+def test_m3_diagnose_questions_never_select_even_when_they_name_a_record(text):
+    # The audit's §3.2: wording decided whether the root-cause line was deleted. Diagnose never selects.
+    assert intent.detect(text) == intent.DIAGNOSE
 
 
 def test_f07_a_summary_request_keeps_every_section():

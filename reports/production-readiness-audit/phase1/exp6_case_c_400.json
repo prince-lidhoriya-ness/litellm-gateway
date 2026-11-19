@@ -1,0 +1,22 @@
+[
+ {
+  "case": "C_backend_log_identifier",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 5634,
+  "pc_status": null,
+  "num_predict": 400,
+  "correct": true,
+  "secs": 128.6,
+  "answer": "The order \"ord-7731\" failed due to a combination of factors. Here's a summary of the events leading to its failure:  1. **Payment authorization timed out**: After 30,000ms, the payment authorization for order \"ord-7731\" timed out. This suggests that the payment processing took longer than expected, causing the timeout. 2. **503 error returned to client**: The checkout service returned a 503 error "
+ },
+ {
+  "case": "C_backend_log_identifier",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 655,
+  "pc_status": "ok",
+  "num_predict": 400,
+  "correct": true,
+  "secs": 23.3,
+  "answer": "Based on the service logs, order ord-7731 failed due to a combination of issues:  1. **Payment authorization timed out**: The payment authorization for order ord-7731 timed out after 30,000ms (30 seconds). This suggests that the payment processing took longer than expected, causing the timeout. 2. **Returned 503 to client**: The checkout service returned a 503 Service Unavailable response to the c"
+ }
+]

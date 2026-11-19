@@ -1,0 +1,98 @@
+[
+ {
+  "case": "C_backend_log_identifier",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 5634,
+  "correct": true,
+  "secs": 362.0,
+  "answer": "The order \"ord-7731\" failed due to a combination of factors. Here's a summary of the events leading to its failure:  1. **Payment authorization timed out**: After 30,000ms, the payment authorization for order \"ord-7731\" timed out."
+ },
+ {
+  "case": "C_backend_log_identifier",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 655,
+  "correct": false,
+  "secs": 48.9,
+  "answer": "Based on the service logs, order ord-7731 failed due to a combination of issues:  1. **Payment authorization timed out**: The payment authorization for order ord-7731 timed out after 30,000ms (30 seconds). This suggests that the p"
+ },
+ {
+  "case": "G_prose_doc",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 1423,
+  "correct": true,
+  "secs": 52.6,
+  "answer": "The minimum allowed idle timeout is 900 seconds."
+ },
+ {
+  "case": "G_prose_doc",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 533,
+  "correct": true,
+  "secs": 20.9,
+  "answer": "The minimum allowed idle timeout is 900 seconds."
+ },
+ {
+  "case": "E_ticket_lookup",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 1437,
+  "correct": true,
+  "secs": 48.5,
+  "answer": "The customer gave the order number 88-4471-XQ."
+ },
+ {
+  "case": "E_ticket_lookup",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 1015,
+  "correct": true,
+  "secs": 32.5,
+  "answer": "The customer gave the order number as 88-4471-XQ."
+ },
+ {
+  "case": "H_agent_old_unref",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 10871,
+  "correct": true,
+  "secs": 577.0,
+  "answer": "db.pool.max_size was set to 17, and there was a comment indicating that it was raised from 10 after the March incident."
+ },
+ {
+  "case": "H_agent_old_unref",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 10871,
+  "correct": true,
+  "secs": 20.7,
+  "answer": "db.pool.max_size was set to 17, and there was a comment indicating that it was raised from 10 after the March incident."
+ },
+ {
+  "case": "I_long_chat",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 2426,
+  "correct": true,
+  "secs": 100.2,
+  "answer": "At the start, you gave the following constraints:  1. You run on EKS (Elastic Container Service for Kubernetes). 2. You must never suggest using `sudo` or disabling TLS verification. 3. The cluster name is `prod-eu-3`."
+ },
+ {
+  "case": "I_long_chat",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 2426,
+  "correct": true,
+  "secs": 14.0,
+  "answer": "At the start, you gave the following constraints:  1. You run on EKS (Elastic Container Service for Kubernetes). 2. You must never suggest using `sudo` or disabling TLS verification. 3. The cluster name is `prod-eu-3`."
+ },
+ {
+  "case": "J_ident_in_prose",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 645,
+  "correct": true,
+  "secs": 27.7,
+  "answer": "The tracking code for the incident was NIMBUS-5044, and it was running on port 8443."
+ },
+ {
+  "case": "J_ident_in_prose",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 645,
+  "correct": true,
+  "secs": 3.9,
+  "answer": "The tracking code for the incident was NIMBUS-5044, and it was running on port 8443."
+ }
+]

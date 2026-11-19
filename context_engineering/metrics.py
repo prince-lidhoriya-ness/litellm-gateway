@@ -56,6 +56,9 @@ PROVIDER_PROMPT_TOKENS = _counter("context_engine_provider_prompt_tokens",
 CONTEXT_TOKENS = _histogram("context_engine_context_tokens", "Estimated context size per request.", ["stage"],
                             (500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000, 256000))
 RESTORED = _counter("context_engine_restored", "Originals kept in full because their ref was mentioned.", ["kind"])
+# Loss signal for masking (STRATEGY.md, H1.4): the latest assistant turn repeated the tool call of an observation that is
+# masked on this request. In shadow mode the model saw the full output, so that series is the natural repeat rate.
+REFETCH = _counter("context_engine_refetch", "Tool calls repeating the call of a masked observation.", ["mode"])
 COMPACTIONS = _counter("context_engine_compactions", "History compaction operations, by summary source.", ["source"])
 RETRIEVAL_SCORE = _histogram("context_engine_retrieval_score", "Relevance score of retrieved older turns.", ["backend"],
                              (0.1, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0))

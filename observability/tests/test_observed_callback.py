@@ -291,3 +291,21 @@ def test_history_trimming_keeps_span_attributes_on_the_original_message_indexes(
     attrs = next(s for s in spans.get_finished_spans() if s.name == "prompt.pipeline").attributes
     assert attrs["prompt.message.4.label"] == GENERAL_CATEGORY          # original index of the latest user message
     assert "prompt.message.4.text_after" in attrs and "prompt.message.0.label" not in attrs
+
+
+def test_fidelity_markers_and_folded_lines_are_counted_in_shadow_mode(spans):
+    # The Phase 1 exit criterion (fidelity reverts under 5% of lossy units) is measured on shadow traffic.
+    log = "\n".join(f"2026-11-17T10:00:{i % 60:02d}Z INFO api req=req-{i:05d} path=/v1/cart latency_ms={80 + i % 9}"
+                    for i in range(60))
+    content = f"Logs:\n\n{log}\n\nWhich service wrote these lines?"
+    labels = dict(route="logfold", result="checked", reason="", mode="shadow")
+    checked_before = sample("prompt_pipeline_fidelity_total", **labels)
+    markers_before = sample("prompt_pipeline_omission_markers_total", mode="shadow")
+    folded_before = sample("prompt_pipeline_log_lines_folded_total", mode="shadow")
+    data = run(make_callback(mode="shadow", routes=frozenset({"logfold"}), protect_edges=True), request(content))
+    summary = data["metadata"]["prompt_compression"]
+    assert data["messages"][0]["content"] == content and summary["status"] == "shadow"
+    assert summary["fidelity"]["logfold"]["checked"] == 1
+    assert sample("prompt_pipeline_fidelity_total", **labels) - checked_before == 1
+    assert sample("prompt_pipeline_omission_markers_total", mode="shadow") - markers_before == 1
+    assert sample("prompt_pipeline_log_lines_folded_total", mode="shadow") - folded_before == 58

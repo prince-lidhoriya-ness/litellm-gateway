@@ -1,0 +1,62 @@
+[
+ {
+  "case": "C_backend_log_identifier",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 5634,
+  "pc_status": null,
+  "num_predict": 160,
+  "correct": true,
+  "secs": 58.0,
+  "answer": "The order \"ord-7731\" failed due to a combination of factors. Here's a summary of the events leading to its failure:  1. **Payment authorization timed out**: After 30,000ms, the payment authorization for order \"ord-7731\" timed out. This suggests that the payment processing took longer than expected, causing the timeout. 2. **503 error returned to client**: The checkout service returned a 503 error "
+ },
+ {
+  "case": "C_backend_log_identifier",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 655,
+  "pc_status": "ok",
+  "num_predict": 160,
+  "correct": true,
+  "secs": 21.2,
+  "answer": "Based on the service logs, order ord-7731 failed due to a combination of issues:  1. **Payment authorization timed out**: The payment authorization for order ord-7731 timed out after 30,000ms (30 seconds). This suggests that the payment processing took longer than expected, causing the timeout. 2. **Returned 503 to client**: The checkout service returned a 503 Service Unavailable response to the c"
+ },
+ {
+  "case": "I_long_chat",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 2426,
+  "pc_status": null,
+  "num_predict": 160,
+  "correct": true,
+  "secs": 10.9,
+  "answer": "At the start, you gave the following constraints:  1. You run on EKS (Elastic Container Service for Kubernetes). 2. You must never suggest using `sudo` or disabling TLS verification. 3. The cluster name is `prod-eu-3`."
+ },
+ {
+  "case": "I_long_chat",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 1005,
+  "pc_status": "ok",
+  "num_predict": 160,
+  "correct": true,
+  "secs": 37.5,
+  "answer": "At the start, you gave the following constraints:  1. The cluster is running on EKS (Elastic Container Service for Kubernetes). 2. You must never suggest using `sudo` or disabling TLS verification. 3. The cluster name is `prod-eu-3`."
+ },
+ {
+  "case": "J_ident_in_prose",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 645,
+  "pc_status": null,
+  "num_predict": 160,
+  "correct": true,
+  "secs": 3.1,
+  "answer": "The tracking code for the incident was NIMBUS-5044, and it was running on port 8443."
+ },
+ {
+  "case": "J_ident_in_prose",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 300,
+  "pc_status": "ok",
+  "num_predict": 160,
+  "correct": true,
+  "secs": 11.2,
+  "answer": "The tracking code was NIMBUS-5044, and it was running on port 8443."
+ }
+]

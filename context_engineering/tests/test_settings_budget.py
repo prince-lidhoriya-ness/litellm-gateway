@@ -139,7 +139,10 @@ def test_pressure_levels_and_triggers():
     s = settings(compaction_enabled=True, window_tokens=0)
     chat = long_chat(14)
     low = budget.plan(analyze(chat), model(10**6), s)
-    assert low.pressure == "low" and "history" not in low.techniques and {"dedupe", "mask"} <= low.techniques
+    # the default trigger is "pressure": at low pressure only lossless duplicate folding may run (STRATEGY.md, H1)
+    assert low.pressure == "low" and "history" not in low.techniques and low.techniques == {"dedupe"}
+    always = budget.plan(analyze(chat), model(10**6), settings(compaction_enabled=True, mask_trigger="always"))
+    assert {"dedupe", "mask"} <= always.techniques
     high = budget.plan(analyze(chat), model(5000), s)
     assert high.pressure == "over" and "history" in high.techniques
     assert any("utilization" in d for d in high.decisions)
@@ -159,8 +162,12 @@ def test_mask_trigger_pressure_masks_only_when_needed():
 
 
 def test_budget_disabled_keeps_only_the_triggers_that_need_no_budget():
-    plan = budget.plan(analyze(long_chat(14)), model(3000), settings(budget_enabled=False, compaction_enabled=True))
+    plan = budget.plan(analyze(long_chat(14)), model(3000), settings(budget_enabled=False, compaction_enabled=True,
+                                                                     mask_trigger="always"))
     assert not plan.enabled and "history" not in plan.techniques and "mask" in plan.techniques
+    # with the default pressure trigger there is no pressure to trigger on without a budget
+    default = budget.plan(analyze(long_chat(14)), model(3000), settings(budget_enabled=False, compaction_enabled=True))
+    assert "mask" not in default.techniques and "dedupe" in default.techniques
 
 
 def test_calibration_factor_scales_utilization():

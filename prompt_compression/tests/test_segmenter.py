@@ -7,11 +7,11 @@ from prompt_compression.segmenter import (
 )
 
 PROSE_1 = (
-    "Customers frequently cite reliability and after-sales support as the deciding factors when choosing between "
+    "Customers frequently cite reliability and aftercare support as the deciding factors when choosing between "
     "suppliers whose prices differ only by a few percentage points."
 )
 PROSE_2 = (
-    "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their larger "
+    "Industry observers often note that midsize manufacturers adapt faster to new standards than their larger "
     "competitors, mainly because decisions pass through fewer layers of management."
 )
 LOG_BLOCK = (

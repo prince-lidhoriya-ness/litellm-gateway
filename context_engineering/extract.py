@@ -83,16 +83,18 @@ def json_shape(text: str):
     return None
 
 
-def key_lines(text: str, follow_up: str = "", max_tokens: int = 150, head_tail: int = 3) -> list[str]:
+def key_lines(text: str, follow_up: str = "", max_tokens: int = 150, head_tail: int = 3, later: str = "") -> list[str]:
     """Lines worth keeping from a tool output, verbatim and in their original order.
 
     Priority when the budget runs out: error lines, lines naming an identifier that the follow-up text (the assistant
-    message right after the tool result) mentions, then the first and last `head_tail` lines."""
+    message right after the tool result) mentions, lines naming an identifier that `later` messages mention (any user
+    or assistant turn after it, as far as the caller allows), then the first and last `head_tail` lines."""
     lines = text.splitlines()
     if not lines:
         return []
     priority: dict = {}
     referenced = {token for token in identifiers(follow_up) if len(token) >= 4} if follow_up else set()
+    mentioned = {token for token in identifiers(later) if len(token) >= 4} - referenced if later else set()
     for position, line in enumerate(lines):
         if not line.strip():
             continue
@@ -100,9 +102,11 @@ def key_lines(text: str, follow_up: str = "", max_tokens: int = 150, head_tail: 
             priority.setdefault(position, 0)
         elif referenced and any(token in line for token in referenced):
             priority.setdefault(position, 1)
+        elif mentioned and any(token in line for token in mentioned):
+            priority.setdefault(position, 2)
     for position in list(range(min(head_tail, len(lines)))) + list(range(max(0, len(lines) - head_tail), len(lines))):
         if lines[position].strip():
-            priority.setdefault(position, 2)
+            priority.setdefault(position, 3)
     chosen, used = set(), 0
     for position in sorted(priority, key=lambda p: (priority[p], p)):
         line = lines[position]

@@ -33,3 +33,11 @@ RUN /app/.venv/bin/python3 -c "import sys; from huggingface_hub import snapshot_
 ENV HF_HUB_OFFLINE=1 \
     TRANSFORMERS_OFFLINE=1 \
     TOKENIZERS_PARALLELISM=false
+
+# The gateway's own packages, loaded by litellm_config.yaml's callbacks. They must be in the image: Kubernetes mounts
+# only config.yaml (k8s/deployment.yaml), so without these the proxy cannot import its callbacks
+# (reports/production-readiness-audit/STRATEGY.md, N1). docker-compose.quickstart.yml still bind-mounts the same
+# directories over these copies, so local edits apply without a rebuild. Tests and eval data stay out (.dockerignore).
+COPY prompt_compression /app/prompt_compression
+COPY context_engineering /app/context_engineering
+COPY observability /app/observability

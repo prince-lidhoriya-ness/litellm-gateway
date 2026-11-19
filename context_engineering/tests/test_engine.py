@@ -53,7 +53,9 @@ def test_long_chat_on_a_small_window_is_compacted_and_the_summary_is_protected()
     chat = long_chat(14)
     result = make(compaction_enabled=True, window_tokens=8000).process(chat, model="ollama_chat/llama3.2:3b")
     report = result.report
-    assert report.summary_index is not None and report.hints == {"protected_indexes": [report.summary_index]}
+    assert report.summary_index is not None and report.hints["protected_indexes"] == [report.summary_index]
+    # the compression stage selects only under pressure (STRATEGY.md, §3.1): the hint is the pressure after this stage
+    assert report.hints["pressure"] in ("low", "moderate", "high", "over")
     assert result.messages[report.summary_index]["content"].startswith(SUMMARY_MARKER)
     assert report.utilization_after < report.utilization_before
     assert result.messages[-1] == chat[-1]
@@ -68,7 +70,11 @@ def test_each_feature_flag_switches_its_technique_off(flag):
     if flag == "prefix_cache_enabled":
         assert result.breakpoints is None and result.report.caching == "unknown"
     if flag == "budget_enabled":
-        assert result.report.masked                  # masking needs no budget
+        # Without a budget there is no pressure, so the default pressure trigger never masks (STRATEGY.md, H1);
+        # duplicate folding needs no budget and still runs.
+        assert not any(record.reason == "age" for record in result.report.masked)
+        always = make(budget_enabled=False, mask_trigger="always").process(messages, model="anthropic/claude-sonnet-4-5")
+        assert always.report.masked                  # the "always" trigger needs no budget
 
 
 def test_everything_off_returns_the_same_messages():
@@ -99,7 +105,8 @@ def test_a_stage_that_breaks_an_invariant_is_undone(monkeypatch):
     result = make(compaction_enabled=True, window_tokens=8000).process(chat, model="m")
     assert "history:invariant" in result.report.stages_failed
     assert any(v.startswith("history:") for v in result.report.invariant_violations)
-    assert result.messages == chat and result.report.summary_index is None and result.report.hints == {}
+    assert result.messages == chat and result.report.summary_index is None
+    assert "protected_indexes" not in result.report.hints
 
 
 def test_output_is_deterministic():

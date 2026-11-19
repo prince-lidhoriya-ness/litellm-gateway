@@ -1,0 +1,10 @@
+[gateway: observation obs_a76e59a9cac7 masked by gateway | tool=read_file | 630 tokens, 45 lines | original stored]
+Key lines (verbatim):
+exporter/batch.py:352: rows = read_rows(path)
+exporter/batch.py:53: log.error('reset: %s', exc)
+tests/test_export.py:185: log.error('reset: %s', exc)
+exporter/config.py:351: resp = self.client.post(self.url, json=payload, timeout=30)
+exporter/client.py:758: resp = self.client.post(self.url, json=payload, timeout=30)
+exporter/config.py:716: log.error('reset: %s', exc)
+tests/test_export.py:744: resp = self.client.post(self.url, json=payload, timeout=30)
+[Full output omitted to save context. To restore it, mention obs_a76e59a9cac7 in a message, or call the tool again.]

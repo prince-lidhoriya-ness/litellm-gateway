@@ -109,7 +109,8 @@ The main switches:
 | `PREFIX_CACHE_OPTIMIZATION_ENABLED` | `true` | Cache-aware construction and breakpoints |
 | `CONTEXT_MAX_UTILIZATION`, `CONTEXT_SAFETY_BUFFER`, `CONTEXT_RESERVED_OUTPUT_TOKENS` | 0.70, 0.10, 4096 | Effective target |
 | `CONTEXT_RECENT_TURNS`, `JIT_RETRIEVAL_MAX_TURNS`, `CONTEXT_COMPACTION_THRESHOLD`, `OBSERVATION_MAX_TOKENS` | 4, 3, 0.80, 400 | Windows and thresholds |
-| `PROMPT_COMPRESSION_ENABLED` / `_MODE` / `_ROUTES` | `true` / `enforce` / `narrative,passages,records` | Compression |
+| `PROMPT_COMPRESSION_ENABLED` / `_MODE` / `_ROUTES` | `true` / `enforce` / `narrative,logfold` | Compression (`passages`, `records` opt-in) |
+| `OBSERVATION_MASK_TRIGGER` | `pressure` | Mask tool outputs only when the budget needs it |
 | `REDACT_SENSITIVE` | `false` | Redaction guardrail (both stages honour it) |
 
 Per-request opt-outs go in the request body: `"metadata": {"context_engineering": false}` and/or
@@ -130,7 +131,8 @@ plain = client.chat.completions.create(model="obs-priced-llama", messages=messag
 Every request's metadata (spend logs, Langfuse trace metadata) holds the decisions, with no prompt text:
 
 - `context_engineering`: tokens by category, pressure, masked refs, history decisions, `saved_by_technique`;
-- `prompt_compression`: tokens, ratio, per-message actions.
+- `prompt_compression`: tokens, ratio, per-message actions, intent, `fidelity` (lossy units checked / retried /
+  reverted per route). Every removed span is replaced by a `[gateway: ...]` marker the model sees.
 
 To restore a masked tool output or compacted turn, mention its ref (`obs_…` / `turn_…`) in a message. With
 `CONTEXT_STORE=redis`, `python -m context_engineering.recover <ref>` prints the stored original.

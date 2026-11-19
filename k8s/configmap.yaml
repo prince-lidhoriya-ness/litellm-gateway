@@ -18,3 +18,20 @@ data:
   OTEL_ENVIRONMENT_NAME: "production"
   OBS_ENABLED: "true"
   OBS_CAPTURE_TEXT: "false"
+  # Prompt optimisation: safe production defaults (reports/production-readiness-audit/STRATEGY.md, Phase 0, N2).
+  # Both stages run in shadow mode: they compute and report what they would save, but the provider receives the
+  # original request. Switch a stage to "enforce" only after the Phase 2 holdout shows billed-cost and quality results.
+  PROMPT_COMPRESSION_MODE: "shadow"
+  CONTEXT_ENGINEERING_MODE: "shadow"
+  PROMPT_COMPRESSION_FAIL_MODE: "open"
+  CONTEXT_ENGINEERING_FAIL_MODE: "open"
+  # Identifier-safe prose compression and log template folding (question-independent, every fold leaves a marker and
+  # passes the fidelity guard). Record and passage selection stay opt-in: they deleted the answer on wording alone in
+  # the audit (C1) and now run only on a lookup intent under context pressure; add them per deployment once the shadow
+  # data (prompt_pipeline_fidelity_total, reverted / checked) supports it.
+  PROMPT_COMPRESSION_ROUTES: "narrative,logfold"
+  # Mask old tool outputs only when the budget needs it, not at 14% utilization (audit H1).
+  OBSERVATION_MASK_TRIGGER: "pressure"
+  # The store is never needed for correctness (the client resends the history) and a Redis outage made every request
+  # 2 s slower (audit M1).
+  CONTEXT_STORE: "none"

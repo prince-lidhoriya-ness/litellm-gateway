@@ -176,11 +176,13 @@ data:
   OBS_CAPTURE_TEXT: "false"
 ```
 
-The `litellm_config.yaml` file that compose mounts as a volume
-(`/app/config.yaml`) should instead be baked into the image or supplied as a
-second `ConfigMap` mounted at the same path — use whichever your rollout
-process prefers; a `ConfigMap` volume lets you change routing without
-rebuilding the image.
+For production, mount `k8s/litellm_config.prod.yaml` (generated from
+`litellm_config.yaml` by `python k8s/build_prod_config.py`, with message logging
+off and `/metrics` authenticated) as a second `ConfigMap` at `/app/config.yaml`;
+see `k8s/README.md`. Do not mount the development `litellm_config.yaml` that
+compose uses. A `ConfigMap` volume lets you change routing without rebuilding
+the image. The gateway packages themselves are baked into the image by the
+`Dockerfile`.
 
 ## 7. Kubernetes manifests
 
@@ -291,7 +293,8 @@ spec:
                   number: 4000
 ```
 
-`litellm_config.yaml` leaves `/metrics` unauthenticated behind TLS only; put
+The development `litellm_config.yaml` leaves `/metrics` unauthenticated (the
+production `k8s/litellm_config.prod.yaml` requires a key); either way, put
 the ALB behind a TLS certificate (as above) and do not expose this Service
 directly with `type: LoadBalancer`, which would skip the ALB/TLS layer.
 
@@ -370,7 +373,7 @@ kubectl -n litellm-gateway rollout undo deployment/litellm-gateway
 - [ ] RDS Postgres and ElastiCache Redis created, reachable only from the
       cluster's security group.
 - [ ] Secrets in Secrets Manager (or a `Secret` object), never committed to git.
-- [ ] `litellm_config.yaml` mounted/baked the same as in compose.
+- [ ] `k8s/litellm_config.prod.yaml` (not the development config) mounted at `/app/config.yaml`.
 - [ ] Readiness/liveness probes point at `/health/readiness` and
       `/health/liveliness`, with `initialDelaySeconds` covering model load.
 - [ ] Ingress terminates TLS before `/metrics` is reachable.

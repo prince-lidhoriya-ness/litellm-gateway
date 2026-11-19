@@ -2,7 +2,7 @@
 
   segment and classify  -> kind (segmenter.py) and sensitive (sensitivity.py) are filled in
   router                -> action, reason, selectable, compressible are filled in
-  actions               -> text, dropped are changed
+  actions               -> text, dropped, marker are changed
   reassemble            -> the units of a message part are joined back in order
 """
 
@@ -12,6 +12,7 @@ from typing import Optional
 KEEP = "keep"
 SELECT = "select"
 COMPRESS = "compress"
+FOLD = "fold"
 
 
 @dataclass
@@ -26,11 +27,13 @@ class Unit:
     sensitive_source: str = ""    # "rules" | "model" | "error" | ""
     rule_hits: tuple = ()
     edge: bool = False            # first or last paragraph of the latest user message
-    action: str = KEEP            # keep | select | compress (the router's decision)
-    reason: str = ""              # why: sensitive, last_user, edge, code, structured, exact, route_off, passage, records, prose
+    action: str = KEEP            # keep | select | compress | fold (the router's decision)
+    reason: str = ""              # why: sensitive, last_user, edge, code, structured, exact, route_off, passage, records,
+                                  # prose, logfold
     selectable: bool = False      # may be dropped whole by a select-or-drop route
     compressible: bool = False    # may be sent to LLMLingua-2
     dropped: bool = False         # removed by select-or-drop, or merged into a compressed run
+    marker: bool = False          # the unit's text is now a gateway omission marker (never compressed, never re-marked)
 
     @property
     def full(self) -> str:

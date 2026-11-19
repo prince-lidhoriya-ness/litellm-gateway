@@ -1,0 +1,110 @@
+[
+ {
+  "case": "C_backend_log_identifier",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 5634,
+  "out_tokens": 160,
+  "secs": 358.5,
+  "correct": true,
+  "answer": "The order \"ord-7731\" failed due to a combination of factors. Here's a summary of the events leading to its failure:  1. **Payment authorization timed out**: After 30,000ms, the payment authorization for order \"ord-7731\" timed out."
+ },
+ {
+  "case": "C_backend_log_identifier",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 276,
+  "out_tokens": 158,
+  "secs": 33.7,
+  "correct": false,
+  "answer": "Based on the provided service logs, order ord-7731 failed due to a payment authorization timeout. The logs indicate that the payment authorization timed out after 30000ms (30 seconds), which suggests that the payment processing to"
+ },
+ {
+  "case": "G_prose_doc",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 1423,
+  "out_tokens": 11,
+  "secs": 59.9,
+  "correct": true,
+  "answer": "The minimum allowed idle timeout is 900 seconds."
+ },
+ {
+  "case": "G_prose_doc",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 535,
+  "out_tokens": 16,
+  "secs": 23.7,
+  "correct": true,
+  "answer": "The minimum allowed idle timeout is 900 seconds (or 15 minutes)."
+ },
+ {
+  "case": "E_ticket_lookup",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 1437,
+  "out_tokens": 15,
+  "secs": 43.6,
+  "correct": true,
+  "answer": "The customer gave the order number 88-4471-XQ."
+ },
+ {
+  "case": "E_ticket_lookup",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 1015,
+  "out_tokens": 16,
+  "secs": 27.2,
+  "correct": true,
+  "answer": "The customer gave the order number as 88-4471-XQ."
+ },
+ {
+  "case": "H_agent_old_unref",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 10871,
+  "out_tokens": 29,
+  "secs": 551.0,
+  "correct": true,
+  "answer": "db.pool.max_size was set to 17, and there was a comment indicating that it was raised from 10 after the March incident."
+ },
+ {
+  "case": "H_agent_old_unref",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 6028,
+  "out_tokens": 53,
+  "secs": 235.3,
+  "correct": false,
+  "answer": "Let me check the config file again.   Ah, yes! According to the config file, `db.pool.max_size` was set to `100`. And, yes, there was a comment next to it: `# max connections to maintain in the pool`."
+ },
+ {
+  "case": "I_long_chat",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 2426,
+  "out_tokens": 54,
+  "secs": 73.5,
+  "correct": true,
+  "answer": "At the start, you gave the following constraints:  1. You run on EKS (Elastic Container Service for Kubernetes). 2. You must never suggest using `sudo` or disabling TLS verification. 3. The cluster name is `prod-eu-3`."
+ },
+ {
+  "case": "I_long_chat",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 979,
+  "out_tokens": 56,
+  "secs": 31.8,
+  "correct": true,
+  "answer": "At the start, you gave the following constraints:  1. The cluster is running on EKS (Elastic Container Service for Kubernetes). 2. You must never suggest using `sudo` or disabling TLS verification. 3. The cluster name is `prod-eu-"
+ },
+ {
+  "case": "J_ident_in_prose",
+  "cfg": "baseline",
+  "provider_prompt_tokens": 645,
+  "out_tokens": 25,
+  "secs": 18.6,
+  "correct": true,
+  "answer": "The tracking code for the incident was NIMBUS-5044, and it was running on port 8443."
+ },
+ {
+  "case": "J_ident_in_prose",
+  "cfg": "gateway",
+  "provider_prompt_tokens": 277,
+  "out_tokens": 23,
+  "secs": 7.6,
+  "correct": true,
+  "answer": "The tracking code was NIMBUS - 5044, and the port in use was 8443."
+ }
+]

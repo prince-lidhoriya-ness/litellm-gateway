@@ -224,6 +224,8 @@ class ContextEngineeringCallback(CustomLogger):
         for kind, count in report.restored.items():
             if count:
                 m.RESTORED.labels(kind).inc(count)
+        if report.refetches:
+            m.REFETCH.labels("shadow" if shadow else "enforce").inc(report.refetches)
         if report.summary_index is not None:
             m.COMPACTIONS.labels(report.summary_source or "unknown").inc()
 

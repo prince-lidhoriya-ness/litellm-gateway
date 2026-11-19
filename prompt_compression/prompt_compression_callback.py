@@ -103,6 +103,21 @@ def _protected_indexes(data: dict) -> frozenset:
     return frozenset()
 
 
+_PRESSURE_LEVELS = ("low", "moderate", "high", "over")
+
+
+def _pressure_hint(data: dict):
+    """The context-engineering stage's pressure level for this request (low, moderate, high, over), or None when that
+    stage did not run, ran in shadow mode (it writes no hints then) or reported nothing usable. Passage and record
+    selection need enough pressure when one is reported (router.selection_permitted)."""
+    for metadata in gate.metadata_dicts(data):
+        engineering = metadata.get("context_engineering")
+        hints = engineering.get("hints") if isinstance(engineering, dict) else None
+        if isinstance(hints, dict) and hints.get("pressure") in _PRESSURE_LEVELS:
+            return hints["pressure"]
+    return None
+
+
 class PromptCompressionCallback(CustomLogger):
     def __init__(self, pipeline: PromptPipeline | None = None, settings: PipelineSettings | None = None):
         super().__init__()
@@ -187,15 +202,18 @@ class PromptCompressionCallback(CustomLogger):
         with self._in_flight_lock:
             self._in_flight -= 1
 
-    def _work(self, pipeline: PromptPipeline, messages: list, deadline: Deadline, protected: frozenset = frozenset()):
+    def _work(self, pipeline: PromptPipeline, messages: list, deadline: Deadline, protected: frozenset = frozenset(),
+              pressure=None):
         """Runs in the worker pool: the token-count gate, then the pipeline."""
         decision = gate.size_check(messages, self.settings)
         if not decision.allow:
             return decision, None, None
+        extra = {}
         if protected:
-            new_messages, report = pipeline.process(messages, deadline=deadline, protected=protected)
-        else:
-            new_messages, report = pipeline.process(messages, deadline=deadline)
+            extra["protected"] = protected
+        if pressure is not None:
+            extra["pressure"] = pressure
+        new_messages, report = pipeline.process(messages, deadline=deadline, **extra)
         return decision, new_messages, report
 
     # ---- the hook ------------------------------------------------------------------------------------------------
@@ -224,7 +242,7 @@ class PromptCompressionCallback(CustomLogger):
         context = contextvars.copy_context()          # trace context and request id reach the worker thread
         try:
             future = self._executor.submit(context.run, self._work, pipeline, data["messages"], deadline,
-                                           _protected_indexes(data))
+                                           _protected_indexes(data), _pressure_hint(data))
         except BaseException:
             self._release()
             raise

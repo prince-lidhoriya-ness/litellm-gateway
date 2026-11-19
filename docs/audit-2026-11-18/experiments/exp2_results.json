@@ -1,0 +1,236 @@
+{
+  "0.4": {
+    "origin_tokens": 2149,
+    "compressed_tokens": 853,
+    "ratio": 2.52,
+    "seconds_one_call": 7.39,
+    "exact_survival": "2/20",
+    "normalized_survival": "15/20",
+    "rows": [
+      {
+        "kind": "id",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "amount",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "ip",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "date",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "config_key",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "error_code",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "name",
+        "exact": true,
+        "normalized": true
+      },
+      {
+        "kind": "path",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "inline_code_call",
+        "exact": false,
+        "normalized": false
+      },
+      {
+        "kind": "inline_code_attr",
+        "exact": false,
+        "normalized": false
+      },
+      {
+        "kind": "expression",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "version",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "commit_hash",
+        "exact": true,
+        "normalized": true
+      },
+      {
+        "kind": "email",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "negation",
+        "exact": false,
+        "normalized": false
+      },
+      {
+        "kind": "bound",
+        "exact": false,
+        "normalized": false
+      },
+      {
+        "kind": "threshold",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "json_key",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "condition",
+        "exact": false,
+        "normalized": false
+      },
+      {
+        "kind": "percent",
+        "exact": false,
+        "normalized": true
+      }
+    ]
+  },
+  "0.6": {
+    "origin_tokens": 2160,
+    "compressed_tokens": 1267,
+    "ratio": 1.7,
+    "seconds_one_call": 6.52,
+    "exact_survival": "4/20",
+    "normalized_survival": "19/20",
+    "rows": [
+      {
+        "kind": "id",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "amount",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "ip",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "date",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "config_key",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "error_code",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "name",
+        "exact": true,
+        "normalized": true
+      },
+      {
+        "kind": "path",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "inline_code_call",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "inline_code_attr",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "expression",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "version",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "commit_hash",
+        "exact": true,
+        "normalized": true
+      },
+      {
+        "kind": "email",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "negation",
+        "exact": true,
+        "normalized": true
+      },
+      {
+        "kind": "bound",
+        "exact": true,
+        "normalized": true
+      },
+      {
+        "kind": "threshold",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "json_key",
+        "exact": false,
+        "normalized": true
+      },
+      {
+        "kind": "condition",
+        "exact": false,
+        "normalized": false
+      },
+      {
+        "kind": "percent",
+        "exact": false,
+        "normalized": true
+      }
+    ]
+  },
+  "scaling_rate_0.4": [
+    {
+      "origin_tokens": 224,
+      "seconds": 1.39
+    },
+    {
+      "origin_tokens": 896,
+      "seconds": 4.4
+    },
+    {
+      "origin_tokens": 2240,
+      "seconds": 6.36
+    }
+  ]
+}

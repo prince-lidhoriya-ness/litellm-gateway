@@ -65,6 +65,20 @@ VALIDATION_REJECTS = Counter(
     "Compressed blocks rejected by validation (ratio cap exceeded after the lighter retry) and left as they were.",
     ["label"],
 )
+# Fidelity guard (prompt_compression/fidelity.py, STRATEGY.md H4): lossy units checked, retried lighter and reverted, per
+# route (compress | records | passages | logfold) and revert reason (identifier | referenced | severity). Recorded in
+# shadow mode too (mode="shadow"): the Phase 1 exit criterion is reverted / checked under 5% on shadow traffic.
+FIDELITY = Counter(
+    "prompt_pipeline_fidelity", "Lossy units checked, retried and reverted by the fidelity guard.",
+    ["route", "result", "reason", "mode"],
+)
+# Every lossy removal leaves a marker the model sees (STRATEGY.md, C1.3 and invariant 17); this is the operations side.
+OMISSION_MARKERS = Counter(
+    "prompt_pipeline_omission_markers", "Omission markers written in place of folded or dropped content.", ["mode"],
+)
+LOG_LINES_FOLDED = Counter(
+    "prompt_pipeline_log_lines_folded", "Log lines folded into template markers (route logfold).", ["mode"],
+)
 COMPRESS_STOPPED = Counter(
     "prompt_pipeline_compress_stopped", "Requests whose compression stopped early and sent the rest unchanged.",
     ["reason"],

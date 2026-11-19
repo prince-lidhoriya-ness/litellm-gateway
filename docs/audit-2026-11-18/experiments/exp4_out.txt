@@ -1,0 +1,25 @@
+baseline single: {'tag': 'single', 'status': 'ok', 'reason': None, 'stop': None, 'calls': 1, 'elapsed_ms_reported': 8708.0, 'wall_ms': 8738.1}
+== wave1 N=8 (cold, simultaneous): n=8 batch_wall=10.02s in_flight_at_return=1 orphan_drain_after_return=3.28s
+   outcomes: {'ok/-': 1, 'error/timeout after 10.0s: TimeoutError': 1, 'ok/deadline': 2, 'skipped/busy': 4}
+   hook wall ms: min=0.0 median=8748.6 max=10019.9
+           w1-0 status=ok reason=None stop=None calls=1 wall=8748.6
+           w1-1 status=error reason=timeout after 10.0s: TimeoutError stop=None calls=0 wall=10019.9
+           w1-2 status=ok reason=None stop=deadline calls=0 wall=9017.7
+           w1-3 status=ok reason=None stop=deadline calls=0 wall=9015.1
+           w1-4 status=skipped reason=busy stop=None calls=0 wall=0.0
+           w1-5 status=skipped reason=busy stop=None calls=0 wall=0.0
+           w1-6 status=skipped reason=busy stop=None calls=0 wall=0.0
+           w1-7 status=skipped reason=busy stop=None calls=0 wall=0.0
+== wave2 N=4 (launched right after wave1, cold): n=4 batch_wall=10.0s in_flight_at_return=1 orphan_drain_after_return=4.39s
+   outcomes: {'error/timeout after 10.0s: TimeoutError': 1, 'ok/-': 1, 'ok/deadline': 2}
+   hook wall ms: min=7530.3 median=9023.6 max=9997.9
+           w2-0 status=error reason=timeout after 10.0s: TimeoutError stop=None calls=0 wall=9997.9
+           w2-1 status=ok reason=None stop=None calls=1 wall=7530.3
+           w2-2 status=ok reason=None stop=deadline calls=0 wall=9023.6
+           w2-3 status=ok reason=None stop=deadline calls=0 wall=9008.4
+CE {'target': 5000, 'tokens_before': 5316, 'status': 'ok', 'error': None, 'reason': None, 'elapsed_ms_reported': 64.1, 'wall_ms': 79.3, 'tokens_after': 5630, 'masked': 0}
+CE {'target': 20000, 'tokens_before': 20311, 'status': 'ok', 'error': None, 'reason': None, 'elapsed_ms_reported': 69.2, 'wall_ms': 103.9, 'tokens_after': 10477, 'masked': 24}
+CE {'target': 60000, 'tokens_before': 60576, 'status': 'ok', 'error': None, 'reason': None, 'elapsed_ms_reported': 195.3, 'wall_ms': 287.1, 'tokens_after': 25140, 'masked': 84}
+CE {'target': 120000, 'tokens_before': 120400, 'status': 'ok', 'error': None, 'reason': None, 'elapsed_ms_reported': 287.0, 'wall_ms': 452.5, 'tokens_after': 46543, 'masked': 176}
+== part C: CE n=12 target=20000 batch_wall=0.94s outcomes={'ok/-': 12} wall_ms min=179.9 median=509.2 max=760.5
+exit=0

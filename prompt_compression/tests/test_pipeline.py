@@ -11,11 +11,11 @@ from .fakes import RateStubCompressor, StubCompressor, StubDetector
 LONG = " ".join(["word"] * 80)
 
 PROSE_1 = (
-    "Customers frequently cite reliability and after-sales support as the deciding factors when choosing between "
+    "Customers frequently cite reliability and aftercare support as the deciding factors when choosing between "
     "suppliers whose prices differ only by a few percentage points across the whole region."
 )
 PROSE_2 = (
-    "Industry observers often note that mid-sized manufacturers adapt faster to new standards than their larger "
+    "Industry observers often note that midsize manufacturers adapt faster to new standards than their larger "
     "competitors, mainly because decisions pass through fewer layers of management and approval."
 )
 PROSE_3 = (
@@ -294,7 +294,8 @@ def test_a_json_array_stays_valid_after_record_selection():
     question = "What is the total of order ORD-0039?"
     messages = [{"role": "user", "content": join("Use the data.", f"[\n{records}\n]", question)}]
     pipeline, _, _ = make_pipeline(routes=frozenset({"records"}), protect_edges=True)
-    body = pipeline.process(messages)[0][0]["content"].split("\n\n")[1]
+    marker, body = pipeline.process(messages)[0][0]["content"].split("\n\n")[1].split("\n", 1)
+    assert marker.startswith("[gateway: ") and "lines omitted" in marker      # above the array, not inside it
     parsed = json.loads(body)
     assert any(item["order_id"] == "ORD-0039" for item in parsed) and len(parsed) < 40
 
@@ -310,10 +311,12 @@ def test_passages_the_question_does_not_need_are_dropped_whole():
     fillers[4] = relevant
     question = "What does the Zorvex programme deliver?"
     messages = [{"role": "user", "content": join("Use the passages below.", *fillers, question)}]
-    pipeline, compressor, _ = make_pipeline(routes=frozenset({"passages"}), protect_edges=True)
+    # The question names no identifier: selection mechanics are tested with the intent gate off (STRATEGY.md, M3).
+    pipeline, compressor, _ = make_pipeline(routes=frozenset({"passages"}), protect_edges=True, intent_gate=False)
     new_messages, report = pipeline.process(messages)
     content = new_messages[0]["content"]
     assert relevant in content and content.startswith("Use the passages") and content.endswith(question)
+    assert report.segments["omission_markers"] >= 1 and "omitted here" in content
     assert 0 < report.segments["passages_dropped"] < 9 and compressor.calls == []
     assert report.messages[0]["action"] == "selected_passages" and report.tokens_after < report.tokens_before
 
@@ -331,7 +334,8 @@ def test_with_passage_selection_each_passage_is_judged_alone():
     fillers[6] = relevant
     question = "What does the Zorvex programme deliver?"
     messages = [{"role": "user", "content": join("Use the passages below.", *fillers, question)}]
-    pipeline, _, detector = make_pipeline(["SENS"], routes=frozenset({"passages"}), protect_edges=True)
+    pipeline, _, detector = make_pipeline(["SENS"], routes=frozenset({"passages"}), protect_edges=True,
+                                          intent_gate=False)
     new_messages, report = pipeline.process(messages)
     content = new_messages[0]["content"]
     assert len(detector.checked) == 9 and all("\n\n" not in text for text in detector.checked)
@@ -343,7 +347,7 @@ def test_a_short_passage_is_judged_with_its_neighbour():
     short = "Ok, noted."
     paragraphs = [PROSE_1, short, PROSE_2, PROSE_3]
     messages = [{"role": "user", "content": join("Read these notes.", *paragraphs, "Question: what is noted?")}]
-    pipeline, _, detector = make_pipeline(routes=frozenset({"passages"}), protect_edges=True)
+    pipeline, _, detector = make_pipeline(routes=frozenset({"passages"}), protect_edges=True, intent_gate=False)
     pipeline.process(messages)
     assert detector.checked == [PROSE_1, join(short, PROSE_2), PROSE_3]
 

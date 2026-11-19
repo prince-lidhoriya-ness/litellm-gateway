@@ -1,4 +1,5 @@
-# The image only needs docker/requirements-image.txt; the code is mounted by docker-compose.
+# The image needs docker/requirements-image.txt and the three gateway packages (Dockerfile COPY); docker-compose
+# bind-mounts the same packages over them for local development.
 # Keeping the rest out makes builds fast and keeps secrets (.env) out of the build context.
 .env
 .env.*
@@ -15,4 +16,8 @@ reports
 evals
 monitoring
 prompt_compression/eval
+prompt_compression/dev
+**/tests
+**/pytest.ini
+**/.ruff_cache
 *.log

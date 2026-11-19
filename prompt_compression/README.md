@@ -19,8 +19,12 @@ Client request  (messages + metadata)
  Router ---------------- the task type picks the action
       |
       +--> Keep verbatim   code, data, PII, the instruction and the question
-      +--> Select or drop  whole old turns; passages and log lines of the latest user message, lookups only
-      +--> Compress text   running prose through LLMLingua-2, 3x cap
+      +--> Fold logs       runs of near-identical log lines -> one marker line (question-independent)
+      +--> Select or drop  opt-in: passages and log lines of the latest user message, lookup intent, under pressure
+      +--> Compress text   running prose through LLMLingua-2, identifier-safe, 3x cap
+      |
+      +--> Fidelity guard  every lossy unit: a removed string the conversation references -> retry lighter / revert unit
+      |                    every removal leaves a "[gateway: ...]" marker the model sees
       |
       v
  Reassemble in order --- ratio and tokens logged
@@ -47,7 +51,7 @@ what kind of text a block is, and whether it is sensitive.
 | Gate | `gate.py` | Disabled, not a chat call, per-request opt-out; too few / too many tokens (`size_check`, in the worker) |
 | Gate, Fail open | `prompt_compression_callback.py` | LiteLLM `CustomLogger.async_pre_call_hook`: redaction, admission, bounded worker pool, deadline and timeout, fail open / closed, shadow mode, metadata, logging |
 | | `deadline.py` | The request deadline every model call checks; lock waits bounded by it |
-| Router | `intent.py` | Lookup or transform (summarise, translate, review ...): selection only runs for lookups |
+| Router | `intent.py` | Lookup, diagnose or transform (the default): selection only runs on a positive lookup |
 | Segment and classify | `segmenter.py` | Splits a message into blocks and says what each is; never changes a character |
 | | `rules.py` | Regex + checksum rules (e-mail, phone, IDs, Luhn cards, IBAN, keys, tokens, private keys, passwords); `redact()` |
 | | `sensitivity.py` | Sensitive or not: rules, then topics, then the model's probability against a threshold |
@@ -55,7 +59,9 @@ what kind of text a block is, and whether it is sensitive.
 | | `embedding_classifier.py` | Default model: all-MiniLM-L6-v2 embedding + trained logistic-regression head (`models/sensitivity_head.json`) |
 | | `labels.py` | Candidate labels of the legacy zero-shot backend (`SENSITIVITY_BACKEND=nli`) |
 | Router | `router.py` | Decides keep / select / compress for every unit, and which old turns to drop |
-| Actions | `actions.py` | Carries the plan out: redaction, record and passage selection, LLMLingua-2 with a ratio cap |
+| Actions | `actions.py` | Carries the plan out: redaction, log folding, record and passage selection with omission markers, identifier-safe LLMLingua-2 with a ratio cap, the fidelity guard after each action |
+| | `fidelity.py` | Must-survive strings (identifiers, numbers with units, severity lines), referenced-string check, identifier span splitting, per-route counters |
+| | `logfold.py` | Log template folding (route `logfold`) |
 | | `unit_selectors.py` | BM25 passage ranking, record (line) selection, chat-history trimming |
 | | `compressor_adapter.py` | Thin wrapper over `llmlingua.PromptCompressor` (LLMLingua-2, CPU): pinned revision, deadline-bounded lock, output cache |
 | Reassemble | `pipeline.py` | Runs the stages over `messages`, joins the blocks back in order, builds the report |
@@ -110,9 +116,10 @@ All optional; `../prompt_compression.env.example` lists every variable with its 
 | | `CLASSIFIER_MODEL` / `_LABEL_FORMAT` / `_QUANTIZE` | distilbert-mnli / `descriptive` / `none` | `nli` backend only |
 | | `CLASSIFIER_CACHE_SIZE` / `_MAX_CHUNK_TOKENS` | `2048` / `400` | LRU entries; tokens per chunk for long texts |
 | | `PROMPT_COMPRESSION_EXACT_DENSITY` | `0.15` | Share of identifier-like words that makes a paragraph "exact text" |
-| Router | `PROMPT_COMPRESSION_ROUTES` | `narrative,passages,records` | Active actions: `narrative`, `passages`, `records`, `history` |
+| Router | `PROMPT_COMPRESSION_ROUTES` | `narrative,logfold` | Active actions: `narrative`, `logfold`, `passages`, `records`, `history`. `passages` and `records` are opt-in since the production-readiness audit (C1) |
 | | `PROMPT_COMPRESSION_SELECTION_SCOPE` | `latest_user` | Messages passages/records may thin out: `latest_user` or `all` |
-| | `PROMPT_COMPRESSION_INTENT_GATE` | `true` | No selection for requests that need the whole text (`intent.py`) |
+| | `PROMPT_COMPRESSION_INTENT_GATE` | `true` | Selection only on a positive lookup: the question names an identifier, and is neither diagnose nor transform (`intent.py`) |
+| | `PROMPT_COMPRESSION_SELECTION_MIN_PRESSURE` | `high` | With context engineering in enforce mode in front, selection also needs this pressure (`low` = no check) |
 | Redact | `REDACT_SENSITIVE` | `false` | Guardrail: replace rule matches with `[EMAIL]`, `[API_KEY]`, ... in every message, role and mode |
 | | `PROMPT_COMPRESSION_PRESERVE_LAST_USER` | `false` | Never touch the latest user message |
 | | `PROMPT_COMPRESSION_PROTECT_EDGES` | `true` | Never compress the first and last paragraph of the latest user message |
@@ -123,7 +130,8 @@ All optional; `../prompt_compression.env.example` lists every variable with its 
 | | `PROMPT_COMPRESSION_CACHE_SIZE` | `512` | Compressed outputs remembered per worker; replays earlier turns byte for byte |
 | | `PROMPT_COMPRESSION_MODEL` / `_MODEL_REVISION` / `_EAGER_LOAD` | LLMLingua-2 mBERT / pinned commit / `true` | Checkpoint and revision; load models at proxy start |
 | Select | `PROMPT_COMPRESSION_MIN_PASSAGES` / `_MIN_PASSAGE_TOKENS` / `_PASSAGE_KEEP_RATIO` | `6` / `100` / `0.5` | `passages` route guards and target |
-| | `PROMPT_COMPRESSION_RECORD_MIN_LINES` / `_RECORD_CONTEXT_LINES` | `10` / `1` | `records` route guard and neighbour lines |
+| | `PROMPT_COMPRESSION_RECORD_MIN_LINES` / `_RECORD_CONTEXT_LINES` | `10` / `3` | `records` route guard and neighbour lines |
+| | `PROMPT_COMPRESSION_RECORD_SEVERITY_CONTEXT` / `_RECORD_CORRELATE` / `_RECORD_TIME_WINDOW_S` | `3` / `true` / `10` | Kept whatever they match: error lines with neighbours, lines sharing an id with a match, a timestamp window |
 | | `PROMPT_COMPRESSION_HISTORY_MAX_TOKENS` / `_HISTORY_KEEP_MESSAGES` | `0` / `6` | `history` route budget (0 = off) and the tail that is always kept |
 
 Per-request opt-out: send `"metadata": {"prompt_compression": false}` (or `{"disable_prompt_compression": true}`) in

@@ -16,7 +16,10 @@ LongLLMLingua, report section 5.3) can replace `rank_units` later without touchi
 
 import math
 import re
+from dataclasses import dataclass
 from typing import Callable, Optional, Sequence
+
+from prompt_compression.fidelity import SEVERITY as _SEVERITY
 
 _TOKEN = re.compile(r"[a-z0-9]+(?:[_\-.][a-z0-9]+)*")
 # Function words and question words carry no evidence about which passage is meant.
@@ -63,14 +66,28 @@ def rank_units(query: str, units: Sequence[str], k1: float = 1.5, b: float = 0.7
 
 
 def select_passages(
-    units: Sequence[str], query: str, keep_ratio: float, count_tokens: Callable[[str], int]
+    units: Sequence[str], query: str, keep_ratio: float, count_tokens: Callable[[str], int],
+    require_identifier: bool = False, max_match_share: float = 0.3,
 ) -> Optional[list[bool]]:
     """Keep-flags for whole passages, or None when there is no lexical signal (then nothing is dropped).
 
     Positive-scoring passages are kept best first until `keep_ratio` of the tokens is reached; if they run out first,
     the shortfall is filled with the neighbours of kept passages, because the evidence for a question often sits next
     to the passage that matches it. Original order is the caller's business.
+
+    `require_identifier` (the intent gate's positive lookup, STRATEGY.md M3): the question must name an identifier that
+    occurs in at least one passage and in at most `max_match_share` of them; otherwise nothing is dropped.
     """
+    if require_identifier:
+        lowered = [unit.lower() for unit in units]
+        named = False
+        for identifier in _query_identifiers(query):
+            found = sum(1 for unit in lowered if identifier in unit)
+            if found and found <= max_match_share * len(units):
+                named = True
+                break
+        if not named:
+            return None
     scores = rank_units(query, units)
     if not units or max(scores) <= 0:
         return None
@@ -108,40 +125,113 @@ def _query_identifiers(query: str) -> set[str]:
     return found
 
 
-def select_records(
-    lines: Sequence[str], query: str, subtype: str, context_lines: int = 1, max_match_share: float = 0.3
-) -> Optional[list[bool]]:
-    """Keep-flags for the lines of a log, JSON-lines, CSV or one-object-per-line JSON block.
+@dataclass(frozen=True)
+class RecordSelection:
+    flags: list                 # keep-flag per line
+    matched: tuple              # the question's identifiers that singled out lines (verbatim, lower-case)
+    severity_lines: int         # severity lines kept whatever they match
+    correlated: tuple           # identifiers taken from the matched lines (one hop)
+    time_window_s: float        # seconds kept around matched lines that carry a timestamp (0: no timestamps)
+
+
+_LINE_TIME = re.compile(
+    r"(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2}):(\d{2}(?:[.,]\d+)?)|(?<!\d)(\d{2}):(\d{2}):(\d{2}(?:[.,]\d+)?)(?!\d)"
+)
+# Identifier-like tokens that are times or dates: correlation must not chain lines through "10:01" or "2026-11-17".
+_TIME_TOKEN = re.compile(r"^\d{4}-\d{2}-\d{2}.*$|^\d{1,2}[:.]\d{2}.*$|^\d+(\.\d+)?$")
+
+
+def _line_seconds(line: str) -> Optional[float]:
+    match = _LINE_TIME.search(line)
+    if not match:
+        return None
+    if match.group(1):
+        day = sum(int(part) * scale for part, scale in zip(match.group(1).split("-"), (372, 31, 1)))
+        hours, minutes, seconds = match.group(2), match.group(3), match.group(4)
+    else:
+        day, hours, minutes, seconds = 0, match.group(5), match.group(6), match.group(7)
+    return day * 86400 + int(hours) * 3600 + int(minutes) * 60 + float(seconds.replace(",", "."))
+
+
+def select_records_detailed(
+    lines: Sequence[str], query: str, subtype: str, context_lines: int = 3, max_match_share: float = 0.3,
+    severity_context: int = 3, correlate: bool = True, time_window_s: float = 10.0,
+) -> Optional[RecordSelection]:
+    """Keep-flags for the lines of a log, JSON-lines, CSV or one-object-per-line JSON block, and why they are kept.
 
     Only acts when the question names a record: some identifier-like word of the question must occur in at least one
     line and in at most `max_match_share` of the lines (a word found on most lines is a field name and is ignored).
-    Matching lines and their neighbours are kept, plus the header line of a table and bracket-only lines of a JSON
-    array. Anything else returns None (keep every line).
+    Anything else returns None (keep every line). When it acts, a line is kept when it is (STRATEGY.md, C1.2):
+
+      * a matched line, or within `context_lines` of one;
+      * a severity line (ERROR, FATAL, Exception, Traceback, exit code != 0 ...), or within `severity_context` of one,
+        whatever it matches: the root cause of a failure is usually an error line that does not name the record;
+      * a line that shares an identifier with a matched line (`correlate`, one hop: ord-7731 -> its req- or pay- id),
+        counting only identifiers found on at most `max_match_share` of the lines;
+      * within `time_window_s` seconds of a matched line, when the lines carry timestamps;
+      * a table header line, or a bracket-only line of a JSON array.
     """
     identifiers = _query_identifiers(query)
     if not identifiers or not lines:
         return None
     lowered = [line.lower() for line in lines]
+    limit = max_match_share * len(lines)
     # An identifier that occurs on most lines is a field name ("latency_ms"), not a record id: it says nothing about
     # which record is meant, so only identifiers that single out a few lines count.
     hit_set: set[int] = set()
-    for identifier in identifiers:
+    matched_ids = []
+    for identifier in sorted(identifiers):
         matched = [i for i, line in enumerate(lowered) if identifier in line]
-        if matched and len(matched) <= max_match_share * len(lines):
+        if matched and len(matched) <= limit:
             hit_set.update(matched)
+            matched_ids.append(identifier)
     hits = sorted(hit_set)
-    if not hits or len(hits) > max_match_share * len(lines):
+    if not hits or len(hits) > limit:
         return None
     keep = [False] * len(lines)
-    for index in hits:
-        for neighbour in range(max(0, index - context_lines), min(len(lines), index + context_lines + 1)):
+
+    def around(index: int, distance: int) -> None:
+        for neighbour in range(max(0, index - distance), min(len(lines), index + distance + 1)):
             keep[neighbour] = True
+
+    for index in hits:
+        around(index, context_lines)
+    severity = [i for i, line in enumerate(lines) if line.strip() and _SEVERITY.search(line)]
+    for index in severity:
+        around(index, severity_context)
+    correlated: list[str] = []
+    if correlate:
+        candidates = sorted({token for i in hits for token in _query_identifiers(lowered[i])
+                             if token not in identifiers and not _TIME_TOKEN.match(token)})
+        for token in candidates:
+            matched = [i for i, line in enumerate(lowered) if token in line]
+            if 1 < len(matched) <= limit:
+                correlated.append(token)
+                for index in matched:
+                    keep[index] = True
+    window = 0.0
+    if time_window_s > 0:
+        times = [_line_seconds(line) for line in lines]
+        anchors = [times[i] for i in hits if times[i] is not None]
+        if anchors:
+            window = time_window_s
+            for index, moment in enumerate(times):
+                if moment is not None and any(abs(moment - anchor) <= time_window_s for anchor in anchors):
+                    keep[index] = True
     if subtype in ("csv", "tsv", "table"):
         keep[0] = True
     for index, line in enumerate(lines):
         if _BRACKET_ONLY.match(line):
             keep[index] = True
-    return keep
+    return RecordSelection(keep, tuple(matched_ids), len(severity), tuple(correlated), window)
+
+
+def select_records(
+    lines: Sequence[str], query: str, subtype: str, context_lines: int = 3, max_match_share: float = 0.3, **options
+) -> Optional[list[bool]]:
+    """Keep-flags only (see select_records_detailed); None when the question names no record."""
+    selection = select_records_detailed(lines, query, subtype, context_lines, max_match_share, **options)
+    return None if selection is None else selection.flags
 
 
 def drop_trailing_comma(lines: list[str]) -> list[str]:
