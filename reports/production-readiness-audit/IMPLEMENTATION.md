@@ -5,7 +5,7 @@
 | Strategy | `reports/production-readiness-audit/STRATEGY.md` |
 | Branch | `feature/production-readiness-remediation` (from `audit/production-readiness` at `d3a36e5`; nothing committed) |
 | Date | 2026-11-19 |
-| Status | **Phase 0 implemented and verified locally. Phase 1 implemented and tested. Its exit criterion is met on the 3B and a production-tier model; the shadow-traffic part is pending (see §4).** Phases 2–4 not started, as the strategy requires. |
+| Status | **Phase 0 implemented and verified locally. Phase 1 implemented and tested. Its exit criterion is met on the 3B and a production-tier model; the shadow-traffic part is pending (see §4).** Phase 2.1–2.2 implemented and verified on a local proxy (§6); 2.3–2.4 and Phases 3–4 not started. |
 
 Evidence labels: **TESTED** (an automated test asserts it), **MEASURED** (I ran it and saw the result), **PENDING** (not done, and why).
 
@@ -142,7 +142,7 @@ Model: `nvidia/nemotron-3-ultra-550b-a55b:free` on OpenRouter (`judge-nemotron` 
 | … and on one production-tier model | **Met** (§3.5): C, H, G and J are correct on `nemotron-3-ultra-550b` from the gateway's prompts. This is one run per cell, so it shows the failures are gone, not a failure rate. |
 | `fidelity_revert` < 5% of lossy units in shadow | **PENDING**: needs real shadow traffic. The metric exists: `prompt_pipeline_fidelity_total`, `result="reverted"` / `result="checked"`, `mode="shadow"`. |
 
-Only the shadow-traffic check remains. It needs the Phase 0 configuration running on real traffic, which is also Phase 2.3's input. Phase 2 has **not** been started.
+Only the shadow-traffic check remains. It needs the Phase 0 configuration running on real traffic, which is also Phase 2.3's input. With the user's agreement, this check and Phase 0's staging-EKS check are deferred to the staging rollout. Phase 2.1 and 2.2 (measurement code, which changes nothing a user receives) were built next (§6).
 
 ## 5. Known gaps and deviations
 
@@ -153,3 +153,45 @@ Only the shadow-traffic check remains. It needs the Phase 0 configuration runnin
 * **Refetch counting is approximate by design.** It compares against this request's masked set, which batching keeps stable.
 * **Shadow-mode LLMLingua cost (H5)** is unchanged until Phase 3.5.
 * **M3b** (an eval regression for "Extract all …" being labelled sensitive) is not done. It is in the Medium table, not in Phase 1.
+
+## 6. Phase 2: measurement before claims (2.1 and 2.2 implemented; 2.3 and 2.4 need traffic)
+
+### 6.1 What changed
+
+| Step | Change | Files |
+|---|---|---|
+| 2.1 holdout | **New measurement hook, first in `callbacks`.** Before either stage runs, it puts each conversation in an arm. The key is a salted hash of the client's session id if it sends one, else of the system prompt plus first user message, so a conversation keeps its arm on every turn. The arm, the key and the turn number go into the request metadata and `spend_logs_metadata` (hash only, no text). For a `holdout` conversation, both stages run exactly as in shadow mode: computed, reported (`holdout: true`), original sent. Client opt-outs are `excluded`; the gateway's own calls are `internal`. With the hook not registered, nothing changes. | `observability/measurement.py`, `prompt_compression/holdout.py`, both stage callbacks, `litellm_config.yaml` |
+| 2.1 billed cost | After each answer, per arm and mode: LiteLLM's billed `response_cost`, provider prompt and cached tokens, conversations started (turn 1), and latency (`gateway_holdout_*`). `observability/holdout_report.sql` gives billed **cost per conversation** and **p50/p95 latency** per team and arm from the spend logs. `gateway_optimization_saved_usd` is relabelled a diagnostic estimate. | `observability/measurement.py`, `observability/holdout_report.sql`, `context_engineering/metrics.py` |
+| 2.2 quality sample | Off by default (`GATEWAY_QUALITY_SAMPLE_RATE=0`). A sampled, optimised request keeps its original messages **in memory only** (bounded, with a TTL). After the answer, a background task asks the same model group the same request with the original messages, opted out of both stages and marked internal. It then compares the two answers. `facts` mode lists identifiers and numbers of the original answer missing from the optimised one; `judge` mode also asks `GATEWAY_QUALITY_JUDGE_MODEL` for EQUIVALENT or DIFFERENT, in a randomised order. A `:free` judge is refused unless explicitly allowed (L2). At most `GATEWAY_QUALITY_MAX_INFLIGHT` checks run at once; a sample that finds them busy is dropped and counted, never queued. | `observability/measurement.py` |
+| Config | `k8s/configmap.yaml`: `GATEWAY_HOLDOUT_SHARE=0.05` (it takes effect once a stage is in enforce mode) and quality sampling off. Compose passes the variables through. | `k8s/configmap.yaml`, `docker-compose.quickstart.yml` |
+
+### 6.2 Verification
+
+| Check | Result |
+|---|---|
+| Unit tests | observability **44 passed** (+23, `tests/test_measurement.py`); prompt_compression 329; context_engineering 150 |
+| Holdout on the live proxy (MEASURED) | The image, Postgres, Redis and the echo mock, both stages in **enforce**, `GATEWAY_HOLDOUT_SHARE=0.5`, the prod config. Of 12 two-turn conversations, 6 reached the provider unoptimised on **both** turns and 6 optimised on both. No conversation switched arms. |
+| Per-arm metrics (MEASURED) | `gateway_holdout_requests_total`: 12 holdout/shadow, 12 treatment/enforce, 12 internal (the quality re-runs). `gateway_holdout_conversations_total`: 6 and 6. `gateway_holdout_billed_usd_total` was non-zero for the priced local model and split by arm. |
+| Spend-log report (MEASURED) | `holdout_report.sql` ran against LiteLLM 1.106's real `LiteLLM_SpendLogs`. All 28 rows carried the arm; the report gave conversations, requests, billed USD, USD per conversation and p50/p95 latency per arm. |
+| Quality sampler on the live proxy (MEASURED) | It checked all 12 optimised mock requests through the real router, and dropped the 3 priced requests the stages had not changed (`not_optimised`). The mock echoes its prompt, so the verdicts themselves mean nothing here. |
+| Judge mode against a real judge | **Not run.** Unit-tested with a fake judge. A live judge sends prompts to the judge provider and needs a paid model (L2). |
+
+Two bugs were found on the live proxy and fixed, each with a test:
+* With `turn_off_message_logging`, the success callback sees scrubbed messages, so every request counted as a new conversation. The turn is now recorded in the pre-call decision.
+* The quality re-runs go straight to the router, which runs no pre-call hooks, so they had no arm. They are now recognised by their `gateway_internal` marker.
+
+The re-runs do not appear in the spend logs, since they are not proxy requests. Their cost shows only in the Prometheus `internal` arm.
+
+### 6.3 Pending for Phase 2
+
+| Step | Needs |
+|---|---|
+| 2.2 live | A paid or self-hosted judge deployment (L2), then `GATEWAY_QUALITY_SAMPLE_RATE=0.01`, `GATEWAY_QUALITY_MODE=judge` once enforce is on. |
+| 2.3 | Two weeks of shadow on real traffic (Phase 0 config on staging/production); then join would-have-saved with provider usage per team. Workload class is not in the spend logs; the report groups by team only. |
+| 2.4 | Complete or retract the `reports/context-engineering/REPORT.md` placeholders, with 2.1/2.2 data. |
+| Exit | The per-team table (billed cost per conversation, p95, quality delta; holdout vs treatment) from `holdout_report.sql` plus `gateway_quality_samples_total`. **Only then** turn on enforce per team. |
+
+Known limits:
+* A conversation whose system prompt changes between turns, a date in it for example, changes key and can switch arms. Clients should send a `session_id` to avoid this.
+* The quality re-run uses the request's own temperature, so with temperature > 0 the answers can differ for reasons unrelated to the optimisation.
+* `facts` mode is a lower bound on loss: it only sees identifiers and numbers.

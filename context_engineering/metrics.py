@@ -69,6 +69,9 @@ RETRIEVAL_SCORE = _histogram("context_engine_retrieval_score", "Relevance score 
 # provider_cache is the prompt tokens the provider served from its cache (discounted, not removed).
 ATTRIBUTED_TOKENS = _counter("gateway_optimization_tokens",
                              "Prompt tokens saved (or, for provider_cache, served from cache) by technique.", ["technique"])
+# Diagnostic only, not a savings figure (STRATEGY.md, H2): list price x estimated tokens ignores cache-write churn. The
+# defensible dollar figure is billed cost per conversation, holdout against treatment (observability/measurement.py,
+# gateway_holdout_billed_usd_total and observability/holdout_report.sql).
 ATTRIBUTED_USD = _counter("gateway_optimization_saved_usd",
-                          "ESTIMATE: attributed tokens x the model's input price (cache: price minus cache-read price).",
-                          ["technique"])
+                          "DIAGNOSTIC ESTIMATE, not billed savings: attributed tokens x list input price. Billed cost "
+                          "per arm: gateway_holdout_billed_usd.", ["technique"])

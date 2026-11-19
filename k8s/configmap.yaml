@@ -35,3 +35,11 @@ data:
   # The store is never needed for correctness (the client resends the history) and a Redis outage made every request
   # 2 s slower (audit M1).
   CONTEXT_STORE: "none"
+  # Measurement (STRATEGY.md, Phase 2): 5% of conversations are held out (sent unoptimised) once a stage runs in
+  # enforce mode; in shadow mode both arms already send the original. Billed cost per arm: gateway_holdout_* metrics and
+  # observability/holdout_report.sql over the spend logs.
+  GATEWAY_HOLDOUT_SHARE: "0.05"
+  # Sampled quality checks re-run 1% of optimised requests on the original prompt (an extra billed call each). Off
+  # until enforce mode; "judge" mode needs GATEWAY_QUALITY_JUDGE_MODEL on a paid or self-hosted deployment (audit L2).
+  GATEWAY_QUALITY_SAMPLE_RATE: "0"
+  GATEWAY_QUALITY_MODE: "facts"

@@ -45,7 +45,7 @@ if _GATEWAY_DIR not in sys.path:
 from fastapi import HTTPException  # noqa: E402
 from litellm.integrations.custom_logger import CustomLogger  # noqa: E402
 
-from prompt_compression import gate  # noqa: E402
+from prompt_compression import gate, holdout  # noqa: E402
 from prompt_compression.deadline import Deadline, DeadlineExceeded  # noqa: E402
 from prompt_compression.gate import CHAT_CALL_TYPES, METADATA_KEY  # noqa: E402,F401  (re-exported for observability)
 from prompt_compression.pipeline import PromptPipeline  # noqa: E402
@@ -261,8 +261,10 @@ class PromptCompressionCallback(CustomLogger):
 
         # Shadow mode runs the whole pipeline and reports what it would have sent, but the provider gets the original
         # prompt. tokens_after in the summary is then the hypothetical figure, and status is "shadow", not "ok".
-        shadow = self.settings.mode == "shadow"
-        summary = {"status": "shadow" if shadow else "ok", **report.as_metadata()}
+        # A holdout conversation (holdout.py, STRATEGY.md H2) is treated exactly like shadow mode.
+        in_holdout = holdout.is_holdout(data)
+        shadow = self.settings.mode == "shadow" or in_holdout
+        summary = {"status": "shadow" if shadow else "ok", **report.as_metadata(), "holdout": in_holdout}
         if not shadow:
             data["messages"] = new_messages
         _write_metadata(data, summary, spend_log_messages=self.settings.spend_log_messages)

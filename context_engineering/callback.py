@@ -34,6 +34,7 @@ from context_engineering import metrics as m  # noqa: E402
 from context_engineering import tokens as tk  # noqa: E402
 from context_engineering.engine import ContextEngine  # noqa: E402
 from context_engineering.settings import ContextSettings  # noqa: E402
+from prompt_compression import holdout  # noqa: E402  (stdlib only; shared with the compression stage)
 
 logger = logging.getLogger("context_engineering")
 if not logger.handlers:
@@ -170,8 +171,12 @@ class ContextEngineeringCallback(CustomLogger):
             return self._fail(data, "engine error", exc)
 
         report = result.report
-        shadow = self.settings.mode == "shadow"
+        # A holdout conversation (prompt_compression/holdout.py, STRATEGY.md H2) is treated exactly like shadow mode.
+        in_holdout = holdout.is_holdout(data)
+        shadow = self.settings.mode == "shadow" or in_holdout
         report.status = "shadow" if shadow else "ok"
+        if in_holdout:
+            report.decisions.append("holdout conversation: computed and reported, original sent")
         if not shadow:
             data["messages"] = result.messages
             if result.tools is not data.get("tools") and result.tools is not None:

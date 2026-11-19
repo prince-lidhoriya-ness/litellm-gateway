@@ -132,6 +132,11 @@ services:
       OBS_OTLP_LOGS_ENDPOINT: ${OBS_OTLP_LOGS_ENDPOINT:-http://otel-collector:4318/v1/logs}
       # Key for the user/team/message hashes. Empty = derived from LITELLM_SALT_KEY (observability/settings.py).
       OBS_HASH_SALT: ${OBS_HASH_SALT:-}
+      # Measurement (observability/measurement.py): conversation holdout share and sampled quality checks. Empty = off.
+      GATEWAY_HOLDOUT_SHARE: ${GATEWAY_HOLDOUT_SHARE:-}
+      GATEWAY_QUALITY_SAMPLE_RATE: ${GATEWAY_QUALITY_SAMPLE_RATE:-}
+      GATEWAY_QUALITY_MODE: ${GATEWAY_QUALITY_MODE:-}
+      GATEWAY_QUALITY_JUDGE_MODEL: ${GATEWAY_QUALITY_JUDGE_MODEL:-}
       OBS_CAPTURE_TEXT: ${OBS_CAPTURE_TEXT:-false}
       OBS_CPU_HOURLY_RATE_USD: ${OBS_CPU_HOURLY_RATE_USD:-0.10}
       OBS_GPU_HOURLY_RATE_USD: ${OBS_GPU_HOURLY_RATE_USD:-0}

@@ -111,6 +111,8 @@ The main switches:
 | `CONTEXT_RECENT_TURNS`, `JIT_RETRIEVAL_MAX_TURNS`, `CONTEXT_COMPACTION_THRESHOLD`, `OBSERVATION_MAX_TOKENS` | 4, 3, 0.80, 400 | Windows and thresholds |
 | `PROMPT_COMPRESSION_ENABLED` / `_MODE` / `_ROUTES` | `true` / `enforce` / `narrative,logfold` | Compression (`passages`, `records` opt-in) |
 | `OBSERVATION_MASK_TRIGGER` | `pressure` | Mask tool outputs only when the budget needs it |
+| `GATEWAY_HOLDOUT_SHARE` | `0` (k8s: `0.05`) | Share of conversations sent unoptimised, for the billed-cost comparison (`observability/measurement.py`) |
+| `GATEWAY_QUALITY_SAMPLE_RATE` / `_MODE` / `_JUDGE_MODEL` | `0` / `facts` / – | Sampled quality checks: re-run on the original prompt, compare answers (`judge` needs a paid judge model) |
 | `REDACT_SENSITIVE` | `false` | Redaction guardrail (both stages honour it) |
 
 Per-request opt-outs go in the request body: `"metadata": {"context_engineering": false}` and/or
