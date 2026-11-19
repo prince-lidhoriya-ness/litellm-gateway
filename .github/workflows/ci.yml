@@ -44,6 +44,8 @@ jobs:
         run: |
           pip install "torch==2.15.0" --index-url https://download.pytorch.org/whl/cpu
           pip install -r prompt_compression/requirements.txt -r observability/requirements.txt
+      - name: The production LiteLLM config is current and production-safe
+        run: python k8s/build_prod_config.py --check
       - name: prompt_compression tests
         working-directory: prompt_compression
         run: python -m pytest -q
@@ -97,6 +99,23 @@ jobs:
           c = LLMLinguaCompressor('microsoft/llmlingua-2-bert-base-multilingual-cased-meetingbank'); c.load()
           print(c.compress('The quarterly review covered hiring plans, supplier delays and the new office move in detail.', 0.5))
           e = EmbeddingSensitivityClassifier(); e.load(); print(e.score('my diagnosis came back today'))
+          "
+      - name: Audit regressions on the real LLMLingua-2 model (identifiers byte-exact; STRATEGY.md Phase 1.7)
+        # The image runs offline with the pinned weights baked in; pytest is installed into a throwaway directory so
+        # the image itself is not changed. tests/ come from the checkout (they are not in the image, .dockerignore).
+        run: |
+          docker run --rm --entrypoint /bin/sh -v "$PWD:/src:ro" -w /src/prompt_compression \
+            -e PYTHONDONTWRITEBYTECODE=1 -e PROMPT_COMPRESSION_EAGER_LOAD=false -e GATEWAY_REQUIRE_MODEL_TESTS=1 \
+            litellm-gateway:ci -c "
+          /app/.venv/bin/python3 -m pip install --quiet --target /tmp/pytest pytest==9.2.0 &&
+          PYTHONPATH=/tmp/pytest /app/.venv/bin/python3 -m pytest -q -p no:cacheprovider tests/test_model_regressions.py
+          "
+      - name: The callbacks import from the image alone (no bind mounts, as on Kubernetes)
+        run: |
+          docker run --rm --entrypoint /app/.venv/bin/python3 -w /app -e PROMPT_COMPRESSION_EAGER_LOAD=false \
+            litellm-gateway:ci -c "
+          import context_engineering.callback, prompt_compression.prompt_compression_callback, observability.observed_callback
+          print('gateway callbacks importable from /app')
           "
 
   secrets:

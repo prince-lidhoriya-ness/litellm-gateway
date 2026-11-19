@@ -1,0 +1,82 @@
+[
+ {
+  "case": "C_backend_log_identifier",
+  "cfg": "baseline",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider_prompt_tokens": 7892,
+  "pc_status": null,
+  "correct": true,
+  "secs": 13.0,
+  "answer": "Based on the logs, order **ord-7731** failed due to a **database connection pool exhaustion** caused by a connection leak in the `InventoryRepo.reserve` method, which led to a payment authorization timeout and a 503 response.  **Timeline of failure:**  1.  **10:01:10** - Checkout started for `ord-7731`. 2.  **10:01:12** - **Critical Error:** `db-pool pool exhausted: max=20 active=20 waiting=41 (leaked connections in InventoryRepo.reserve)`.     *   The database connection pool (max 20) was fully saturated.     *   The log explicitly identifies the source: **leaked connections in `InventoryRepo"
+ },
+ {
+  "case": "C_backend_log_identifier",
+  "cfg": "gateway",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider_prompt_tokens": 862,
+  "pc_status": "ok",
+  "correct": true,
+  "secs": 9.1,
+  "answer": "Based on the logs, **order `ord-7731` failed due to a database connection pool exhaustion caused by leaked connections in `InventoryRepo.reserve`, which blocked the checkout flow and led to a payment authorization timeout.**  Here is the sequence of events:  1.  **10:01:10** \u2013 Order `ord-7731` starts (`/v1/checkout`). 2.  **10:01:12** \u2013 **Critical Error:** The database connection pool is exhausted (`max=20 active=20 waiting=41`). The log explicitly attributes this to **leaked connections in `InventoryRepo.reserve`**. Since checkout typically reserves inventory first, this request (and 41 other"
+ },
+ {
+  "case": "H_agent_old_unref",
+  "cfg": "baseline",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider_prompt_tokens": 12629,
+  "pc_status": null,
+  "correct": true,
+  "secs": 2.3,
+  "answer": "From the config I read earlier:  ``` db.pool.max_size = 17   # raised from 10 after the March incident ```  The pool size is **17**, with a comment noting it was raised from 10 after the March incident."
+ },
+ {
+  "case": "H_agent_old_unref",
+  "cfg": "gateway",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider_prompt_tokens": 12629,
+  "pc_status": "ok",
+  "correct": true,
+  "secs": 2.4,
+  "answer": "From the config file (`config/app.conf`):  ``` db.pool.max_size = 17   # raised from 10 after the March incident ```  It's set to **17**, with a comment noting it was raised from 10 after the March incident."
+ },
+ {
+  "case": "G_prose_doc",
+  "cfg": "baseline",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider_prompt_tokens": 1436,
+  "pc_status": null,
+  "correct": true,
+  "secs": 2.9,
+  "answer": "The minimum allowed idle timeout is **900 seconds** (as stated: \"it must never be lowered below 900\")."
+ },
+ {
+  "case": "G_prose_doc",
+  "cfg": "gateway",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider_prompt_tokens": 538,
+  "pc_status": "ok",
+  "correct": true,
+  "secs": 2.8,
+  "answer": "Based on the design memo, the minimum allowed idle timeout is **900 seconds**.  The memo explicitly states: \"decisive configuration value IDLE_TIMEOUT_SECONDS=1800 must never be lowered below 900\""
+ },
+ {
+  "case": "J_ident_in_prose",
+  "cfg": "baseline",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider_prompt_tokens": 658,
+  "pc_status": null,
+  "correct": true,
+  "secs": 1.0,
+  "answer": "Based on the incident details provided:  *   **Tracking Code:** NIMBUS-5044 *   **Port:** 8443"
+ },
+ {
+  "case": "J_ident_in_prose",
+  "cfg": "gateway",
+  "model": "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "provider_prompt_tokens": 313,
+  "pc_status": "ok",
+  "correct": true,
+  "secs": 1.7,
+  "answer": "**Tracking Code:** `NIMBUS-5044` **Port:** `8443`"
+ }
+]

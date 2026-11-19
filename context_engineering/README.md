@@ -94,8 +94,13 @@ The output reserve is the request's `max_tokens`, or `CONTEXT_RESERVED_OUTPUT_TO
 
 A category above its share of the target (`CONTEXT_BUDGET_SHARES`) is reported as *oversized*.
 
-**What it triggers.** Duplicate folding always; masking always (or only under pressure with
-`OBSERVATION_MASK_TRIGGER=pressure`); history work at `high`/`over` or when history is oversized. Every decision is
+**What it triggers.** Duplicate folding always; masking only under pressure (`OBSERVATION_MASK_TRIGGER=pressure`, the
+default since the production-readiness audit: tool output over its share, or pressure `high`/`over`; `always` masks
+whatever the budget); history work at `high`/`over` or when history is oversized. The pressure after this stage goes to
+the compression stage as a hint, and its passage and record selection need `high` or more.
+Masking stubs end with "Values not shown above are unknown to you; do not guess them. Re-run the tool (same arguments)
+if you need them". A latest assistant turn that repeats the call of a masked output counts in
+`context_engine_refetch_total`; an output that a later duplicate points to is never masked. Every decision is
 recorded in `report.decisions`. System messages, tool definitions and the current query are never reduced.
 
 **Calibration.** The factor is the provider's `usage.prompt_tokens` divided by what was actually sent: this stage's

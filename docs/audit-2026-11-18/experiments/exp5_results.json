@@ -1,0 +1,35 @@
+{
+ "gate": [
+  {
+   "input_tokens": 29023,
+   "status": "error",
+   "reason": "timeout after 10.0s: TimeoutError",
+   "stop": null,
+   "wall_ms": 10015.0
+  },
+  {
+   "input_tokens": 36142,
+   "status": "skipped",
+   "reason": "too_large",
+   "stop": null,
+   "wall_ms": 86.9
+  },
+  {
+   "input_tokens": 43470,
+   "status": "skipped",
+   "reason": "too_large",
+   "stop": null,
+   "wall_ms": 84.3
+  }
+ ],
+ "stub": {
+  "original_tokens": 622,
+  "stub_tokens": 622,
+  "original_head": "tests/test_export.py:578: log.error('reset: %s', exc)\nexporter/batch.py:202: return out\nexporter/batch.py:144: if resp.status_code == 429:\nexporter/config.py:768: log.error('reset: %s', exc)\ntests/test_export.py:685: raise\nexporter/batch.py:524: except ConnectionResetError as exc:\nexporter/client.py",
+  "stub": "tests/test_export.py:578: log.error('reset: %s', exc)\nexporter/batch.py:202: return out\nexporter/batch.py:144: if resp.status_code == 429:\nexporter/config.py:768: log.error('reset: %s', exc)\ntests/test_export.py:685: raise\nexporter/batch.py:524: except ConnectionResetError as exc:\nexporter/client.py:385: rows = read_rows(path)\nexporter/batch.py:224: if resp.status_code == 429:\nexporter/config.py:327: retries = 3\ntests/test_export.py:27: def load_batch(path, limit=100):\nexporter/client.py:487: rows = read_rows(path)\nexporter/client.py:820: time.sleep(self.backoff * attempt)\ntests/test_export.py:534: def load_batch(path, limit=100):\nexporter/batch.py:243: rows = read_rows(path)\nexporter/config.py:321: def send(self, payload):\nexporter/client.py:744: return []\nexporter/config.py:745: if not rows:\nexporter/batch.py:635: class Exporter:\nexporter/client.py:267: raise\nexporter/batch.py:367: log.error('reset: %s', exc)\nexporter/client.py:443: retries = 3\nexporter/config.py:696: raise\ntests/test_export.py:532: def load_batch(path, limit=100):\nexporter/batch.py:688: log.error('reset: %s', exc)\ntests/test_export.py:88: def load_batch(path, limit=100):\nexporter/config.py:705: rows = read_rows(path)\nexporter/batch.py:842: time.sleep(self.backoff * attempt)\nexporter/client.py:278: except ConnectionResetError as exc:\nexporter/config.py:756: class Exporter:\nexporter/batch.py:767: def send(self, payload):\nexporter/client.py:40: return []\ntests/test_export.py:879: resp = self.client.post(self.url, json=payload, timeout=30)\nexporter/batch.py:134: if not rows:\nexporter/batch.py:191: log.error('reset: %s', exc)\nexporter/batch.py:566: time.sleep(self.backoff * attempt)\nexporter/config.py:261: def load_batch(path, limit=100):\ntests/test_export.py:313: raise\nexporter/client.py:381: except ConnectionResetError as exc:\nexporter/client.py:580: if not rows:\ntests/test_export.py:326: return out\nexporter/client.py:316: return out\nexporter/config.py:42: rows = read_rows(path)\nexporter/batch.py:81: out = [normalize(r) for r in rows[:limit]]\ntests/test_export.py:86: retries = 3\ntests/test_export.py:556: log.error('reset: %s', exc)",
+  "decisions": [
+   "mask: 1 recent error output(s) kept (active debugging)"
+  ],
+  "records": []
+ }
+}

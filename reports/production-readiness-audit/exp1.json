@@ -1,0 +1,261 @@
+[
+ {
+  "case": "A_short",
+  "domain": "any",
+  "tok_before": 14,
+  "tok_after": 14,
+  "saved_pct": 0.0,
+  "ce_status": "skipped",
+  "ce_saved": null,
+  "pc_status": "skipped",
+  "pc_intent": null,
+  "pc_actions": [],
+  "ce_ms": 1,
+  "pc_ms": 1,
+  "needles_kept": 0,
+  "needles_total": 0,
+  "lost": [],
+  "omission_marker_present": false
+ },
+ {
+  "case": "B_frontend_code",
+  "domain": "frontend",
+  "tok_before": 657,
+  "tok_after": 657,
+  "saved_pct": 0.0,
+  "ce_status": "skipped",
+  "ce_saved": null,
+  "pc_status": "ok",
+  "pc_intent": "lookup",
+  "pc_actions": [
+   "preserved_role",
+   "guarded"
+  ],
+  "ce_ms": 1,
+  "pc_ms": 9,
+  "needles_kept": 2,
+  "needles_total": 2,
+  "lost": [],
+  "omission_marker_present": false
+ },
+ {
+  "case": "C_backend_log_identifier",
+  "domain": "backend",
+  "tok_before": 5613,
+  "tok_after": 255,
+  "saved_pct": 95.5,
+  "ce_status": "ok",
+  "ce_saved": {},
+  "pc_status": "ok",
+  "pc_intent": "lookup",
+  "pc_actions": [
+   "selected_records"
+  ],
+  "ce_ms": 27,
+  "pc_ms": 46,
+  "needles_kept": 1,
+  "needles_total": 5,
+  "lost": [
+   "pool exhausted",
+   "max=20 active=20",
+   "leaked connections",
+   "InventoryRepo.reserve"
+  ],
+  "omission_marker_present": false
+ },
+ {
+  "case": "D_devops_ci_noid",
+  "domain": "devops",
+  "tok_before": 4654,
+  "tok_after": 4654,
+  "saved_pct": 0.0,
+  "ce_status": "ok",
+  "ce_saved": {},
+  "pc_status": "ok",
+  "pc_intent": "lookup",
+  "pc_actions": [
+   "guarded"
+  ],
+  "ce_ms": 5,
+  "pc_ms": 42,
+  "needles_kept": 3,
+  "needles_total": 3,
+  "lost": [],
+  "omission_marker_present": false
+ },
+ {
+  "case": "E_ticket_lookup",
+  "domain": "ticket",
+  "tok_before": 1416,
+  "tok_after": 994,
+  "saved_pct": 29.8,
+  "ce_status": "ok",
+  "ce_saved": {},
+  "pc_status": "ok",
+  "pc_intent": "lookup",
+  "pc_actions": [
+   "compressed"
+  ],
+  "ce_ms": 3,
+  "pc_ms": 4419,
+  "needles_kept": 4,
+  "needles_total": 4,
+  "lost": [],
+  "omission_marker_present": false
+ },
+ {
+  "case": "F_ticket_summarize",
+  "domain": "ticket",
+  "tok_before": 1419,
+  "tok_after": 787,
+  "saved_pct": 44.5,
+  "ce_status": "ok",
+  "ce_saved": {},
+  "pc_status": "ok",
+  "pc_intent": "transform",
+  "pc_actions": [
+   "compressed"
+  ],
+  "ce_ms": 6,
+  "pc_ms": 2578,
+  "needles_kept": 4,
+  "needles_total": 4,
+  "lost": [],
+  "omission_marker_present": false
+ },
+ {
+  "case": "G_prose_doc",
+  "domain": "any",
+  "tok_before": 1402,
+  "tok_after": 514,
+  "saved_pct": 63.3,
+  "ce_status": "ok",
+  "ce_saved": {},
+  "pc_status": "ok",
+  "pc_intent": "lookup",
+  "pc_actions": [
+   "compressed"
+  ],
+  "ce_ms": 5,
+  "pc_ms": 3797,
+  "needles_kept": 1,
+  "needles_total": 2,
+  "lost": [
+   "IDLE_TIMEOUT_SECONDS=1800"
+  ],
+  "omission_marker_present": false
+ },
+ {
+  "case": "J_ident_in_prose",
+  "domain": "ticket",
+  "tok_before": 622,
+  "tok_after": 254,
+  "saved_pct": 59.2,
+  "ce_status": "skipped",
+  "ce_saved": null,
+  "pc_status": "ok",
+  "pc_intent": "lookup",
+  "pc_actions": [
+   "compressed",
+   "compressed",
+   "guarded"
+  ],
+  "ce_ms": 1,
+  "pc_ms": 1948,
+  "needles_kept": 1,
+  "needles_total": 5,
+  "lost": [
+   "NIMBUS-5044",
+   "RFC-9110",
+   "section 5.2",
+   "3.11.4"
+  ],
+  "omission_marker_present": false
+ },
+ {
+  "case": "H_agent_old_unref",
+  "domain": "backend-debug",
+  "tok_before": 10954,
+  "tok_after": 6111,
+  "saved_pct": 44.2,
+  "ce_status": "ok",
+  "ce_saved": {
+   "masking": 4843
+  },
+  "pc_status": "ok",
+  "pc_intent": "lookup",
+  "pc_actions": [
+   "preserved_role",
+   "below_min_chars",
+   "preserved_role",
+   "preserved_role",
+   "sensitive",
+   "preserved_role",
+   "preserved_role",
+   "below_min_chars",
+   "preserved_role",
+   "preserved_role",
+   "below_min_chars",
+   "preserved_role",
+   "preserved_role",
+   "below_min_chars",
+   "preserved_role",
+   "preserved_role",
+   "below_min_chars",
+   "preserved_role",
+   "preserved_role",
+   "below_min_chars",
+   "preserved_role",
+   "preserved_role",
+   "below_min_chars",
+   "preserved_role",
+   "preserved_role",
+   "below_min_chars",
+   "guarded"
+  ],
+  "ce_ms": 48,
+  "pc_ms": 139,
+  "needles_kept": 0,
+  "needles_total": 2,
+  "lost": [
+   "db.pool.max_size = 17",
+   "raised from 10"
+  ],
+  "omission_marker_present": true
+ },
+ {
+  "case": "I_long_chat",
+  "domain": "devops",
+  "tok_before": 2395,
+  "tok_after": 1001,
+  "saved_pct": 58.2,
+  "ce_status": "ok",
+  "ce_saved": {},
+  "pc_status": "ok",
+  "pc_intent": "lookup",
+  "pc_actions": [
+   "preserved_role",
+   "below_min_chars",
+   "compressed",
+   "unchanged",
+   "compressed",
+   "unchanged",
+   "compressed",
+   "compressed",
+   "compressed",
+   "unchanged",
+   "compressed",
+   "compressed",
+   "compressed",
+   "compressed",
+   "compressed",
+   "guarded"
+  ],
+  "ce_ms": 6,
+  "pc_ms": 9197,
+  "needles_kept": 3,
+  "needles_total": 3,
+  "lost": [],
+  "omission_marker_present": false
+ }
+]

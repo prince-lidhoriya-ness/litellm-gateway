@@ -125,6 +125,7 @@ class ContextEngine:
             if not stage("mask", run_mask):
                 report.masked.clear()
             report.restored["observations"] = masking.restored_count(current, analyzer.analyze(current, tools))
+            report.refetches = masking.refetch_count(original, report.masked, profile)
         lap("mask")
 
         # 7. history: re-measure after masking; mask first, compact only if still needed (cheapest loss first)
@@ -167,8 +168,10 @@ class ContextEngine:
         report.tokens_after = final.total_tokens
         report.by_category_after = dict(final.totals)
         report.utilization_after = budget.plan(final, info, settings, max_tokens, factor).utilization
-        # The compression stage reads protected_indexes and leaves those messages verbatim (pipeline.py, `protected`).
-        hints: dict = {}
+        # The compression stage reads protected_indexes and leaves those messages verbatim (pipeline.py, `protected`),
+        # and needs at least PROMPT_COMPRESSION_SELECTION_MIN_PRESSURE before it selects passages or records: lossy
+        # selection exists to make a request fit (STRATEGY.md, §3.1). The pressure is the one after this stage.
+        hints: dict = {"pressure": budget.pressure_of(report.utilization_after, settings)}
         if report.summary_index is not None:
             hints["protected_indexes"] = [report.summary_index]
         report.hints = hints

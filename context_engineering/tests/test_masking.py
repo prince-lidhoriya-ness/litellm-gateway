@@ -144,13 +144,22 @@ def test_originals_are_stored_and_recoverable():
     entry = masking.recover_observation(store, records[0].ref)
     assert entry["content"] == messages[records[0].index]["content"]
     assert entry["tool_call_id"] == messages[records[0].index]["tool_call_id"]
-    assert records[0].stored and "original stored" in out[records[0].index]["content"]
+    assert records[0].stored
 
 
-def test_with_no_store_the_stub_says_so():
+def test_with_no_store_the_record_says_so():
     messages = agent_conversation(9, output=varied(120))
     out, records, _, _ = run(messages, store=NullStore())
-    assert not records[0].stored and "original not stored" in out[records[0].index]["content"]
+    assert not records[0].stored
+
+
+def test_stub_bytes_do_not_depend_on_the_store():
+    # A store outage must not change the prompt: the stub is part of the cached prefix (STRATEGY.md, N3).
+    messages = agent_conversation(9, output=varied(120))
+    with_store, stored_records, _, _ = run(messages)
+    without_store, unstored_records, _, _ = run(messages, store=NullStore())
+    assert stored_records[0].stored and not unstored_records[0].stored
+    assert with_store == without_store
 
 
 def test_small_outputs_and_gateway_stubs_are_left_alone():

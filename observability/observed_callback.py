@@ -226,6 +226,22 @@ class ObservedPromptCompressionCallback(PromptCompressionCallback):
         rejects = int((summary.get("segments") or {}).get("ratio_cap_hits") or 0)
         if rejects:
             m.VALIDATION_REJECTS.labels(category).inc(rejects)
+        mode = "enforce" if applied else "shadow"
+        segments = summary.get("segments") or {}
+        if segments.get("omission_markers"):
+            m.OMISSION_MARKERS.labels(mode).inc(int(segments["omission_markers"]))
+        if segments.get("log_lines_folded"):
+            m.LOG_LINES_FOLDED.labels(mode).inc(int(segments["log_lines_folded"]))
+        for route, tally in (summary.get("fidelity") or {}).items():
+            if not isinstance(tally, dict):
+                continue
+            route = str(route)[:16]
+            for result in ("checked", "retried"):
+                if tally.get(result):
+                    m.FIDELITY.labels(route, result, "", mode).inc(int(tally[result]))
+            for reason, count in (tally.get("reasons") or {}).items():
+                if count:
+                    m.FIDELITY.labels(route, "reverted", str(reason)[:16], mode).inc(int(count))
         if summary.get("compress_stopped"):
             m.COMPRESS_STOPPED.labels(str(summary["compress_stopped"])[:32]).inc()
 

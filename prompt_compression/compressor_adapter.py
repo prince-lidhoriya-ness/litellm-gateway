@@ -95,10 +95,52 @@ class LLMLinguaCompressor:
         if missing_keys:
             raise ValueError(f"LLMLingua returned an incomplete result; missing: {', '.join(sorted(missing_keys))}")
         output = CompressionOutput(result["compressed_prompt"], result["origin_tokens"], result["compressed_tokens"])
+        self._remember(key, output)
+        return output
+
+    def _remember(self, key: str, output: CompressionOutput) -> None:
         if self._cache_size:
             with self._cache_lock:
                 self._cache[key] = output
                 self._cache.move_to_end(key)
                 while len(self._cache) > self._cache_size:
                     self._cache.popitem(last=False)
-        return output
+
+    def compress_many(self, texts: list, rate: float) -> tuple[list, int]:
+        """Compress several texts at one rate in a single model call (LLMLingua-2 takes a list of contexts and returns
+        one compressed text per context). Texts found in the cache are not sent. Returns (outputs in order, model calls
+        made: 0 or 1). Used by identifier-safe compression, which splits a prose run at its identifier spans."""
+        outputs: list = [None] * len(texts)
+        misses = []
+        for position, text in enumerate(texts):
+            key = self._key(text, rate)
+            hit = None
+            if self._cache_size:
+                with self._cache_lock:
+                    hit = self._cache.get(key)
+                    if hit is not None:
+                        self._cache.move_to_end(key)
+            if hit is not None:
+                outputs[position] = CompressionOutput(hit.text, hit.origin_tokens, hit.compressed_tokens, cached=True)
+            else:
+                misses.append(position)
+        if not misses:
+            return outputs, 0
+        self.load()
+        batch = [texts[position] for position in misses]
+        with deadlines.acquire(self._call_lock, "compressor"):
+            # use_context_level_filter=False is required: compress_prompt defaults it to True, and with more than one
+            # context LLMLingua-2 then drops whole contexts (measured: two contexts in, one out). A single context is
+            # exempt inside llmlingua, which is why compress() never needed it.
+            result = self._compressor.compress_prompt(batch, rate=rate, force_reserve_digit=True,
+                                                      use_context_level_filter=False)
+        compressed = result.get("compressed_prompt_list")
+        if not isinstance(compressed, list) or len(compressed) != len(batch):
+            raise ValueError("LLMLingua returned no per-context result (compressed_prompt_list)")
+        for position, text, piece in zip(misses, batch, compressed):
+            # LLMLingua reports token totals for the whole batch only; per piece the length in words is a stand-in
+            # (the caller measures the joined run with its own tokenizer).
+            output = CompressionOutput(piece, len(text.split()), len(piece.split()))
+            self._remember(self._key(text, rate), output)
+            outputs[position] = output
+        return outputs, 1

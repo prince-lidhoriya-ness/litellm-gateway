@@ -14,13 +14,19 @@ DEFAULT_COMPRESSION_REVISION = "5f0c82792b7ea14c6484e015b6a072009496b7f2"
 DEFAULT_ENCODER = "sentence-transformers/all-MiniLM-L6-v2"
 DEFAULT_ENCODER_REVISION = "1110a243fdf4706b3f48f1d95db1a4f5529b4d41"
 
-# Router actions that can be switched on or off (PROMPT_COMPRESSION_ROUTES). On by default: "narrative" (compress prose),
-# "passages" and "records" (drop whole passages / log lines the question does not need). The two selection routes kept
-# accuracy at 1.000 on the research benchmark (eval/results/guard_eval_real.md) and are where nearly all the savings come
-# from: with only "narrative" the benchmark prompts saved 11% (QA) and 0% (logs); with all three 39% and 66%
-# (reports/playground-ab/REPORT.md). "history" needs a token budget and stays off.
-ROUTE_NAMES = ("narrative", "passages", "records", "history")
-DEFAULT_ROUTES = "narrative,passages,records"
+# Router actions that can be switched on or off (PROMPT_COMPRESSION_ROUTES). On by default: "narrative" (compress prose,
+# identifier-safe) and "logfold" (fold runs of near-identical log lines into a marker; question-independent and
+# byte-stable, logfold.py). Opt-in: "passages" and "records" drop whole passages / log lines the question does not need.
+# They saved the most on the research benchmark (reports/playground-ab/REPORT.md) but deleted the answer on wording
+# alone in the production-readiness audit (reports/production-readiness-audit/REPORT.md, C1), so they now run only on
+# a positive lookup intent, leave an omission marker and pass the fidelity guard; enable them per deployment after the
+# shadow data supports it. "history" needs a token budget and stays off.
+ROUTE_NAMES = ("narrative", "logfold", "passages", "records", "history")
+DEFAULT_ROUTES = "narrative,logfold"
+# Context-engineering pressure levels (context_engineering/budget.py). Selection needs at least
+# PROMPT_COMPRESSION_SELECTION_MIN_PRESSURE when the context-engineering stage reports a pressure: lossy selection exists
+# to make a request fit, not to save (STRATEGY.md, §3.1). "low" turns the check off.
+PRESSURE_LEVELS = ("low", "moderate", "high", "over")
 MODES = ("enforce", "shadow")
 # Which messages passage and record selection may thin out. "latest_user" (default): only the latest user message, so
 # earlier turns are never re-selected against a new question (that silently lost context in multi-turn chats and changed
@@ -157,7 +163,7 @@ class PipelineSettings:
     spend_log_messages: int = 8
     # --- select or drop ---
     # Which router actions are active; see ROUTE_NAMES.
-    routes: frozenset = frozenset({"narrative", "passages", "records"})
+    routes: frozenset = frozenset({"narrative", "logfold"})
     selection_scope: str = "latest_user"
     # Turn passage and record selection off for requests that need the whole text (summarise, translate, review ...).
     intent_gate: bool = True
@@ -168,9 +174,18 @@ class PipelineSettings:
     min_passages: int = 6
     min_passage_tokens: int = 100
     passage_keep_ratio: float = 0.5
-    # "records" route: blocks with at least this many lines are candidates; neighbours kept around each match.
+    # Passage and record selection need this context-engineering pressure when that stage reports one (see
+    # PRESSURE_LEVELS). Without the stage, or in its shadow mode, there is no pressure and the opt-in routes apply.
+    selection_min_pressure: str = "high"
+    # "records" route: blocks with at least this many lines are candidates. Kept around each match: this many
+    # neighbouring lines; around every severity line (ERROR, Exception, ...): record_severity_context lines; lines that
+    # share an identifier with a matched line (record_correlate, one hop); lines within record_time_window_s seconds of a
+    # matched line when the lines carry timestamps (0 turns the window off). STRATEGY.md, C1.2.
     record_min_lines: int = 10
-    record_context_lines: int = 1
+    record_context_lines: int = 3
+    record_severity_context: int = 3
+    record_correlate: bool = True
+    record_time_window_s: float = 10.0
     # "history" route: 0 = off even if the route is listed; otherwise trim oldest whole turns above this many tokens.
     history_max_tokens: int = 0
     history_keep_messages: int = 6
@@ -186,6 +201,9 @@ class PipelineSettings:
         scope = (os.getenv("PROMPT_COMPRESSION_SELECTION_SCOPE") or "latest_user").strip().lower()
         if scope not in SELECTION_SCOPES:
             raise ValueError(f"PROMPT_COMPRESSION_SELECTION_SCOPE must be one of {', '.join(SELECTION_SCOPES)}")
+        min_pressure = (os.getenv("PROMPT_COMPRESSION_SELECTION_MIN_PRESSURE") or "high").strip().lower()
+        if min_pressure not in PRESSURE_LEVELS:
+            raise ValueError(f"PROMPT_COMPRESSION_SELECTION_MIN_PRESSURE must be one of {', '.join(PRESSURE_LEVELS)}")
         max_ratio = _float("PROMPT_COMPRESSION_MAX_RATIO", 3.0)
         if max_ratio < 1.0:
             raise ValueError("PROMPT_COMPRESSION_MAX_RATIO must be at least 1.0")
@@ -218,7 +236,11 @@ class PipelineSettings:
             min_passage_tokens=_int("PROMPT_COMPRESSION_MIN_PASSAGE_TOKENS", 100),
             passage_keep_ratio=_float("PROMPT_COMPRESSION_PASSAGE_KEEP_RATIO", 0.5),
             record_min_lines=_int("PROMPT_COMPRESSION_RECORD_MIN_LINES", 10),
-            record_context_lines=_int("PROMPT_COMPRESSION_RECORD_CONTEXT_LINES", 1),
+            selection_min_pressure=min_pressure,
+            record_context_lines=_int("PROMPT_COMPRESSION_RECORD_CONTEXT_LINES", 3),
+            record_severity_context=_int("PROMPT_COMPRESSION_RECORD_SEVERITY_CONTEXT", 3),
+            record_correlate=_bool("PROMPT_COMPRESSION_RECORD_CORRELATE", True),
+            record_time_window_s=_float("PROMPT_COMPRESSION_RECORD_TIME_WINDOW_S", 10.0),
             history_max_tokens=_int("PROMPT_COMPRESSION_HISTORY_MAX_TOKENS", 0),
             history_keep_messages=_int("PROMPT_COMPRESSION_HISTORY_KEEP_MESSAGES", 6),
         )

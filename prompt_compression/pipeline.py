@@ -2,8 +2,9 @@
 
     1. Segment and classify   every eligible message is split into blocks (what kind of text: segmenter.py) and each
                               block is checked for sensitivity (sensitivity.py: rules, and the NLI model on prose)
-    2. Router                 the task type picks an action per block: keep, select or drop, compress (router.py)
-    3. Actions                keep does nothing; select drops whole units; compress calls LLMLingua-2 (actions.py)
+    2. Router                 the task type picks an action per block: keep, fold, select or drop, compress (router.py)
+    3. Actions                keep does nothing; fold collapses repeated log lines; select drops whole units; compress
+                              calls LLMLingua-2; every removal leaves a marker and passes the fidelity guard (actions.py)
     4. Reassemble             the blocks of each message are joined back in their original order
 
 Never touched: system/developer messages, tool and function results, assistant messages that carry
@@ -12,8 +13,9 @@ definitions. Roles and order are kept; only the text of eligible messages change
 dropped when the "history" route is on. The report keeps original message indexes and adds "new_index" for the position
 in the returned list.
 
-Passage and record selection only act on the latest user message (settings.selection_scope) and not at all when the
-request needs the whole text (intent.py). Every model call is bounded by the request's deadline (deadline.py).
+Passage and record selection only act on the latest user message (settings.selection_scope), only on a positive lookup
+intent (intent.py), and only under enough context pressure when the context-engineering stage reports one (`pressure`).
+Every model call is bounded by the request's deadline (deadline.py).
 
 Messages whose index is in `protected` (the context-engineering stage's compaction summary, passed by the hook from
 metadata["context_engineering"]["hints"]["protected_indexes"]) are left exactly as they are and never dropped by the
@@ -82,8 +84,13 @@ class PipelineReport:
     segments: dict = field(default_factory=dict)
     # Why blocks were kept verbatim: reason -> number of blocks ("code", "sensitive", "edge", ...).
     kept: dict = field(default_factory=dict)
-    # "lookup" or "transform" (intent.py); selection only runs for "lookup".
+    # "lookup", "diagnose" or "transform" (intent.py); selection only runs for "lookup".
     intent: str = intent.LOOKUP
+    # Context-engineering pressure passed in by the hook (None: not reported), and whether selection was allowed.
+    pressure: Optional[str] = None
+    selection_allowed: bool = False
+    # Fidelity guard counters per lossy route (fidelity.Tally.as_dict): checked / retried / reverted units, and why.
+    fidelity: dict = field(default_factory=dict)
     selection_scope: str = "latest_user"
     # Model calls made for compression in this request, and why compression stopped early (None: it did not).
     compress_calls: int = 0
@@ -108,7 +115,10 @@ class PipelineReport:
             "segments": dict(self.segments),
             "kept": dict(self.kept),
             "intent": self.intent,
+            "pressure": self.pressure,
+            "selection_allowed": self.selection_allowed,
             "selection_scope": self.selection_scope,
+            "fidelity": self.fidelity,
             "compress_calls": self.compress_calls,
             "compress_stopped": self.compress_stopped,
             "messages": self.messages,
@@ -225,16 +235,18 @@ class PromptPipeline:
     # ---- the whole request ----------------------------------------------------------------------------------------
 
     def process(self, messages: list, deadline: Optional[deadlines.Deadline] = None,
-                protected: frozenset = frozenset()) -> tuple[list, PipelineReport]:
+                protected: frozenset = frozenset(), pressure: Optional[str] = None) -> tuple[list, PipelineReport]:
         """`deadline`: stop model work when it passes (classification raises DeadlineExceeded; compression stops early
         and sends the rest unchanged). None keeps whatever deadline is current (none outside the hook).
-        `protected`: message indexes to leave untouched (see the module docstring)."""
+        `protected`: message indexes to leave untouched (see the module docstring).
+        `pressure`: the context-engineering stage's pressure level for this request, None when it reported none."""
         if deadline is None:
-            return self._process(messages, frozenset(protected))
+            return self._process(messages, frozenset(protected), pressure)
         with deadlines.use(deadline):
-            return self._process(messages, frozenset(protected))
+            return self._process(messages, frozenset(protected), pressure)
 
-    def _process(self, messages: list, protected: frozenset = frozenset()) -> tuple[list, PipelineReport]:
+    def _process(self, messages: list, protected: frozenset = frozenset(),
+                 pressure: Optional[str] = None) -> tuple[list, PipelineReport]:
         started = time.perf_counter()
         settings = self.settings
         new_messages = copy.deepcopy(messages)
@@ -253,10 +265,10 @@ class PromptPipeline:
             last_user_text = "\n".join(text for _, text in text_parts(messages[last_user_index]))
             query = _tail_paragraph(last_user_text)
             if settings.intent_gate:
-                report.intent = intent.detect(_instruction_text(last_user_text))
-        selection_routes = bool(settings.routes & {"passages", "records"}) and not (
-            settings.intent_gate and report.intent == intent.TRANSFORM
-        )
+                report.intent = intent.detect(_instruction_text(last_user_text), query or "")
+        report.pressure = pressure
+        report.selection_allowed = router.selection_permitted(settings, report.intent, pressure)
+        selection_routes = bool(settings.routes & {"passages", "records"}) and report.selection_allowed
 
         # 1. Segment and classify
         entries: dict = {}
@@ -317,7 +329,9 @@ class PromptPipeline:
                 message_units.pop(index, None)
             report.history_dropped = len(dropped)
             units = [unit for index in sorted(message_units) for unit in message_units[index]]
-            plan = router.route(units, settings, query, last_user_index, count_tokens, intent=report.intent)
+            plan = router.route(units, settings, query, last_user_index, count_tokens, intent=report.intent,
+                                pressure=pressure)
+            plan.reference = _reference_text(messages, units, last_user_index)
             _set_attributes(span, {
                 "prompt.route.units": len(units), "prompt.route.history_dropped": len(dropped),
                 "prompt.route.intent": report.intent,
@@ -335,6 +349,7 @@ class PromptPipeline:
                                    "prompt.compress.stopped": outcome.compress_stopped or ""})
         report.compress_calls = outcome.compress_calls
         report.compress_stopped = outcome.compress_stopped
+        report.fidelity = outcome.fidelity.as_dict()
 
         # 4. Reassemble
         new_index = {}
@@ -405,6 +420,22 @@ class PromptPipeline:
         })
         for key, value in segments.items():
             report.segments[key] = report.segments.get(key, 0) + value
+
+
+def _reference_text(messages: list, units: list, last_user_index: Optional[int]) -> str:
+    """What the fidelity guard checks removals against: what the conversation points at. The parts of the latest user
+    message that are kept verbatim (its instruction and question; never the block being reduced), the system and
+    developer messages, and the last two assistant turns."""
+    parts = [unit.text for unit in units if unit.message == last_user_index and unit.action == "keep" and unit.filled]
+    assistants = 0
+    for index in range(len(messages) - 1, -1, -1):
+        message = messages[index]
+        role = message.get("role")
+        if role in ("system", "developer") or (role == "assistant" and assistants < 2):
+            if role == "assistant":
+                assistants += 1
+            parts.extend(text for _, text in text_parts(message))
+    return "\n".join(parts)
 
 
 def _joined(units: list) -> str:

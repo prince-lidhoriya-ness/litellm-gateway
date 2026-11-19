@@ -10,10 +10,18 @@ Rules (docs/context-engineering-blueprint.md 5.7):
     and consecutive requests share a byte-identical prefix
   * never masked: error outputs among the newest OBSERVATION_ERROR_GUARD tool results (active debugging), and any
     observation whose ref the latest user or assistant message mentions (that is how a masked output is asked back)
-  * the stub keeps the tool_call_id, the name and the role; only the content changes. Key lines are copied verbatim.
+  * the stub keeps the tool_call_id, the name and the role; only the content changes. Key lines are copied verbatim:
+    error lines, then lines naming an identifier that a user or assistant message after the output mentions (up to the
+    tool result that completed the output's mask batch, so the stub is fixed once its batch exists), then head and tail
+  * the stub tells the model that values it does not show are unknown and must not be guessed: a model inside one
+    completion cannot ask for the original, and in the audit it invented a plausible wrong value instead
+    (reports/production-readiness-audit/STRATEGY.md, H1)
+  * an output that a later duplicate points to is never masked: the pointer would lead to a stub, and the content
+    would be lost although the model had fetched it again
   * the original goes to the store under its ref (obs_<sha256[:12]> of the content, so the ref is deterministic)
 """
 
+import json
 import re
 from typing import Optional
 
@@ -65,21 +73,40 @@ def _follow_up(messages: list, index: int) -> str:
     return ""
 
 
+def _later_text(messages: list, index: int, until: int) -> str:
+    """User and assistant text (and tool-call arguments) between a tool result and the tool result that completed its
+    mask batch: what the conversation said about the output before it was masked. Fixed once the batch exists."""
+    parts = []
+    for message in messages[index + 1:until]:
+        if message.get("role") in ("user", "assistant"):
+            parts.append(tk.message_text(message))
+            parts.append(tk.tool_calls_text(message))
+    return "\n".join(part for part in parts if part)
+
+
+STUB_FOOTER = ("[Full output omitted to save context. Values not shown above are unknown to you; do not guess them. "
+               "Re-run the tool (same arguments) if you need them, or mention {ref} in a message to restore it.]")
+
+
 def build_stub(ref: str, tool_name: str, original: str, follow_up: str, settings: ContextSettings,
-               stored: bool) -> str:
+               later: str = "") -> str:
+    """The stub is a pure function of the original output, its follow-up and the `later` turns up to its batch
+    boundary (_later_text). Nothing about the store goes into it:
+    a stub whose bytes changed with store health (a Redis outage) would change the prompt prefix and make every later
+    token miss the provider cache. Whether the original was stored is in MaskRecord.stored and the metadata report."""
     lines = original.splitlines()
     header = (f"{STUB_MARKER}{ref} masked by gateway | tool={tool_name or 'unknown'} | "
-              f"{tk.text_tokens(original)} tokens, {len(lines)} lines | original {'stored' if stored else 'not stored'}]")
+              f"{tk.text_tokens(original)} tokens, {len(lines)} lines]")
     body = []
     shape = extract.json_shape(original)
     if shape:
         body.append(f"Structure: {shape}")
-    kept = extract.key_lines(original, follow_up, settings.observation_stub_max_tokens, settings.observation_head_tail_lines)
+    kept = extract.key_lines(original, follow_up, settings.observation_stub_max_tokens, settings.observation_head_tail_lines,
+                             later=later)
     if kept:
         body.append("Key lines (verbatim):")
         body.extend(kept)
-    footer = f"[Full output omitted to save context. To restore it, mention {ref} in a message, or call the tool again.]"
-    return "\n".join([header, *body, footer])
+    return "\n".join([header, *body, STUB_FOOTER.format(ref=ref)])
 
 
 def mask(messages: list, profile: ContextProfile, settings: ContextSettings, techniques: frozenset, store
@@ -108,6 +135,7 @@ def mask(messages: list, profile: ContextProfile, settings: ContextSettings, tec
                                   item.tool_call_id or "", item.tokens, after, stored))
 
     duplicates = set()
+    pointed_to = set()               # earlier copies a duplicate pointer leads to: never masked
     eligible_indexes = {item.index for item in eligible}
     if "dedupe" in techniques:
         first_seen: dict = {}
@@ -123,6 +151,7 @@ def mask(messages: list, profile: ContextProfile, settings: ContextSettings, tec
                         f"tool={item.tool_name or 'unknown'}: identical content omitted]")
                 apply(item, "duplicate", stub, stored=False)
                 duplicates.add(item.index)
+                pointed_to.add(first_seen[item.content_sha])
             else:
                 first_seen.setdefault(item.content_sha, item.index)
 
@@ -134,8 +163,11 @@ def mask(messages: list, profile: ContextProfile, settings: ContextSettings, tec
         candidates = [
             item for item in eligible
             if item.index not in duplicates and item.index not in guarded and item.tokens > settings.observation_max_tokens
-            and observation_ref(item.content_sha) not in requested
+            and observation_ref(item.content_sha) not in requested and item.index not in pointed_to
         ]
+        if pointed_to & eligible_indexes:
+            decisions.append(f"mask: {len(pointed_to & eligible_indexes)} output(s) kept because a later duplicate "
+                             f"points to them")
         if guarded:
             decisions.append(f"mask: {len(guarded)} recent error output(s) kept (active debugging)")
         restored = [item.index for item in eligible if observation_ref(item.content_sha) in requested]
@@ -145,7 +177,10 @@ def mask(messages: list, profile: ContextProfile, settings: ContextSettings, tec
         count = (surplus // settings.observation_batch) * settings.observation_batch
         if surplus and not count:
             decisions.append(f"mask: {surplus} candidate(s) wait for a full batch of {settings.observation_batch}")
-        for item in candidates[:count]:
+        for position, item in enumerate(candidates[:count]):
+            # The tool result whose arrival completed this item's batch: the stub only reads messages before it.
+            trigger = candidates[settings.observation_keep_recent + settings.observation_batch * (
+                position // settings.observation_batch + 1) - 1]
             original = tk.message_text(messages[item.index])
             ref = observation_ref(item.content_sha)
             # Only a store that leaves the process cares (RedisStore refuses sensitive content); the regex scan
@@ -155,7 +190,8 @@ def mask(messages: list, profile: ContextProfile, settings: ContextSettings, tec
                 "kind": "observation", "ref": ref, "tool": item.tool_name, "tool_call_id": item.tool_call_id,
                 "content": messages[item.index].get("content"),
             }, sensitive=sensitive)
-            stub = build_stub(ref, item.tool_name or "", original, _follow_up(messages, item.index), settings, stored)
+            stub = build_stub(ref, item.tool_name or "", original, _follow_up(messages, item.index), settings,
+                              later=_later_text(messages, item.index, trigger.index))
             apply(item, "age", stub, stored)
     return out, records, decisions
 
@@ -167,6 +203,39 @@ def _sensitive(text: str) -> bool:
         return bool(deterministic_hits(text))
     except Exception:
         return True        # unknown: treat as sensitive so nothing leaves the process
+
+
+def _call_key(call: dict) -> tuple:
+    function = call.get("function") or {}
+    arguments = function.get("arguments")
+    if isinstance(arguments, str):
+        try:
+            arguments = json.loads(arguments)
+        except (TypeError, ValueError):
+            pass
+    try:
+        normalized = json.dumps(arguments, sort_keys=True, default=str)
+    except (TypeError, ValueError):
+        normalized = str(arguments)
+    return function.get("name") or call.get("name") or "", normalized
+
+
+def refetch_count(messages: list, records: list, profile: ContextProfile) -> int:
+    """Tool calls in the latest assistant message that repeat the (name, arguments) of an observation masked on this
+    request: the model asked again for content it no longer had. A rising rate means masking is too aggressive
+    (STRATEGY.md, H1.4). Approximate by design: it uses this request's masked set, which batching keeps stable."""
+    if profile.last_assistant_index is None:
+        return 0
+    calls: dict = {}
+    for message in messages:
+        for call in message.get("tool_calls") or []:
+            if isinstance(call, dict) and call.get("id"):
+                calls[call["id"]] = _call_key(call)
+    masked = {calls[r.tool_call_id] for r in records if r.reason == "age" and r.tool_call_id in calls}
+    if not masked:
+        return 0
+    latest = messages[profile.last_assistant_index]
+    return sum(1 for call in latest.get("tool_calls") or [] if isinstance(call, dict) and _call_key(call) in masked)
 
 
 def recover_observation(store, ref: str) -> Optional[dict]:
